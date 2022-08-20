@@ -31,7 +31,7 @@ unsigned short N_days_live = 0; // Numero de dias vividos desde la fecha de naci
 /*Se creara una variable de 32 bits, ya que 8 ni 16 fueron suficientes para las horas de dias vividos */
 unsigned int N_days_live_hours = 0; // Numero de horas vividas desde el dia de nacimiento hasta el 17/08/2022 a medio dia
 
-/*Se creara una variable de 32 bits, ya que 8 no es suficiente para los dias del año */
+/*Se creara una variable de 32 bits, ya que 8 ni 16 fueron suficientes para segundos de dias vividos */
 unsigned int N_days_live_seconds = 0; // Numero de segundos vividos desde el dia de nacimiento hasta el 17/08/2022 a medio dia
 
 /*Funcion principal del proyecto*/
@@ -42,6 +42,26 @@ int main(){
 	Age = 23; // Mi edad completa hasta el 17/11/1998
 	N_days_Year = 365;// Los dias del año sin bisiesto
 	N_Seconds_hours = 3600;// Segundos que tiene una hora
+
+    /*  La siguiente declaracion se encargara de calcular los dias que hay entre el dia de nacimiento y el 17/08/22*/
+
+	N_days_live = Age * N_days_Year + 272; // 272 los dias que ha entre el 17/11 y el 17/08
+			// Se multiplico la edad por el numero de dias del año y se le sumo el 272
+
+/*  La siguiente declaracion se encargara de calcular las horas de los dias que hay
+*entre el dia de nacimiento y el 17/08/22 a medio dia*/
+	// Se declara una nueva variable a utilizar
+
+	 N_hours_days = 24; // Horas del dia
+
+
+
+	N_days_live_hours = N_days_live * N_hours_days + 12; /* La suma con 12 se debe a que nos dara el resultado hasta el 16/08, asi que haciendo la adicion
+	 se tendra hasta el medio dia del 17/08*/
+
+
+
+
 
 
 
