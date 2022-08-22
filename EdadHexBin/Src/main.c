@@ -5,13 +5,13 @@
  *      Author: German Antonio Fuentes Tapias
  *      Estudiante de Ingeniería Física
  *
- *
+ *                    E L A B O R A C I Ó N   D E  L A  T A R E A I
  *
  *      <<<<<<<<<Nota= Recordar que cumplo el mismo dia de LuisFelipe>>>>>>>>>>
  */
 /**
  *  Se declara las variables necesarias para el funcionamiento de la tarea
- *  Ademas se tomo las variables con variable inicial cero
+ *  Ademas se tomo las variables con declaración inicial cero
  */
 /*Se creara una variable de 8 bits que sera suficiente para la edad*/
 unsigned char Age = 0; // La edad que se tiene al momento de diseñar el programa
@@ -39,7 +39,7 @@ unsigned int N_days_live_seconds = 0; // Numero de segundos vividos desde el dia
 int main(){
     /* Se definen las 3 variables necesarias durante todo el codigo, las cuales son Año, numero de dias y segundos de una hora*/
 
-	Age = 23; // Mi edad completa hasta el 17/11/1998
+	Age = 23; // Mi edad completa desde el 17/11/1998 hasta el 17/11/2021
 	N_days_Year = 365;// Los dias del año sin bisiesto
 	N_Seconds_hours = 3600;// Segundos que tiene una hora
 
@@ -55,12 +55,21 @@ int main(){
 	 N_hours_days = 24; // Horas del dia
 
 
+ /* Variable que contiene en numero de horas desde el dia de mi nacimiento */
 
 	N_days_live_hours = N_days_live * N_hours_days + 12; /* La suma con 12 se debe a que nos dara el resultado hasta el 16/08, asi que haciendo la adicion
 	 se tendra hasta el medio dia del 17/08*/
 
+/* Variable que contiene en numero de segundos desde el dia de mi nacimiento hasta 17/08/2022 a las 12 pm*/
 
+	N_days_live_seconds = N_days_live_hours * N_Seconds_hours; // Se calcula la cantidad de segundos, operandose
+	//con las horas vividas, por la cantidad de segundos que tiene una hora, llegando asi al resultado de segundos
+	//vividos desde el nacimiento
 
+/* Acontinuación se mmostrara los numeros de dias y numero de horas en formato bin
+ *
+ *
+ */
 
 
 
