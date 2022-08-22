@@ -66,7 +66,24 @@ int main(){
 	//con las horas vividas, por la cantidad de segundos que tiene una hora, llegando asi al resultado de segundos
 	//vividos desde el nacimiento
 
-/* Acontinuación se mmostrara los numeros de dias y numero de horas en formato bin
+/* Acontinuación se mostrara los numeros de dias y numero de horas en formato bin
+ *Primeramente se dara a observar el numero de dias en bin y luego el de horas en bin
+ *El resultado de numero de dias tiene 16 bits, pero el de numero de horas tiene 32 bits,
+ *Se hara manuealmente y se compara este resultado con el dado por el visualizador de Debugger de Live Expressions
+ * Se tienen 8667 dias de vida, lo que nos dice que es requerido 2^13 como minimo, que son 8192
+ * de donde 8667-8192 nos da 475 de espacio, lo que nos hace ir hasta 2^8 que es 256, teniedo asi ya:
+ * 8448 de espacio, pero aun nos falta 219, por lo que usamos 2^7 y 2^6, falta 27,
+ * Yendo a espacio mas bajos se toman 2^4 y 2^3, y para completar 2^1 y 2^0, logrando asi
+ * obtener el numero 8667 en Binario que seria entonces = 10000111011011  con su escritura de forma
+ *  N_days_live =  0b10000111011011
+ *
+ *  Ahora el mismo procedimiento para numero de horas 208020 que es de 32 bits
+ *  comenzando por 2^17 y haciendo el mismo procedimiento anterio se llega a 110010110010010100
+ *  que sera entonces    N_days_live_hours = 0b110010110010010100
+ *
+ *  Ahora para el numero de segundos es mas favorable presentarlo en Hexagesimal dado la magnitud de este
+ *  visto en binario, asi que recordando que en Hexa las letras representan numeros desde A hasta F, y teniendo el numero
+ *  se tiene a N_days_live_seconds = 0x2ca2e140 que es mas comodo de ver, que su formato bin o decimal.
  *
  *
  */
@@ -76,21 +93,10 @@ int main(){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   while(1){
   }
+
+
   }
 
 
