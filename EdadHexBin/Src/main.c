@@ -5,7 +5,7 @@
  *      Author: German Antonio Fuentes Tapias
  *      Estudiante de Ingeniería Física
  *
- *                    E L A B O R A C I Ó N   D E  L A  T A R E A I
+ *                    E L A B O R A C I Ó N   D E  L A  T A R E A - I
  *
  *      <<<<<<<<<Nota= Recordar que cumplo el mismo dia de LuisFelipe>>>>>>>>>>
  */
@@ -34,14 +34,23 @@ unsigned int N_days_live_hours = 0; // Numero de horas vividas desde el dia de n
 /*Se creara una variable de 32 bits, ya que 8 ni 16 fueron suficientes para segundos de dias vividos */
 unsigned int N_days_live_seconds = 0; // Numero de segundos vividos desde el dia de nacimiento hasta el 17/08/2022 a medio dia
 
-unsigned char N_days_live_Shift = 0; // Se crea esta variable para la operacion de shaft-izquierdo
+
+/*Las siguientes variables estan con fin de no perder los valores iniciales calculados*/
+unsigned short N_days_live_Shift = 0; // Se crea esta variable para la operacion de shaft-izquierdo
 
 unsigned int N_days_live_hours_Shift = 0;// Se crea esta variable para la operacion de Shaft-derecho
 
+unsigned short N_days_live_Not = 0; // Se crea esta variable para la operación Not
+
+unsigned short V_prueba = 0;// Se crea esta variable para probar si con otro valor se obtiene el mismo resultaod que con N_days_live
+
+unsigned short V_prueba_Not = 0;// Variable para prueba despues de realizar negación
+
+unsigned int mascara = 0;
+
+unsigned int mascara_10 = 0; // Se desarrolla una variable para aplicarle la mascara a numero de segundos
 
 /*Funcion principal del proyecto*/
-
-
 
 int main(){
     /* Se definen las 3 variables necesarias durante todo el codigo, las cuales son Año, numero de dias y segundos de una hora*/
@@ -139,23 +148,62 @@ int main(){
 	//esto sin haber operado las >> anteriores de 1 unidad.
 
 
-
     /* Se hara operacion NOT a numero de dias*/
 
-	N_days_live = ~N_days_live;
+	N_days_live_Not = ~N_days_live;
 
 	/* Se le suma una unidad*/
 
-	N_days_live = N_days_live +1;
+	N_days_live_Not = N_days_live_Not + 1;
 
 	/* Sumar a la variable original */
 
-	N_days_live = N_days_live + N_days_live;
+	N_days_live_Not = N_days_live_Not + N_days_live; // Se obtiene el valor  de cero
+	//Esto ocurre por el espacio de almacenamiento del espacio, ocurriendo un Overflow
+	//Haciendo la prueba con otro numero se obtiene lo siguiente:
 
+	/* Se define la variable nueva*/
+
+	V_prueba = 2856;
+
+	V_prueba_Not = ~V_prueba;
+
+	V_prueba_Not = V_prueba_Not + 1;
+
+	V_prueba_Not = V_prueba + V_prueba_Not; //Se observa que aplicando otro valor definido anteriormente
+	// Se llega al mismo resultado, ya que ocurre un desbordamiento.
+
+
+      /* Punto 09*/
 
 	 /* Se hace una mascara observando el formato Hex de numero de segundos */
 	// El valor en Hex de numero de segundos o como variable N_days_live_seconds = 0x2ca2e140
-	// El numero de 4 contando de derecha a izquierda es 2, por lo que es par
+	// El numero de 4 contando de derecha a izquierda es 2, por lo que es par,asi que debo anular
+	// El resto menos uno y cinco, observando el numero Hex como Bin se tiene como 101100101000101110000101000000
+	// Donde la posicion 1 y 5 se encerran entre comillas 00101100"1010"001011100001"0100"0000
+    // Asi que la mascara para la siguiente operación sera -->> 0b00000000101000000000000001000000
+	//o en forma Hex
+
+
+	mascara = N_days_live_seconds & 0x00f000f0; // Despues de la mascara se mantiene la posicion 1 y 5
+
+	//Ahora se va a realizar una operación And con al siguiente mascara 0x040
+
+	/* Punto 10 */
+
+   mascara_10 = N_days_live_seconds & 0x040;
+
+   // Dado que el valor obtenido despues de aplicar la mascara es diferente de cero
+   // particulamente el numero 64, se procedera a borrar la posición 6 Hex
+
+   mascara_10 =  N_days_live_seconds & 0xf0ffffff; // Se obtiene el resultado en Hex de 0x20a2e140
+   // observando que en la posición 6 se tiene el cero, borrandolo y dejando las demas posiciones intactas
+
+
+   /* Punto 11 */
+
+
+
 
 
 
