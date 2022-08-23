@@ -67,13 +67,16 @@ int main(){
 	//vividos desde el nacimiento
 
 /* Acontinuación se mostrara los numeros de dias y numero de horas en formato bin
+ *
  *Primeramente se dara a observar el numero de dias en bin y luego el de horas en bin
  *El resultado de numero de dias tiene 16 bits, pero el de numero de horas tiene 32 bits,
  *Se hara manuealmente y se compara este resultado con el dado por el visualizador de Debugger de Live Expressions
+ *
  * Se tienen 8667 dias de vida, lo que nos dice que es requerido 2^13 como minimo, que son 8192
  * de donde 8667-8192 nos da 475 de espacio, lo que nos hace ir hasta 2^8 que es 256, teniedo asi ya:
  * 8448 de espacio, pero aun nos falta 219, por lo que usamos 2^7 y 2^6, falta 27,
- * Yendo a espacio mas bajos se toman 2^4 y 2^3, y para completar 2^1 y 2^0, logrando asi
+ *
+ * Yendo al espacio mas bajos se toman 2^4 y 2^3, y para completar 2^1 y 2^0, logrando asi
  * obtener el numero 8667 en Binario que seria entonces = 10000111011011  con su escritura de forma
  *  N_days_live =  0b10000111011011
  *
@@ -84,9 +87,58 @@ int main(){
  *  Ahora para el numero de segundos es mas favorable presentarlo en Hexagesimal dado la magnitud de este
  *  visto en binario, asi que recordando que en Hexa las letras representan numeros desde A hasta F, y teniendo el numero
  *  se tiene a N_days_live_seconds = 0x2ca2e140 que es mas comodo de ver, que su formato bin o decimal.
- *
- *
  */
+
+	/*Se realiza la operacion shift << sobre la variable N_days_live */
+
+	N_days_live = N_days_live << 1; // Al realizar la operación se agrego un cero a la derecha lo que
+	// representaria un aumento del espacio o tamaño, lo que se represento como una multiplicación
+	// por 2 en la parte decimal y pasando en binario de 0b10000111011011 a -> 0b100110000110
+	//Asi que tecnicamente se movio una unidad hacia la izquierda lo que nos representa pasar de
+	//2^13 a 2^14 y el cero a la derecha.
+
+	/* Se realiza la operacion shift << de nuevo, pero esta vez se realizara sobre la variable ya operada con shift izquierdo */
+
+	N_days_live = N_days_live << 1; // Despues de realizar la operación, se agrego nuevamente un cero
+	// obteniendo asi un valor negativo, lo que nos estaria diciendo que !
+
+
+	// OJO TERMINAR EXPLICACION
+
+	/* Por ultimo se hace comprobante de que pasa si se hace cuatro veces seguidas */
+
+	N_days_live = N_days_live << 4; // Por ultimo cuatro veces seguidas causa un desbordamiento
+	// o Overflow en la memoria, en nuestro caso, el numero original aguanta 2 << shift,pero
+	// en el tercero se desborda haciendo comenzar en un numero menor y volviendo al ciclo de multiplicar
+	// por dos los bits que se van aumentando
+
+
+
+
+	/* Se realizaran operaciones shif-derecha >> */
+
+
+	N_days_live_hours = N_days_live_hours >> 1; //Al realizar la operación se corre todo un bit a la derecha
+	// ya que esto pasa, se observa con esta primera operación de el valor en decimal se dividio por 2
+
+	/* Se realizara de nueva la operacion shift-derecha, pero con la variable ya con un shift-derecho aplicado  */
+
+	N_days_live_hours = N_days_live_hours >> 1;//Al realizar la operación se corre tod un bit a la derecha
+	// de nuevo, por lo que con esta nueva operacion se observa el numero en binario como = 0b1100101100100101  y se representa como
+	// una nueva division por 2, los nuevos ceros a izquierda no se observan
+
+	/* Se realiza 4 shift-derechos seguidos*/
+
+	N_days_live_hours = N_days_live_hours >> 4;//Operando 4 veces seguidas se estaria desplazaria
+	// 4 bits hacia la derecha, agregando 4 ceros a la izquierda y todas las 4 unidades cayendo
+	// del almacenamiento, esto en decimal se vera como si estuvieramos dividiendo por 16, que seria
+	//dividir por 2 en cada desplazamiento.
+
+
+
+
+
+
 
 
 
