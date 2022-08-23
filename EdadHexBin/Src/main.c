@@ -34,7 +34,14 @@ unsigned int N_days_live_hours = 0; // Numero de horas vividas desde el dia de n
 /*Se creara una variable de 32 bits, ya que 8 ni 16 fueron suficientes para segundos de dias vividos */
 unsigned int N_days_live_seconds = 0; // Numero de segundos vividos desde el dia de nacimiento hasta el 17/08/2022 a medio dia
 
+unsigned char N_days_live_Shift = 0; // Se crea esta variable para la operacion de shaft-izquierdo
+
+unsigned int N_days_live_hours_Shift = 0;// Se crea esta variable para la operacion de Shaft-derecho
+
+
 /*Funcion principal del proyecto*/
+
+
 
 int main(){
     /* Se definen las 3 variables necesarias durante todo el codigo, las cuales son Año, numero de dias y segundos de una hora*/
@@ -91,7 +98,7 @@ int main(){
 
 	/*Se realiza la operacion shift << sobre la variable N_days_live */
 
-	N_days_live = N_days_live << 1; // Al realizar la operación se agrego un cero a la derecha lo que
+	N_days_live_Shift  = N_days_live << 1; // Al realizar la operación se agrego un cero a la derecha lo que
 	// representaria un aumento del espacio o tamaño, lo que se represento como una multiplicación
 	// por 2 en la parte decimal y pasando en binario de 0b10000111011011 a -> 0b100110000110
 	//Asi que tecnicamente se movio una unidad hacia la izquierda lo que nos representa pasar de
@@ -99,7 +106,7 @@ int main(){
 
 	/* Se realiza la operacion shift << de nuevo, pero esta vez se realizara sobre la variable ya operada con shift izquierdo */
 
-	N_days_live = N_days_live << 1; // Despues de realizar la operación, se agrego nuevamente un cero
+	N_days_live_Shift = N_days_live_Shift  << 1; // Despues de realizar la operación, se agrego nuevamente un cero
 	// obteniendo asi un valor negativo, lo que nos estaria diciendo que !
 
 
@@ -107,25 +114,25 @@ int main(){
 
 	/* Por ultimo se hace comprobante de que pasa si se hace cuatro veces seguidas */
 
-	N_days_live = N_days_live << 4; // Por ultimo cuatro veces seguidas causa un desbordamiento
+	N_days_live_Shift = N_days_live << 4; // Por ultimo cuatro veces seguidas causa un desbordamiento
 	// o Overflow en la memoria, en nuestro caso, el numero original aguanta 2 << shift,pero
 	// en el tercero se desborda haciendo comenzar en un numero menor y volviendo al ciclo de multiplicar
 	// por dos los bits que se van aumentando
 
 	/* Se realizaran operaciones shif-derecha >> */
 
-	N_days_live_hours = N_days_live_hours >> 1; //Al realizar la operación se corre todo un bit a la derecha
+	N_days_live_hours_Shift = N_days_live_hours >> 1; //Al realizar la operación se corre todo un bit a la derecha
 	// ya que esto pasa, se observa con esta primera operación de el valor en decimal se dividio por 2
 
 	/* Se realizara de nueva la operacion shift-derecha, pero con la variable ya con un shift-derecho aplicado  */
 
-	N_days_live_hours = N_days_live_hours >> 1;//Al realizar la operación se corre tod un bit a la derecha
+	N_days_live_hours_Shift = N_days_live_hours_Shift >> 1;//Al realizar la operación se corre tod un bit a la derecha
 	// de nuevo, por lo que con esta nueva operacion se observa el numero en binario como = 0b1100101100100101  y se representa como
 	// una nueva division por 2, los nuevos ceros a izquierda no se observan
 
 	/* Se realiza 4 shift-derechos seguidos*/
 
-	N_days_live_hours = N_days_live_hours >> 4;//Operando 4 veces seguidas se estaria desplazaria
+	N_days_live_hours_Shift = N_days_live_hours >> 4;//Operando 4 veces seguidas se estaria desplazaria
 	// 4 bits hacia la derecha, agregando 4 ceros a la izquierda y todas las 4 unidades cayendo
 	// del almacenamiento, esto en decimal se vera como si estuvieramos dividiendo por 16, que seria
 	//dividir por 2 en cada desplazamiento. Paso de 0b110010110010010100 a 0b11001011001001
