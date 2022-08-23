@@ -50,6 +50,8 @@ unsigned int mascara = 0;
 
 unsigned int mascara_10 = 0; // Se desarrolla una variable para aplicarle la mascara a numero de segundos
 
+unsigned int operador_logica = 0; // Variable para la operación ! en el punto 11
+
 /*Funcion principal del proyecto*/
 
 int main(){
@@ -201,6 +203,18 @@ int main(){
 
 
    /* Punto 11 */
+
+   //Se usara la variable N_days_live_hours para el procedimiento del punto con un declaración nombrada
+   // operador_logica
+
+   operador_logica = !N_days_live_hours; // Al realizarse la primera vez se convirtio todos los valores en cero
+
+
+   operador_logica = !operador_logica; // Al realizarse de nuevo se obtiene un 0b1, que matematicamente
+
+
+
+
 
 
 
