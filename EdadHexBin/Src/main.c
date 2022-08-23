@@ -112,11 +112,7 @@ int main(){
 	// en el tercero se desborda haciendo comenzar en un numero menor y volviendo al ciclo de multiplicar
 	// por dos los bits que se van aumentando
 
-
-
-
 	/* Se realizaran operaciones shif-derecha >> */
-
 
 	N_days_live_hours = N_days_live_hours >> 1; //Al realizar la operación se corre todo un bit a la derecha
 	// ya que esto pasa, se observa con esta primera operación de el valor en decimal se dividio por 2
@@ -132,7 +128,33 @@ int main(){
 	N_days_live_hours = N_days_live_hours >> 4;//Operando 4 veces seguidas se estaria desplazaria
 	// 4 bits hacia la derecha, agregando 4 ceros a la izquierda y todas las 4 unidades cayendo
 	// del almacenamiento, esto en decimal se vera como si estuvieramos dividiendo por 16, que seria
-	//dividir por 2 en cada desplazamiento.
+	//dividir por 2 en cada desplazamiento. Paso de 0b110010110010010100 a 0b11001011001001
+	//esto sin haber operado las >> anteriores de 1 unidad.
+
+
+
+    /* Se hara operacion NOT a numero de dias*/
+
+	N_days_live = ~N_days_live;
+
+	/* Se le suma una unidad*/
+
+	N_days_live = N_days_live +1;
+
+	/* Sumar a la variable original */
+
+	N_days_live = N_days_live + N_days_live;
+
+
+	 /* Se hace una mascara observando el formato Hex de numero de segundos */
+	// El valor en Hex de numero de segundos o como variable N_days_live_seconds = 0x2ca2e140
+	// El numero de 4 contando de derecha a izquierda es 2, por lo que es par
+
+
+
+
+
+
 
 
 
