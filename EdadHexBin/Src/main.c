@@ -2,12 +2,14 @@
  * main.c
  *
  *  Created on: Aug 19, 2022
+ *
+ *
  *      Author: German Antonio Fuentes Tapias
  *      Estudiante de Ingeniería Física
  *
  *                    E L A B O R A C I Ó N   D E  L A  T A R E A - I
  *
- *      <<<<<<<<<Nota= Recordar que cumplo el mismo dia de LuisFelipe>>>>>>>>>>
+ *      <<<<<<<<<Nota= Recordar que cumplo el mismo dia de Luis Felipe>>>>>>>>>>
  */
 /**
  *  Se declara las variables necesarias para el funcionamiento de la tarea
@@ -25,7 +27,7 @@ unsigned char N_hours_days = 0; //Numero de horas de un dia
 /*Se creara una variable de 16 bits, ya que 8 no es suficiente para los segundos de una hora */
 unsigned short N_Seconds_hours = 0; //Numero de segundos que se tiene en una hora
 
-/*Se creara una variable de 16 bits, ya que 8 no es suficiente para los dias que se ha vivido desde el nacimiento*/
+/*Se creara una variable de 16 bits, ya que 8 no es suficiente para los dias que se ha vivido desde el dia de mi nacimiento*/
 unsigned short N_days_live = 0; // Numero de dias vividos desde la fecha de nacimiento hasta el 17/08/2022
 
 /*Se creara una variable de 32 bits, ya que 8 ni 16 fueron suficientes para las horas de dias vividos */
@@ -36,41 +38,47 @@ unsigned int N_days_live_seconds = 0; // Numero de segundos vividos desde el dia
 
 
 /*Las siguientes variables estan con fin de no perder los valores iniciales calculados*/
-unsigned short N_days_live_Shift = 0; // Se crea esta variable para la operacion de shaft-izquierdo
+unsigned short N_days_live_Shift = 0; // Se crea esta variable para la operacion de shift-izquierdo, en el cual
+// se almacenara el resultado de la operación
 
-unsigned int N_days_live_hours_Shift = 0;// Se crea esta variable para la operacion de Shaft-derecho
+unsigned int N_days_live_hours_Shift = 0;// Se crea esta variable para la operacion de Shift-derecho, en el cual
+// se almacenara el resultado de la operación
 
-unsigned short N_days_live_Not = 0; // Se crea esta variable para la operación Not
+unsigned short N_days_live_Not = 0; // Se crea esta variable para la operación Not, en el cual se almacenara
+//el resultado de la operación
 
-unsigned short V_prueba = 0;// Se crea esta variable para probar si con otro valor se obtiene el mismo resultaod que con N_days_live
-
+unsigned short V_prueba = 0;// Se crea esta variable para asignarle  otro valor se obtiene el mismo resultaod que con N_days_live
+// el cual se encargara de verificar la prueba del punto 8-b
 unsigned short V_prueba_Not = 0;// Variable para prueba despues de realizar negación
 
-unsigned int mascara = 0;
+unsigned int mascara = 0;//Se desaroola una variable para aplicarle la Mascara creada para la operación del punto 9.
 
 unsigned int mascara_10 = 0; // Se desarrolla una variable para aplicarle la mascara a numero de segundos
 
 unsigned int operador_logica = 0; // Variable para la operación ! en el punto 11
 
-/*Funcion principal del proyecto*/
+
+
+/*Desarrollo de la funcion principal del proyecto*/
 
 int main(){
+
     /* Se definen las 3 variables necesarias durante todo el codigo, las cuales son Año, numero de dias y segundos de una hora*/
 
 	Age = 23; // Mi edad completa desde el 17/11/1998 hasta el 17/11/2021
-	N_days_Year = 365;// Los dias del año sin bisiesto
+	N_days_Year = 365;// Los dias del año sin año bisiesto
 	N_Seconds_hours = 3600;// Segundos que tiene una hora
 
     /*  La siguiente declaracion se encargara de calcular los dias que hay entre el dia de nacimiento y el 17/08/22*/
 
-	N_days_live = Age * N_days_Year + 272; // 272 los dias que ha entre el 17/11 y el 17/08
+	N_days_live = Age * N_days_Year + 272; // 272 los dias que hay entre el 17/11/2021 y el 17/08/2022
 			// Se multiplico la edad por el numero de dias del año y se le sumo el 272
 
 /*  La siguiente declaracion se encargara de calcular las horas de los dias que hay
 *entre el dia de nacimiento y el 17/08/22 a medio dia*/
 	// Se declara una nueva variable a utilizar
 
-	 N_hours_days = 24; // Horas del dia
+	 N_hours_days = 24; // Horas del dia normalmente
 
 
  /* Variable que contiene en numero de horas desde el dia de mi nacimiento */
@@ -82,7 +90,7 @@ int main(){
 
 	N_days_live_seconds = N_days_live_hours * N_Seconds_hours; // Se calcula la cantidad de segundos, operandose
 	//con las horas vividas, por la cantidad de segundos que tiene una hora, llegando asi al resultado de segundos
-	//vividos desde el nacimiento
+	//vividos desde el nacimiento hasta el medio dia del 17/08/2022
 
 /* Acontinuación se mostrara los numeros de dias y numero de horas en formato bin
  *
@@ -99,8 +107,14 @@ int main(){
  *  N_days_live =  0b10000111011011
  *
  *  Ahora el mismo procedimiento para numero de horas 208020 que es de 32 bits
- *  comenzando por 2^17 y haciendo el mismo procedimiento anterio se llega a 110010110010010100
- *  que sera entonces    N_days_live_hours = 0b110010110010010100
+ *  comenzando por 2^17 y haciendo el mismo procedimiento anterior en el cual  2^17 es 131072, faltando aun valores para llegar
+ *  a 208020,se tomo 2^16 ya que la suma de ambas no supera el valor de 208020, sumando ambas se obtiene el valor de
+ *  196608, acercandonos al valor que se busca, por logica se tendra a consideración que el numero ha añadir debe ser
+ *  de un espacio mas pequeño,por lo que nos iremos hasta 2^13, acumulando 204800, pero aún falta, por lo que se debe
+ *  tomar el bit de 2^11, acumulando asi 206848, faltando aun espacio, añadiendo 2^10 se llega al valor de 207872, estando mas cerca
+ *  del valor que se busca. Ahora se le añade 2^7, llegando al valor de 20800, solo nos falta la representación de 20, por lo que nos
+ *  vamos hasta 2^4 y añadiendo 2^2, se llea al valor buscado 208020 por lo que nuestro numero en binario sera 110010110010010100
+ *  que  entonces se representa como  N_days_live_hours = 0b110010110010010100
  *
  *  Ahora para el numero de segundos es mas favorable presentarlo en Hexagesimal dado la magnitud de este
  *  visto en binario, asi que recordando que en Hexa las letras representan numeros desde A hasta F, y teniendo el numero
@@ -188,7 +202,7 @@ int main(){
 
 
 	mascara = N_days_live_seconds & 0x00f000f0; // Despues de la mascara se mantiene la posicion 1 y 5
-
+    // Obteniendo un resultado de Hex como 0xa00040
 	//Ahora se va a realizar una operación And con al siguiente mascara 0x040
 
 	/* Punto 10 */
@@ -211,33 +225,6 @@ int main(){
 
 
    operador_logica = !operador_logica; // Al realizarse de nuevo se obtiene un 0b1, que matematicamente
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  while(1){
-  }
 
 
   }
