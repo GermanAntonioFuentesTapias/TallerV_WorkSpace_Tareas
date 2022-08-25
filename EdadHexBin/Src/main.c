@@ -90,37 +90,43 @@ int main(){
 
 	N_days_live_seconds = N_days_live_hours * N_Seconds_hours; // Se calcula la cantidad de segundos, operandose
 	//con las horas vividas, por la cantidad de segundos que tiene una hora, llegando asi al resultado de segundos
-	//vividos desde el nacimiento hasta el medio dia del 17/08/2022
+	//vivídos desde el nacimiento hasta el medio dia del 17/08/2022
 
-/* Acontinuación se mostrara los numeros de dias y numero de horas en formato bin
+/* A continuación se mostrara los numeros de dias y numero de horas en formato bin
  *
  *Primeramente se dara a observar el numero de dias en bin y luego el de horas en bin
  *El resultado de numero de dias tiene 16 bits, pero el de numero de horas tiene 32 bits,
  *Se hara manuealmente y se compara este resultado con el dado por el visualizador de Debugger de Live Expressions
  *
- * Se tienen 8667 dias de vida, lo que nos dice que es requerido 2^13 como minimo, que son 8192
- * de donde 8667-8192 nos da 475 de espacio, lo que nos hace ir hasta 2^8 que es 256, teniedo asi ya:
- * 8448 de espacio, pero aun nos falta 219, por lo que usamos 2^7 y 2^6, falta 27,
- *
- * Yendo al espacio mas bajos se toman 2^4 y 2^3, y para completar 2^1 y 2^0, logrando asi
- * obtener el numero 8667 en Binario que seria entonces = 10000111011011  con su escritura de forma
+ * Se tienen 8667 dias de vida, lo cual representa en tamaño de variable como minimo 2^13, que son 8192 del tamaño de la variable,
+ * en donde 8667-8192 nos da un resultado de 475 de ,con el resultado anterior se debe ir hasta 2^8 que es 256, teniedo asi ya:
+ * 8448 de espacio, pero aun nos queda faltando 219, por lo que se requiere aun 2^7 y 2^6, nos queda faltando 27 para la meta asi que,
+ * Yendo a  espacios inferiores,se toman los valores de 2^4 y 2^3, ademas de los tamaños de 2^1 y 2^0, logrando asi
+ * obtener el numero 8667 que en Binario que seria entonces = 10000111011011  con su escritura de forma:
  *  N_days_live =  0b10000111011011
  *
- *  Ahora el mismo procedimiento para numero de horas 208020 que es de 32 bits
- *  comenzando por 2^17 y haciendo el mismo procedimiento anterior en el cual  2^17 es 131072, faltando aun valores para llegar
- *  a 208020,se tomo 2^16 ya que la suma de ambas no supera el valor de 208020, sumando ambas se obtiene el valor de
- *  196608, acercandonos al valor que se busca, por logica se tendra a consideración que el numero ha añadir debe ser
- *  de un espacio mas pequeño,por lo que nos iremos hasta 2^13, acumulando 204800, pero aún falta, por lo que se debe
- *  tomar el bit de 2^11, acumulando asi 206848, faltando aun espacio, añadiendo 2^10 se llega al valor de 207872, estando mas cerca
+ *  Ahora el mismo procedimiento para numero de horas, que tiene un valor de 208020, siendo este de  32 bits
+ *  comenzando por 2^17 y realiando el mismo procedimiento anterior,el valor de  2^17 es 131072 de tamaño de variable, faltando aun valores para llegar
+ *  a 208020,se toma entonces 2^16 ya que la suma de ambas no superá el valor de 208020, sumando ambas se obtiene el valor de
+ *  196608, acercandose al valor que se quiere llegar, por logica se tendra a consideración que el numero ha añadir debe ser
+ *  de un espacio de variable mas pequeño,por lo que nos iremos hasta el tamaño de  2^13, acumulando con la suma de este valor 204800, pero aún falta, por lo que se debe
+ *  tomar el bit de 2^11, acumulando asi 206848, faltando aun espacio, se añade 2^10 y con este se llega al valor de 207872, estando mas cerca
  *  del valor que se busca. Ahora se le añade 2^7, llegando al valor de 20800, solo nos falta la representación de 20, por lo que nos
- *  vamos hasta 2^4 y añadiendo 2^2, se llea al valor buscado 208020 por lo que nuestro numero en binario sera 110010110010010100
+ *  vamos hasta 2^4 y 2^2 añadiendolos al acumulado, con lo cual se llega al valor buscado de 208020, por lo que nuestro numero en binario sera 110010110010010100
  *  que  entonces se representa como  N_days_live_hours = 0b110010110010010100
  *
  *  Ahora para el numero de segundos es mas favorable presentarlo en Hexagesimal dado la magnitud de este
- *  visto en binario, asi que recordando que en Hexa las letras representan numeros desde A hasta F, y teniendo el numero
- *  se tiene a N_days_live_seconds = 0x2ca2e140 que es mas comodo de ver, que su formato bin o decimal.
+ *  visto en binario, que tiene un valor de 0b101100101000101110000101000000, asi que recordando que en Hexa las letras representan numeros desde A hasta F en grupos de 4 bits,
+ *  se tiene entonces que los 4 ultimos bits serian 0, los otros 4 siguientes sera el valor de 4 en Hexagesimal, siguiendole el siguiente cuarteto, con valor
+ *  de 1 en Hexagesimal y asi sucesivamente hasta cumplir el tamaño total de la variable, teniendo entonces  a N_days_live_seconds = 0x2ca2e140 que es mas comodo en su lectura..
  */
 
+	/*
+	 * Se usaron esos tipos de signos porque: Para Age: una variable de 8 bits sera suficiente para la edad, ya que no supera los 255 de espacio de almacenamiento
+	 * lo cual es el tamaño apropiado para ser representado el numero
+	 *
+	 *
+	 */
 	/*Se realiza la operacion shift << sobre la variable N_days_live */
 
 	N_days_live_Shift  = N_days_live << 1; // Al realizar la operación se agrego un cero a la derecha lo que
@@ -165,6 +171,11 @@ int main(){
 
 
     /* Se hara operacion NOT a numero de dias*/
+
+	/*
+	 * La operación NOT es un operador Bit a Bit por lo que se encargara de  cambiar los valores de 0 y 1, por lo que
+	 * donde se encuentro un cero, sera reemplazado por cero y donde se encuentre el uno, sera reemplanzado con el cero.
+	 */
 
 	N_days_live_Not = ~N_days_live;
 
