@@ -38,8 +38,12 @@ unsigned int N_days_live_seconds = 0; // Numero de segundos vividos desde el dia
 
 
 /*Las siguientes variables estan con fin de no perder los valores iniciales calculados*/
-unsigned short N_days_live_Shift = 0; // Se crea esta variable para la operacion de shift-izquierdo, en el cual
+unsigned short N_days_live_Shift = 0; // Se crea esta variable para la operación de shift-izquierdo, en el cual
 // se almacenara el resultado de la operación
+
+unsigned short N_days_live_Shift_4 = 0; // Se crea esta variable para la operación de shift-izquierdo cuatro veces
+
+unsigned short N_days_live_hours_Shift_4 = 0; // Se crea esta variable para la operación Shift-derecho cuatro veces
 
 unsigned int N_days_live_hours_Shift = 0;// Se crea esta variable para la operacion de Shift-derecho, en el cual
 // se almacenara el resultado de la operación
@@ -51,7 +55,7 @@ unsigned short V_prueba = 0;// Se crea esta variable para asignarle  otro valor 
 // el cual se encargara de verificar la prueba del punto 8-b
 unsigned short V_prueba_Not = 0;// Variable para prueba despues de realizar negación
 
-unsigned int mascara = 0;//Se desaroola una variable para aplicarle la Mascara creada para la operación del punto 9.
+unsigned int mascara = 0;//Se desarrola una variable para aplicarle la Mascara creada para la operación del punto 9.
 
 unsigned int mascara_10 = 0; // Se desarrolla una variable para aplicarle la mascara a numero de segundos
 
@@ -123,10 +127,12 @@ int main(){
 
 	/*
 	 * Se usaron esos tipos de signos porque: Para Age: una variable de 8 bits sera suficiente para la edad, ya que no supera los 255 de espacio de almacenamiento
-	 * lo cual es el tamaño apropiado para ser representado el numero
-	 *
+	 * lo cual es el tamaño apropiado para ser representado el numero, definiendo como "unsigned char", para los dias del año se USA una variable de 16 bits, que es
+	 * requerida para el tamaño de numero de dias del año, esta se declaro con "unsigned short" y por ultimo para horas del dia se declaro con "unsigned short" de 8 bits
+	 * que era suficiente en tamaño para ocupar la cantidad de horas del dia.
 	 *
 	 */
+
 	/*Se realiza la operacion shift << sobre la variable N_days_live */
 
 	N_days_live_Shift  = N_days_live << 1; // Al realizar la operación se agrego un cero a la derecha lo que
@@ -134,36 +140,42 @@ int main(){
 	// por 2 en la parte decimal y pasando en binario de 0b10000111011011 a -> 0b100110000110
 	//Asi que tecnicamente se movio una unidad hacia la izquierda lo que nos representa pasar de
 	//2^13 a 2^14 y el cero a la derecha.
+    //Asi que en terminos generales la operación Shift-izquierda se encarga de desplazar bit a bit en esa dirección del
+	//numero binario, el desplazamiento lo hara y se iran desbordando los numeros en caso que sea 1
 
 	/* Se realiza la operacion shift << de nuevo, pero esta vez se realizara sobre la variable ya operada con shift izquierdo */
 
 	N_days_live_Shift = N_days_live_Shift  << 1; // Despues de realizar la operación, se agrego nuevamente un cero
-	// obteniendo asi un valor negativo, lo que nos estaria diciendo que !
+	// obteniendo asi un valor mayor, lo que nos estaria diciendo que se esta aumentado el valor de la variable
+	//como si en cada desplazamiento a la izquierda se multiplicara por 2
 
 
-	// OJO TERMINAR EXPLICACION
+	/* Por ultimo se hace el comprobante de que pasa si se hace cuatro veces seguidas */
 
-	/* Por ultimo se hace comprobante de que pasa si se hace cuatro veces seguidas */
-
-	N_days_live_Shift = N_days_live << 4; // Por ultimo cuatro veces seguidas causa un desbordamiento
+	N_days_live_Shift_4 = N_days_live << 4; // Por ultimo cuatro veces seguidas causa un desbordamiento
 	// o Overflow en la memoria, en nuestro caso, el numero original aguanta 2 << shift,pero
 	// en el tercero se desborda haciendo comenzar en un numero menor y volviendo al ciclo de multiplicar
-	// por dos los bits que se van aumentando
+	// por dos los bits que se van aumentando. Esto seria a causa de que no hay espacio disponible en los 16 bits
+	// y se "caerian" al no tener donde ocupar mas espacio. Si la variable se declara como int y no como short
+	// No pasara ese problema, ya que se seguira desplaando hasta que ocurra el overflow en ese espacio de memoria
+
 
 	/* Se realizaran operaciones shif-derecha >> */
 
 	N_days_live_hours_Shift = N_days_live_hours >> 1; //Al realizar la operación se corre todo un bit a la derecha
-	// ya que esto pasa, se observa con esta primera operación de el valor en decimal se dividio por 2
+	//y ya que esto pasa, se observa con esta primera operación del valor como la operación de una división por 2
+	// Desplazando asi del numero binario esta unidad y agregando un cero a la izquierda
 
-	/* Se realizara de nueva la operacion shift-derecha, pero con la variable ya con un shift-derecho aplicado  */
+	/* Se realizara de nueva la operacion shift-derecha, pero con la variable ya operada con un shift-derecho aplicado  */
 
-	N_days_live_hours_Shift = N_days_live_hours_Shift >> 1;//Al realizar la operación se corre tod un bit a la derecha
+	N_days_live_hours_Shift = N_days_live_hours_Shift >> 1;//Al realizar la operación se corre todo un bit a la derecha
 	// de nuevo, por lo que con esta nueva operacion se observa el numero en binario como = 0b1100101100100101  y se representa como
 	// una nueva division por 2, los nuevos ceros a izquierda no se observan
 
+
 	/* Se realiza 4 shift-derechos seguidos*/
 
-	N_days_live_hours_Shift = N_days_live_hours >> 4;//Operando 4 veces seguidas se estaria desplazaria
+	N_days_live_hours_Shift_4 = N_days_live_hours >> 4;//Operando 4 veces seguidas se estaria desplazando
 	// 4 bits hacia la derecha, agregando 4 ceros a la izquierda y todas las 4 unidades cayendo
 	// del almacenamiento, esto en decimal se vera como si estuvieramos dividiendo por 16, que seria
 	//dividir por 2 en cada desplazamiento. Paso de 0b110010110010010100 a 0b11001011001001
@@ -177,28 +189,33 @@ int main(){
 	 * donde se encuentro un cero, sera reemplazado por cero y donde se encuentre el uno, sera reemplanzado con el cero.
 	 */
 
-	N_days_live_Not = ~N_days_live;
+	N_days_live_Not = ~N_days_live; // Se realiza la operación NOT, que invierte el valor de sus operandos, transformando el valor 0 en 1 y el valor 1 en 0.
+	//Esto se hace bit a bit. Teniendo el valor original como 8667 y su operación NOT Siendo 56868,llegando a un tamaño de
+	// 65535
 
 	/* Se le suma una unidad*/
 
-	N_days_live_Not = N_days_live_Not + 1;
+	N_days_live_Not = N_days_live_Not + 1; // Sumando esta unidad se obtiene el valor de 56869,
 
 	/* Sumar a la variable original */
 
 	N_days_live_Not = N_days_live_Not + N_days_live; // Se obtiene el valor  de cero
-	//Esto ocurre por el espacio de almacenamiento del espacio, ocurriendo un Overflow
-	//Haciendo la prueba con otro numero se obtiene lo siguiente:
-
+	//Esto ocurre por el espacio de almacenamiento, asi que operacionalmente ya que tenemos unsigned no se ve correctamente la representación,
+	//asi que la negación tomaria una parte negativa, por lo tanto en este caso se tomaria el valor de  -8668
+	//al sumarle una unidad se obtendria el valor de -8667 y sumandole la original se obtendria el valor de cero, observado esto desde la
+	// recta numerica de espacios de memorias de bits
+	//
 	/* Se define la variable nueva*/
 
-	V_prueba = 2856;
+	// Se realizara la prueba con la nueva variable
+	V_prueba = 2856;// Se define la nueva variable
 
-	V_prueba_Not = ~V_prueba;
+	V_prueba_Not = ~V_prueba; // Se le hace negación a la nueva declaración
 
-	V_prueba_Not = V_prueba_Not + 1;
+	V_prueba_Not = V_prueba_Not + 1; // Se le suma 1 a la nueva declaración
 
 	V_prueba_Not = V_prueba + V_prueba_Not; //Se observa que aplicando otro valor definido anteriormente
-	// Se llega al mismo resultado, ya que ocurre un desbordamiento.
+	// Se llega al mismo resultado, ya que ocurre lo ocurrido con la variable N_days_live
 
 
       /* Punto 09*/
@@ -209,7 +226,7 @@ int main(){
 	// El resto menos uno y cinco, observando el numero Hex como Bin se tiene como 101100101000101110000101000000
 	// Donde la posicion 1 y 5 se encerran entre comillas 00101100"1010"001011100001"0100"0000
     // Asi que la mascara para la siguiente operación sera -->> 0b00000000101000000000000001000000
-	//o en forma Hex
+	//o en forma Hex 0x00f000f0
 
 
 	mascara = N_days_live_seconds & 0x00f000f0; // Despues de la mascara se mantiene la posicion 1 y 5
