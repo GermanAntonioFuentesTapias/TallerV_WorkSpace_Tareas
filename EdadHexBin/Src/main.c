@@ -186,7 +186,7 @@ int main(){
 
 	/*
 	 * La operación NOT es un operador Bit a Bit por lo que se encargara de  cambiar los valores de 0 y 1, por lo que
-	 * donde se encuentro un cero, sera reemplazado por cero y donde se encuentre el uno, sera reemplanzado con el cero.
+	 * donde se encuentre un cero, sera reemplazado por uno y donde se encuentre el uno, sera reemplanzado con el cero.
 	 */
 
 	N_days_live_Not = ~N_days_live; // Se realiza la operación NOT, que invierte el valor de sus operandos, transformando el valor 0 en 1 y el valor 1 en 0.
@@ -203,8 +203,12 @@ int main(){
 	//Esto ocurre por el espacio de almacenamiento, asi que operacionalmente ya que tenemos unsigned no se ve correctamente la representación,
 	//asi que la negación tomaria una parte negativa, por lo tanto en este caso se tomaria el valor de  -8668
 	//al sumarle una unidad se obtendria el valor de -8667 y sumandole la original se obtendria el valor de cero, observado esto desde la
-	// recta numerica de espacios de memorias de bits
-	//
+	// recta numerica de espacios de memorias de bits.
+	// Una explicación adicional, seria verlo con el complemento, al hacer el operador bit-wise y sumarle uno se tendria un complemento de la variable original
+	// entonces ya que el complemento tiene signo negativo y al sumarse con la original, se obtiene el valor de cero
+	//También se puede ver como el inverso adictivo ya que estamos en variable sin signos.
+
+
 	/* Se define la variable nueva*/
 
 	// Se realizara la prueba con la nueva variable
@@ -215,7 +219,7 @@ int main(){
 	V_prueba_Not = V_prueba_Not + 1; // Se le suma 1 a la nueva declaración
 
 	V_prueba_Not = V_prueba + V_prueba_Not; //Se observa que aplicando otro valor definido anteriormente
-	// Se llega al mismo resultado, ya que ocurre lo ocurrido con la variable N_days_live
+	// Se llega al mismo resultado, ya que ocurre lo mismo que con la variable N_days_live
 
 
       /* Punto 09*/
@@ -242,6 +246,8 @@ int main(){
 
    mascara_10 =  N_days_live_seconds & 0xf0ffffff; // Se obtiene el resultado en Hex de 0x20a2e140
    // observando que en la posición 6 se tiene el cero, borrandolo y dejando las demas posiciones intactas
+   // Esto nos podra servir para eliminar un valor desconocido en un registro o variable mas grande y requiriendo eliminar un valor de este
+   // sin eliminar los otros bits o modificarlos
 
 
    /* Punto 11 */
@@ -254,8 +260,11 @@ int main(){
 
    operador_logica = !operador_logica; // Al realizarse de nuevo se obtiene un 0b1, que matematicamente
 
-
-  }
+// De los resultados anteriores se puede decir que: A diferencia de los operadores anteriores este lo hace para todo el conjunto, siendo un operador booleano
+   // que se encarga de hacer una compación de verdadero o falso, entonces con la inicial tomo todo el valor como falso y por lo tanto se imprime cero, pero al volverse a operar
+   // se obtiene el resultado 1, asi que nos dice que cero era verdadero, y se imprime el 1, si se volviera a proceder pasaria de nuevo el valor de cero y asi sucesivamente
+   // Por lo que en general el operador ! significara NO, siendo util para anteponer estados de reloj que se requieran, teniendo condiciones de condicional, pero optimizando los recursos
+   // y la cantidad de escritura
 
 
 
