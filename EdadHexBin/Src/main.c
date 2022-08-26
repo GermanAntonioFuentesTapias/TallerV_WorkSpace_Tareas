@@ -255,10 +255,10 @@ int main(){
    //Se usara la variable N_days_live_hours para el procedimiento del punto con un declaración nombrada
    // operador_logica
 
-   operador_logica = !N_days_live_hours; // Al realizarse la primera vez se convirtio todos los valores en cero
+  operador_logica = !N_days_live_hours; // Al realizarse la primera vez se convirtio todos los valores en cero
 
 
-   operador_logica = !operador_logica; // Al realizarse de nuevo se obtiene un 0b1, que matematicamente
+   operador_logica = !operador_logica; // Al realizarse de nuevo se obtiene un 0b1, que matematicamente estaria negando el valor de entrada
 
 // De los resultados anteriores se puede decir que: A diferencia de los operadores anteriores este lo hace para todo el conjunto, siendo un operador booleano
    // que se encarga de hacer una compación de verdadero o falso, entonces con la inicial tomo todo el valor como falso y por lo tanto se imprime cero, pero al volverse a operar
@@ -267,4 +267,4 @@ int main(){
    // y la cantidad de escritura
 
 
-
+}
