@@ -15,13 +15,13 @@
  *         interrupciones
  ********************************************************************************** */
 
-#ifndef STM32F4XX_HAL_H_
+#ifndef STM32F4XX_HAL_H_ //Inicio del archivo
 #define STM32F4XX_HAL_H_
 
 #include <stdint.h>
 #include <stddef.h>
 
-#define HSI_CLOCK_SPEED    16000000 //Value for the main clock signal (HSI -> High speed Internal)
+#define HSI_CLOCK_SPEED    16000000 //Value for the main clock signal (HSI -> High speed Internal) (Relojes internos y externos)
 #define HSI_CLOCK_SPEED    4000000  //Value for the main clock signal (HSE -> High Speed External)
 
 #define NOP()   asm("NOP")
@@ -33,7 +33,7 @@
  * (Remenber, 1KByte = 1024 bytes)
  */
 
-#define FLASH_BASE_ADDR    0x08000000U  //Esta es la memoria del programa, 512KB
+#define FLASH_BASE_ADDR    0x08000000U  //Esta es la memoria del programa, 512KB memoria flash
 #define SRAM_BASE_ADDR     0x20000000U  //Esta es la memoria RAM,128KB.
 
 /* NOTA : Observar que existen unos registros específicos del Cortes M4 en la región 0xE0000000U
@@ -58,6 +58,7 @@
 #define APB1_BASE_ADDR          0x40000000U
 #define APB2_BASE_ADDR          0x40010000U
 #define AHB1_BASE_ADDR          0x40020000U
+#define AHB2_BASE_ADDR          0x50000000U
 
 /**
  * Y ahora debemos hacer lo mismo pero cada una de las posiciones de memoria de cada uno de los
@@ -120,16 +121,146 @@
  */
 
 /**
- *  Macros Genéricos
+ *  Macros Genéricos Elementos importante
  */
 
+#define ENABLE              1
+#define DISABLE             0
+#define SET                 ENABLE
+#define CLEAR               DISABLE
+#define RESET               SET
+#define GPIO_PIN_SET        SET
+#define GPIO_PIN_RESET      RESET
+#define FLAG_SET            SET
+#define FLAG_RESET          RESET
+#define I2C_WRITE           0
+#define I2C_READ            1
+
+/*         +++++ ====== INICIO de la descripción de los elementos que componen el periférico ======++++ */
+
+/* Definición de la estructura de datos que representa a cada uno de los registros que componen el periferico
+ * RCC.
+ *
+ * Debido a los temas que se van a manejar en el curso, solo se deben definir los bits de los registros:
+ * 6.3.1 (RCC_CR) hasta el 6.3.12 (RCC_APB2ENR), 6.3.17 (RCC_BDCR)  6.3.18 (RCC_CSR)
+ *
+ * NOTA: La posición de memoria (offset) debe encajar perfectamente con la posición de memoria indicada
+ * en la hoja de datos del equipo. Observe que los elementos "reservedx" también están presentes allí.
+ */
+
+typedef struct
+{
+	   volatile uint32_t CR;                       // Clock Control Register          ADDR_OFFSET:  0x00
+	   volatile uint32_t PLLCFGR;                  // PLL Configuration Register      ADDR_OFFSET:  0x04
+	   volatile uint32_t CFGR;                     // Clock Configuration Register    ADDR_OFFSET:  0x08
+	   volatile uint32_t CIR;                      // Clock Interrupt Register        ADDR_OFFSET:  0x0C
+	   volatile uint32_t AHB1RSTR;                 // AHB1 Peripheral reset register  ADDR_OFFSET:  0x10
+	   volatile uint32_t AHB2RSTR;                 // ABH2 Peripheral reset register  ADDR_OFFSET;  0x14
+	   volatile uint32_t reserved0;                // reserved                        ADDR_OFFSET;  0x18
+	   volatile uint32_t reserved1;                // reserved                        ADDR_OFFSET;  0x1C
+	   volatile uint32_t APB1RSTR;                 // APB1 Peripheral reset register  ADDR_OFFSET;  0x20
+	   volatile uint32_t APB2RSTR;                 // APB2 Peripheral reset register  ADDR_OFFSET;  0x24
+	   volatile uint32_t reserved2;                // reserved                        ADDR_OFFSET;  0x28
+	   volatile uint32_t reserved3;                // reserved                        ADDR_OFFSET;  0x2C
+	   volatile uint32_t AHB1ENR;                  // AHB1 Peripheral clock enable register ADDR_OFFSET; 0x30
+	   volatile uint32_t AHB2ENR;                  // AHB2 Peripheral clock enable register ADDR_OFFSET; 0x34
+	   volatile uint32_t reserved4;                // reserved                       ADDR_OFFSET;  0x38
+	   volatile uint32_t reserved5;                // reserved                       ADDR_OFFSET;  0x3C
+	   volatile uint32_t APB1ENR;                  // APB1 Peripheral clock enable r ADDR_OFFSET;  0x40
+	   volatile uint32_t APB2ENR;                  // APB2 Peripheral clock enable r ADDR_OFFSET;  0x44
+	   volatile uint32_t reserved6;                // reserved                       ADDR_OFFSET;  0x48
+	   volatile uint32_t reserved7;                // reserved                       ADDR_OFFSET;  0x4C
+	   volatile uint32_t AHB1LPENR;                // AHB1 clock enable low power r  ADDR_OFFSET;  0x50
+	   volatile uint32_t AHB2LPENR;                // AHB2 clock enable low power r  ADDR_OFFSET;  0x54
+	   volatile uint32_t reserved8;                // reserved                       ADDR_OFFSET;  0x58
+	   volatile uint32_t reserved9;                // reserved                       ADDR_OFFSET;  0x5C
+	   volatile uint32_t APB1LPENR;                // APB1 clock enable low power r  ADDR_OFFSET;  0x60
+	   volatile uint32_t APB2LPENR;                // APB2 clock enable low power r  ADDR_OFFSET;  0x64
+	   volatile uint32_t reserved10;               // reserved                       ADDR_OFFSET;  0x68
+	   volatile uint32_t reserved11;               // reserved                       ADDR_OFFSET;  0x6C
+	   volatile uint32_t BDCR;                     // Backup domain control register ADDR_OFFSET;  0x70
+	   volatile uint32_t CSR;                      // clock control & status register ADDR_OFFSET;  0x74
+	   volatile uint32_t reserved12;               // reserved                       ADDR_OFFSET;  0x78
+	   volatile uint32_t reserved13;               // reserved                       ADDR_OFFSET;  0x7C
+	   volatile uint32_t SSCGR;                    // spread spectrum clock generation red ADD_OFFSET; 0x80
+	   volatile uint32_t PLLI2SCFGR;               // PLLI2S configuration register  ADDR_OFFSET;  0x84
+	   volatile uint32_t reserved14;               // reserved                       ADDR_OFFSET;  0x88
+	   volatile uint32_t DCKCFGR;                  // Dedicated Clocks Configuration Reg ADDR_OFFSET; 0x8C
+} RCC_RegDef_t;
+
+/*
+ * Como se vio en la clase de introducción a las estructuras, hacemos un puntero a RCC_RegDef_t que
+ * apunta a la posición exacta del periférico RCC, de forma que cada miembro de la estructura coincide
+ * con cada uno de los SFR en la memoria del MCU.  Esta acción la estamos haciendo en un MACRO, de forma
+ * que el nuevo elemento "RCC" queda disponible para cada clase .c (archivo .c) que incluya este archivo
+ *  */
+#define RCC ((RCC_RegDef_t *) RCC_BASE_ADDR) // Un puntero apuntando a esa posición de memoria
 
 
+/* Descripción bit a bit de cada uno de los registros del que componen al periférico RCC
+ * En este primer ejercicio muchos de ellos no son necesarios, se dejan sin implementar
+ * Haciendo desde antes
+ *
+ *6.3.1 RCC_CR
+ *6.3.2 RCC_PLLCFGR
+ *6.3.3 RCC_CFGR
+ *6.3.4 RCC_CIR
+ *6.3.5 RCC_AHB1RSTR
+ *6.3.6 RCC_AHB2RSTR
+ *6.3.7 RCC_APB1RSTR
+ *6.3.8 RCC_APB2RSTR
+ * - - - - Este si esta implementado
+ * 6.3.10 RCC_AHB2ENR
+ * 6.3.11 RCC_APB1ENR
+ * 6.3.12 RCC_APB2ENR
+ * 6.3.17 RCC_BDCR
+ * 6.3.18 RCC_CSR
+ */
+
+/* 6.3.8 RCC_AHB1ENR */ // Para los GPIO
+#define RCC_AHB1ENR_GPIOA_EN           0
+#define RCC_AHB1ENR_GPIOB_EN           1
+#define RCC_AHB1ENR_GPIOC_EN           2
+#define RCC_AHB1ENR_GPIOD_EN           3
+#define RCC_AHB1ENR_GPIOE_EN           4
+#define RCC_AHB1ENR_GPIOH_EN           7
+#define RCC_AHB1ENR_CRCEN              12
+#define RCC_AHB1ENR_DMA1_EN            21
+#define RCC_AHB1ENR_DMA2_EN            22
+
+/*  =========== Fin de la descripción de los elementos que componen el periférico RCC ==== */
 
 
+/*   +++++ ==== INICIO de la descripción de los elementos que componen el periférico de GPIOx =====+++ */
+/*  Definición de la estructura de datos que representan a cada uno de los registros que componen el
+ * periférico GPIO.
+ * Debido a que el periférico GPIOx es muy simple, no es muy necesario crear la descripción bit a bit de cada uno de los registros que componen el dicho
+ * periférico,pero si es necesario comprender qué hace cada registro, para poder cargar correctamente la configuración.
+ */
+
+typedef struct
+{
+
+	volatile uint32_t MODER;  // port mode register                   ADDR_OFFSET:  0x00
+	volatile uint32_t OTYPER; // port output type register            ADDR_OFFSET:  0x04
+	volatile uint32_t OSPEEDR;// port output speed register           ADDR_OFFSET:  0x08
+	volatile uint32_t PUPDR;  // port pull-up/pull-down register      ADDR_OFFSET:  0x0C
+	volatile uint32_t IDR;    // port input data register             ADDR_OFFSET:  0x10
+	volatile uint32_t ODR;    // port output data register            ADDR_OFFSET:  0x14
+	volatile uint32_t BSRR;   // port bit set/reset register          ADDR_OFFSET:  0x18
+	volatile uint32_t LCKR;   // port configuration lock register     ADDR_OFFSET:  0x1C
+	volatile uint32_t AFRL;   // alternate function low register      ADDR_OFFSET:  0x20
+	volatile uint32_t AFRH;   // alternate function high register     ADDR_OFFSET:  0x24
+
+} GPIOx_RegDef_t;
 
 
-
+/* Al igual que con el RCC, Creamos un puntero a la estructura que define a GPIOx y debemos hacer
+ * que cada GPIOx (A, B, C...) quede ubicado exactamente sobre la posición de memoria correcta.
+ * Debido a que son varios periféricos GPIOx, es necesario hacer la definición para cada uno.
+ *
+ * Nota : Tener cuidado que cada elemento coincida con su respectiva dirección base
+ */
 
 
 
