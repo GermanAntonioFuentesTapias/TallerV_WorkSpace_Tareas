@@ -49,7 +49,7 @@ int main(void){
 
 	// ***************
 	// Definimos el handler para el PIN que deseamos configurar
-	GPIO_Handler_tt handlerUserLedPin = {0};  // Creando un objeto con ese nombre iniciando en cero
+	GPIO_Handler_t handlerUserLedPin = {0};  // Creando un objeto con ese nombre iniciando en cero
 
 	//Deseamos trabajar con el puerto GPIOA
 
