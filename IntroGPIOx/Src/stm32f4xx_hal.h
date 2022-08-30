@@ -22,7 +22,7 @@
 #include <stddef.h>
 
 #define HSI_CLOCK_SPEED    16000000 //Value for the main clock signal (HSI -> High speed Internal) (Relojes internos y externos)
-#define HSI_CLOCK_SPEED    4000000  //Value for the main clock signal (HSE -> High Speed External)
+#define HSE_CLOCK_SPEED    4000000  //Value for the main clock signal (HSE -> High Speed External)
 
 #define NOP()   asm("NOP")
 #define _weak  _attribute_((weak))
@@ -348,75 +348,3 @@ typedef struct
 /* No es necesario hacer nada mas en este archivo */
 
 #endif /* INC_STM32F411XX_HAL_H_ */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif /* STM32F4XX_HAL_H_ */
