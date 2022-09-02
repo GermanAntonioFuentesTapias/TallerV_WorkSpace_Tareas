@@ -19,13 +19,34 @@
 
 #include <stdint.h>
 
-#if !defined(__SOFT_FP__) && defined(__ARM_FP)
-  #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
-#endif
+uint16_t data = 0;
+uint16_t *ptrEjemplo;
+uint32_t ValorPuntero = 0;
 
-int main(void)
-{
-    /* Loop forever */
+int main(void){
+//    Iniciando variables
+	data= 57;
+
+	// Cambiando el valor de data en +32
+	data +=32;
+
+	// A que el puntero apunte
+
+	ptrEjemplo = &data;
+
+	ValorPuntero = (uint32_t) ptrEjemplo;
+
+    *ptrEjemplo +=2;
+
+    // Incrementamos posición de memoria
+
+    ptrEjemplo++;
+
+    *ptrEjemplo= 0xAC;
+
+
+
+
 	while(1){
 
 	}
