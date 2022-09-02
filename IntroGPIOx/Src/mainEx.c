@@ -49,6 +49,7 @@ int main(void){
 
 	// ***************
 	// Definimos el handler para el PIN que deseamos configurar
+
 	GPIO_Handler_t handlerUserLedPin = {0};  // Creando un objeto con ese nombre iniciando en cero
 
 	//Deseamos trabajar con el puerto GPIOA
@@ -168,7 +169,7 @@ int main(void){
 
            //toca llamar la función que me lee el estado del pin
         while(1){
-        	if(GPIO_ReadPin(&handlerUserBExtern) == 1 &&  GPIO_ReadPin(&handlerUserButtom) == 0 );
+        	if(GPIO_ReadPin(&handlerUserBExtern) == 1 &&  GPIO_ReadPin(&handlerUserButtom) == 0 ){
         	for(unsigned int i = 0; i < 500000; i++){
         	    		NOP();
             }
@@ -182,8 +183,45 @@ int main(void){
 
         	GPIO_WritePin(&handlerUserLedPin, RESET);
         	GPIO_WritePin(&handlerUserLedExtern, SET);
+        	}
+        	//Punto B //Si se presiona el botón externo, solo el LED externo debe hacer el blinky, y el userLED debe permanecer encendido.
 
-        }
+        	 else if(GPIO_ReadPin(&handlerUserBExtern) == 0  &&  GPIO_ReadPin(&handlerUserButtom) == 1 ){
 
-        // Punto B
-}
+             GPIO_WritePin(&handlerUserLedPin, SET);
+
+        	 for(unsigned int i = 0; i < 50000; i++){
+        						NOP();
+			  }
+
+			 GPIO_WritePin(&handlerUserLedExtern, RESET);
+
+			 for (unsigned int i = 0; i < 50000; i++){
+				 NOP();
+			 }
+			 GPIO_WritePin(&handlerUserLedExtern, SET);
+
+			 }
+
+        	// Si se presionan ambos botones, ambos LEDs deben permanecer apagados.
+
+        	 else if(GPIO_ReadPin(&handlerUserBExtern) == 0  &&  GPIO_ReadPin(&handlerUserButtom) == 0) {
+
+
+
+
+        	 GPIO_WritePin(&handlerUserLedExtern, RESET);
+        	 GPIO_WritePin(&handlerUserLedPin, RESET);
+        	 }
+
+        	 else{
+
+        	 GPIO_WritePin(&handlerUserLedExtern,SET);
+             GPIO_WritePin(&handlerUserLedPin, SET);
+
+        	 }
+             }
+
+
+         }
+
