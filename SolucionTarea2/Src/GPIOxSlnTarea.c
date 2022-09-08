@@ -195,71 +195,141 @@ int main(void){
     GPIO_WritePin(&handlerUserLedPin, SET); // Se ve prendido porque lo estoy colocando en 1
 
 
-    // Punto 2, se necesita hacer Handler
-    //  SIEMPRE definirlo, configurarlo y cargarlo
+    // Continuando con el Punto 2, se necesita hacer Handler para el boton
+    //  recordar SIEMPRE definirlo, configurarlo y cargarlo
     //Coonfigurando otro Pin
-    GPIO_Handler_t handlerUserButtom = {0};  // Creando un objeto con ese nombre iniciando en cero nueva entonces se creo con otro nombre poeque es otro pin
+    GPIO_Handler_t handlerButtom = {0};  // Creando un objeto con ese nombre iniciando en cero
 
-	handlerUserButtom.pGPIOx = GPIOC; //Salida del buton respecto al diagrama
-	handlerUserButtom.GPIO_PinConfig.GPIO_PinNumber              = PIN_13; // Numero del pin
-	handlerUserButtom.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_IN; // Entrada porque esta mandando informacion al micro
-	handlerUserButtom.GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Dejar asi porque casi no se usa
-	handlerUserButtom.GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_PULLUP; // La mayoria de veces que se tiene salida va en nothing, va en pullup segun diaggrama cierto y es la entrada que nos da el boton
-	handlerUserButtom.GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad no importa
-	handlerUserButtom.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Mirar funciones y en pin 5 no hacer nada
+    handlerButtom .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+    handlerButtom .GPIO_PinConfig.GPIO_PinNumber              = PIN_13; // Numero del pin
+    handlerButtom .GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_IN; // Entrada porque esta mandando informacion al micro con la presión
+    handlerButtom .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Normalmente se deja en este registro
+    handlerButtom .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_PULLUP; // Es entrada en configuración PULL Up, lo que nos dice que 1 es inactivo y 0 es activo
+    handlerButtom .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad no importa
+    handlerButtom .GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones alternativas no hay en esta parte
 
 
-    // cargarlo
+    // Cargando el handlerButtton
 
-    GPIO_Config(&handlerUserButtom);  // Cargandolo por si
+    GPIO_Config(&handlerButtom);  // Cargandolo
 
-    //Este es el ciclo principal, donde se ejecuta todo el programa
-//     Punto 1
-//    while(1){ // Se queda girando infinitamente
-//    Control + shift + c
-//    	for(unsigned int i = 0; i < 5000000; i++){
-//    		NOP();
-//    	}
-//    	GPIO_WritePin(&handlerUserLedPin, RESET);
+
+
+    /* Agregando botones para el punto 4 */
+
+    /* Agregando boton externo en Pull Down*/
+
+
+    //Configurando boton externo
+         GPIO_Handler_t handlerExtBut= {0};  // Creando un objeto con ese nombre iniciando en cero
+
+         handlerExtBut .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+         handlerExtBut .GPIO_PinConfig.GPIO_PinNumber              = PIN_6; // Numero del pin del boton externo
+         handlerExtBut .GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_IN; // Entrada, esta dando info al micro
+         handlerExtBut .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa operación
+         handlerExtBut .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_PULLDOWN; // Entrada con esa caracteristica.  0 sin operación y 1 operando
+         handlerExtBut .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
+         handlerExtBut .GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones alternativas no hay en esta parte
+
+
+         // Cargando el boton externo
+
+         GPIO_Config(&handlerExtBut);  // Cargandolo
+
+
+
+
+
+    //Configurando Led PC10
+      GPIO_Handler_t handlerLedPC10= {0};  // Creando un objeto con ese nombre iniciando en cero
+
+      handlerLedPC10 .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+      handlerLedPC10 .GPIO_PinConfig.GPIO_PinNumber              = PIN_10; // Numero del pin Led
+      handlerLedPC10.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
+      handlerLedPC10 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prenderlo
+      handlerLedPC10 .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // Es salida
+      handlerLedPC10 .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
+      handlerLedPC10 .GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones alternativas no hay en esta parte
+
+
+      // Cargando el Led de posición 10
+
+      GPIO_Config(&handlerLedPC10);  // Cargandolo
+
+
+ //Configurando Led PC11
+   GPIO_Handler_t handlerLedPC11= {0};  // Creando un objeto con ese nombre iniciando en cero
+
+   handlerLedPC11 .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+   handlerLedPC11 .GPIO_PinConfig.GPIO_PinNumber              = PIN_11; // Numero del pin Led
+   handlerLedPC11.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
+   handlerLedPC11 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prenderlo
+   handlerLedPC11 .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // Es salida
+   handlerLedPC11 .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
+   handlerLedPC11 .GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones alternativas no hay en esta parte
+
+
+ //  Cargando el Led de posición 11
+
+   GPIO_Config(&handlerLedPC11);  // Cargandolo
+
+
+
+   //Configurando Led PC11
+	GPIO_Handler_t handlerLedPC12= {0};  // Creando un objeto con ese nombre iniciando en cero
+
+	handlerLedPC12 .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+	handlerLedPC12 .GPIO_PinConfig.GPIO_PinNumber              = PIN_12; // Numero del pin Led
+	handlerLedPC12.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
+	handlerLedPC12 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prenderlo
+	handlerLedPC12 .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // Es salida
+	handlerLedPC12 .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
+	handlerLedPC12 .GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones alternativas no hay en esta parte
+
+
+  //  Cargando el Led de posición 12
+
+	GPIO_Config(&handlerLedPC12);  // Cargandolo
+
+
+
+
+    return(0);
+
+    }
+    // Ahora se hara el cambio de configuración
+
+    void GPIOxTooglePin(GPIO_Handler_t*pPinHandler){
+    	// Se crea un condicional
+
+//   if ((pPinHandler -> pGPIOx -> BSRR) == SET){
 //
-//    	for(unsigned int i = 0; i < 5000000; i++){
+//    	// Operando las partes inferiores del registro
 //
-//    		NOP();  // Aca se pone la logica de los programas
-//        }
-//    	GPIO_WritePin(&handlerUserLedPin, SET);
-//      }
-
-       // Punto 2
-
-//       while (1){
-//    	   if( GPIO_ReadPin(&handlerUserButtom) == 1){  // Aqui estamos leyendo el estado de ese pin en especifico
+//    	pPinHandler -> pGPIOx -> BSRR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber)); // Si esto no pasa
 //
-//    	    for(unsigned int i = 0; i < 500000; i++){
-//    		    		NOP();
-//    		   	}
-//			GPIO_WritePin(&handlerUserLedPin, RESET);
+//      }else{
 //
-//			for(unsigned int i = 0; i < 500000; i++){
+//    	// Opera la otra parte del registro, la alta
 //
-//				NOP();  // Aca se pone la logica de los programas
-//			   }
-//			GPIO_WritePin(&handlerUserLedPin, SET);
-//    	    } else{
+//    	 pPinHandler -> pGPIOx -> BSRR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber +16));
 //
-//    		   for(unsigned int i = 0; i < 250000; i++){
-//    		       		    		NOP();
-//    		       		   	}
-//			GPIO_WritePin(&handlerUserLedPin, RESET);
+//    	   NOP();
 //
-//			for(unsigned int i = 0; i < 250000; i++){
-//
-//				NOP();  // Aca se pone la logica de los programas
-//			   }
-//			GPIO_WritePin(&handlerUserLedPin, SET);
-//    	   }
-//       }
+//         }
 
 
+   if ((pPinHandler -> pGPIOx -> BSRR) == SET){
 
+	   pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
 
-         }
+    }
+
+   else{
+
+	   // Registro alto
+
+	   pPinHandler -> pGPIOx -> BSRR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
+
+    }
+    }
