@@ -313,59 +313,67 @@ int main(void){
 
 	/* ELABORACIÓN DEL CUARTO PUNTO */
 
-	// Ya se tiene el pin_6 con el cual se configuro el boton extterno en Pull Down y la configuración de los
+	// Ya se tiene el pin_6 con el cual se configuro el boton externo en Pull Down y la configuración de los
 	// otros 3 botones PC10, PC11 Y PC12
 
     // Debemos encender los 3 leds cuando presione asi que
 
-	 if(GPIO_ReadPin(&handlerExtBut) == 1){
+	 if(GPIO_ReadPin(&handlerExtBut) == 1){ // Cuando el boton este presionado se cumple
 
-		 // Se prenden los 3 leds inmediato
+		 // Se prenden los 3 leds inmediato despues de presionarlo
 
-		 GPIO_WritePin(&handlerLedPC10, SET);
-		 GPIO_WritePin(&handlerLedPC11, SET);
-		 GPIO_WritePin(&handlerLedPC12, SET);
+		 GPIO_WritePin(&handlerLedPC10, SET); // Prende led 10
+		 GPIO_WritePin(&handlerLedPC11, SET); // Prende led 11
+		 GPIO_WritePin(&handlerLedPC12, SET); // Prende led 12
 
-		 for(unsigned int i = 0; i < 6000000; i++){
+		 for(unsigned int i = 0; i < 6000000; i++){ // Con esto pasarian aproximadamente esa cantidad de ciclos dentro del micro
+			 // que se acerca a los 5 segundos requeridos
+			 // Fue sin signo pero se puede garantizar desde i=0 un el contador i++
 
-			 NOP();
+			 NOP(); // Para que no haga nada mientras ocurren los ciclos
 
 		     }
-		      GPIO_WritePin(&handlerLedPC12, RESET);
+		      GPIO_WritePin(&handlerLedPC12, RESET); // Se apaga este led despues de cumplidos los ciclos anteriores
 
 			   for(unsigned int i = 0; i < 2400000; i++){
 
-			  NOP();
+			  NOP();  // Para que no haga nada mientras ocurren los ciclos
 
 			   }
+			   /* Despues de ocurrido lo anterior necesitamos que el led 11 se apaga despues de 2 segundos */
 
-			   GPIO_WritePin(&handlerLedPC11, RESET);
+			   GPIO_WritePin(&handlerLedPC11, RESET);   // Se apaga este led despues de cumplidos los ciclos anteriores del for garantizando el tiempo aproximado
 
 			   for(unsigned int i = 0; i < 1200000; i++){
 
-               NOP();
+               NOP(); // Para que no haga nada mientras ocurren los ciclos
 
 			   }
+			   /* Despues de ocurrido lo anterior necesitamos que el led 10 se apague despues de 1 segundo */
 
 			   GPIO_WritePin(&handlerLedPC10, RESET);
 
+			   // Se apaga este led despues de cumplidos los ciclos anteriores del for garantizando el tiempo aproximado
+
 	 }
 	 }
-
-
 
     return 0;
 
     }
-    // Ahora se hara el cambio de configuración
+    /* Se crea la condición de GPIOxTooglePin*/
 
     void GPIOxTooglePin(GPIO_Handler_t *pPinHandler){
 
-
-     // Aqui me estaria leyendo de lo apuntado a comparar
 	  // ODR me dice el registro del pin a la salida
+     // Void seria una función que no retorna nada
 
     pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
 
-
+    // Se elaboro la función de manera que el puntero señale la estructura GPIO_Handler_t, en esta se esta dirigiendo dentro de esta
+    // a la dirección del puerto que se esta utilizando y este en nuestro caso sera el puerto:  port output data register
+    // Este se encargara de leer y escribir en la posición dada por el GPIO_PinConfig.GPIO_PinNumber asi que ya en operacion la funcion
+    // por ejemplo si es posicion 5, con el XOR se encargara de escribir unicamente en esa posición manteniendo las otras en el mismo estado
+    // y asi respectivamente, entonces ese una función general para distintos pines.
+    // Si se le coloca un condicional se podria crear un codigo de manera que lea y mire si ya esta registrado ese pin o es necesario agregarlo
     }
