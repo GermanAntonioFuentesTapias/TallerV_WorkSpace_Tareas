@@ -4,7 +4,7 @@
  *  Created on: 03/09/2022
  *
  *
- *      Author: German Fuentes
+ *      Author: G e r m a n  A n t o n i o  F u e n t e s  T a p i a s
  *
  *     D E S A R R O L L O    D E   T A R E A   # 2
  * ************************************************
@@ -161,7 +161,7 @@
 
 // Se procede a crear  una función para que este programa la reconoce, esta estara definida en la parte inferior ( despues del main)
 
-void GPIOxTooglePin(GPIO_Handler_t*pPinHandler); // Se crea para que se una función global
+void GPIOxTooglePin(GPIO_Handler_t *pPinHandler ); // Se crea para que se una función global en los While del main
 
 
 /* Función principal del programa. Es acá donde se ejecuta todo */
@@ -292,44 +292,49 @@ int main(void){
 	GPIO_Config(&handlerLedPC12);  // Cargandolo
 
 
+   /* Se encargara de hacer la segunda parte para la prueba usando la función creada GPIOxTooglePin */
+
+	// Hacer que cambie de estado cada vez que se oprima el boton, asi que
+    while(1){
+
+		 if(GPIO_ReadPin(&handlerButtom) == RESET){ // Se leyo con read
+
+			GPIOxTooglePin(&handlerUserLedPin); // Se escribe con el Toogle
+
+			for(int i = 0; i < 500000; i++){
+		     NOP();
+
+			}
+		 } else {
+			NOP();
+		 }
 
 
-    return(0);
+
+
+    }
+
+
+    return 0;
 
     }
     // Ahora se hara el cambio de configuración
 
-    void GPIOxTooglePin(GPIO_Handler_t*pPinHandler){
-    	// Se crea un condicional
+    void GPIOxTooglePin(GPIO_Handler_t *pPinHandler){
+    	// Se crea un condiciona
 
-//   if ((pPinHandler -> pGPIOx -> BSRR) == SET){
-//
-//    	// Operando las partes inferiores del registro
-//
-//    	pPinHandler -> pGPIOx -> BSRR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber)); // Si esto no pasa
-//
-//      }else{
-//
-//    	// Opera la otra parte del registro, la alta
-//
-//    	 pPinHandler -> pGPIOx -> BSRR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber +16));
-//
-//    	   NOP();
-//
-//         }
+    	if ((pPinHandler -> pGPIOx -> ODR) == SET){ // Aqui me estaria leyendo de lo apuntado a comparar
+	   // ODR me dice el registro del pin a la salida
 
-
-   if ((pPinHandler -> pGPIOx -> BSRR) == SET){
-
-	   pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
+    		pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
 
     }
 
-   else{
+    	else{
 
-	   // Registro alto
+	   // Registro alto o superior
 
-	   pPinHandler -> pGPIOx -> BSRR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
+    		pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
 
     }
     }
