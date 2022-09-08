@@ -226,7 +226,7 @@ int main(void){
          handlerExtBut .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
          handlerExtBut .GPIO_PinConfig.GPIO_PinNumber              = PIN_6; // Numero del pin del boton externo
          handlerExtBut .GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_IN; // Entrada, esta dando info al micro
-         handlerExtBut .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa operación
+         handlerExtBut .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente para operación
          handlerExtBut .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_PULLDOWN; // Entrada con esa caracteristica.  0 sin operación y 1 operando
          handlerExtBut .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
          handlerExtBut .GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones alternativas no hay en esta parte
@@ -234,7 +234,7 @@ int main(void){
 
          // Cargando el boton externo
 
-         GPIO_Config(&handlerExtBut);  // Cargandolo
+         GPIO_Config(&handlerExtBut);
 
 
 
@@ -246,7 +246,7 @@ int main(void){
       handlerLedPC10 .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
       handlerLedPC10 .GPIO_PinConfig.GPIO_PinNumber              = PIN_10; // Numero del pin Led
       handlerLedPC10.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
-      handlerLedPC10 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prenderlo
+      handlerLedPC10 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prender el led
       handlerLedPC10 .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // Es salida
       handlerLedPC10 .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
       handlerLedPC10 .GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones alternativas no hay en esta parte
@@ -254,7 +254,7 @@ int main(void){
 
       // Cargando el Led de posición 10
 
-      GPIO_Config(&handlerLedPC10);  // Cargandolo
+      GPIO_Config(&handlerLedPC10);  // Cargando el led del pin 10
 
 
  //Configurando Led PC11
@@ -263,7 +263,7 @@ int main(void){
    handlerLedPC11 .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
    handlerLedPC11 .GPIO_PinConfig.GPIO_PinNumber              = PIN_11; // Numero del pin Led
    handlerLedPC11.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
-   handlerLedPC11 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prenderlo
+   handlerLedPC11 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prender el led
    handlerLedPC11 .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // Es salida
    handlerLedPC11 .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
    handlerLedPC11 .GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones alternativas no hay en esta parte
@@ -271,7 +271,7 @@ int main(void){
 
  //  Cargando el Led de posición 11
 
-   GPIO_Config(&handlerLedPC11);  // Cargandolo
+   GPIO_Config(&handlerLedPC11);  //  Cargando el led del pin 11
 
 
 
@@ -281,15 +281,15 @@ int main(void){
 	handlerLedPC12 .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
 	handlerLedPC12 .GPIO_PinConfig.GPIO_PinNumber              = PIN_12; // Numero del pin Led
 	handlerLedPC12.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
-	handlerLedPC12 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prenderlo
-	handlerLedPC12 .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // Es salida
-	handlerLedPC12 .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
+	handlerLedPC12 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prender el led
+	handlerLedPC12 .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // Es salida, por lo que va en NOTHING
+	handlerLedPC12 .GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad del pin
 	handlerLedPC12 .GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones alternativas no hay en esta parte
 
 
   //  Cargando el Led de posición 12
 
-	GPIO_Config(&handlerLedPC12);  // Cargandolo
+	GPIO_Config(&handlerLedPC12);  //  Cargando el led del pin 12
 
 
    /* Se encargara de hacer la segunda parte para la prueba usando la función creada GPIOxTooglePin */
@@ -297,19 +297,18 @@ int main(void){
 	// Hacer que cambie de estado cada vez que se oprima el boton, asi que
     while(1){
 
-		 if(GPIO_ReadPin(&handlerButtom) == RESET){ // Se leyo con read
+		 if(GPIO_ReadPin(&handlerButtom) == RESET){ // Se uso con read para leer el estado del boton, si su estado es cero o uno y comparar
 
-			GPIOxTooglePin(&handlerUserLedPin); // Se escribe con el Toogle de la nueva función
+			GPIOxTooglePin(&handlerUserLedPin); // Se escribe con el Toogle de la nueva función, haciendo lo que hace la función con la configuracion que tiene el handlerUserLedPin
 
-			for(int i = 0; i < 500000; i++){ // Se hace una variación en el tiempo del micro que varia su estado
-		     NOP();
+			for(int i = 0; i < 500000; i++){ // Se hace una variación en el tiempo del micro para variar su estado
+
+		     NOP();// Para que no haga nada mientras ocurren los ciclos
 
 			}
 		 } else {
-			NOP();
+			NOP(); // Para que no haga nada mientras ocurren los ciclos
 		 }
-
-
 
 	/* ELABORACIÓN DEL CUARTO PUNTO */
 
@@ -318,7 +317,10 @@ int main(void){
 
     // Debemos encender los 3 leds cuando presione asi que
 
-	 if(GPIO_ReadPin(&handlerExtBut) == 1){ // Cuando el boton este presionado se cumple
+	 if(GPIO_ReadPin(&handlerExtBut) == 1){ // Cuando el boton este presionado se cumple ya que es Pull Down
+
+		 // Debido a que es Pull Down es necesario agregar al circuito los 3.3 V porque si se coloca como tierra
+		 // La comparación sera con cero y se obtendra cero en ambos estados.
 
 		 // Se prenden los 3 leds inmediato despues de presionarlo
 
@@ -363,7 +365,7 @@ int main(void){
     }
     /* Se crea la condición de GPIOxTooglePin*/
 
-    void GPIOxTooglePin(GPIO_Handler_t *pPinHandler){
+    void GPIOxTooglePin(GPIO_Handler_t *pPinHandler){ // Se creo con un parametro tipo GPIO_Handler_t
 
 	  // ODR me dice el registro del pin a la salida
      // Void seria una función que no retorna nada
