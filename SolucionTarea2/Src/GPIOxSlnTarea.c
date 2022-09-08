@@ -299,9 +299,9 @@ int main(void){
 
 		 if(GPIO_ReadPin(&handlerButtom) == RESET){ // Se leyo con read
 
-			GPIOxTooglePin(&handlerUserLedPin); // Se escribe con el Toogle
+			GPIOxTooglePin(&handlerUserLedPin); // Se escribe con el Toogle de la nueva función
 
-			for(int i = 0; i < 500000; i++){
+			for(int i = 0; i < 500000; i++){ // Se hace una variación en el tiempo del micro que varia su estado
 		     NOP();
 
 			}
@@ -311,8 +311,47 @@ int main(void){
 
 
 
+	/* ELABORACIÓN DEL CUARTO PUNTO */
 
-    }
+	// Ya se tiene el pin_6 con el cual se configuro el boton extterno en Pull Down y la configuración de los
+	// otros 3 botones PC10, PC11 Y PC12
+
+    // Debemos encender los 3 leds cuando presione asi que
+
+	 if(GPIO_ReadPin(&handlerExtBut) == 1){
+
+		 // Se prenden los 3 leds inmediato
+
+		 GPIO_WritePin(&handlerLedPC10, SET);
+		 GPIO_WritePin(&handlerLedPC11, SET);
+		 GPIO_WritePin(&handlerLedPC12, SET);
+
+		 for(unsigned int i = 0; i < 6000000; i++){
+
+			 NOP();
+
+		     }
+		      GPIO_WritePin(&handlerLedPC12, RESET);
+
+			   for(unsigned int i = 0; i < 2400000; i++){
+
+			  NOP();
+
+			   }
+
+			   GPIO_WritePin(&handlerLedPC11, RESET);
+
+			   for(unsigned int i = 0; i < 1200000; i++){
+
+               NOP();
+
+			   }
+
+			   GPIO_WritePin(&handlerLedPC10, RESET);
+
+	 }
+	 }
+
 
 
     return 0;
@@ -321,20 +360,12 @@ int main(void){
     // Ahora se hara el cambio de configuración
 
     void GPIOxTooglePin(GPIO_Handler_t *pPinHandler){
-    	// Se crea un condiciona
 
-    	if ((pPinHandler -> pGPIOx -> ODR) == SET){ // Aqui me estaria leyendo de lo apuntado a comparar
-	   // ODR me dice el registro del pin a la salida
 
-    		pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
+     // Aqui me estaria leyendo de lo apuntado a comparar
+	  // ODR me dice el registro del pin a la salida
 
-    }
+    pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
 
-    	else{
 
-	   // Registro alto o superior
-
-    		pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
-
-    }
     }
