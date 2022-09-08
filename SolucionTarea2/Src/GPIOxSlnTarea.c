@@ -2,6 +2,8 @@
  * GPIOxSlnTarea.c
  *
  *  Created on: 03/09/2022
+ *
+ *
  *      Author: German Fuentes
  *
  *     D E S A R R O L L O    D E   T A R E A   # 2
@@ -47,8 +49,10 @@
 * a)
 * Principalmente el error seria por la falta de una linea en el codigo, ya que siempre es necesario
 * hacer limpieza antes de sobreescribir en una posición, se esta sobre escribiendo o guardando en ese espacio de memoria
-* asi que si se realizaba una primera operación sobre ese pin quedaba guardando esa posición, y al hacer otra seguira en el mismo
-* estado, ese seria en error
+* asi que si se realizaba una primera operación sobre ese pin quedaba guardando esa posición, y al hacer otra puede quedar
+* como se encontraba, ya que no se sabe que se tiene en ese lugar y modificarlo como esta, puede cambiar el estado, dejarlo igual
+* o alterarlo de alguna manera que no se quiere. El registro IDR está desplazado a el lado derecho tantas veces como la magnitud
+* de la ubicación del pin especifico, pero no las otras posiciones que se desconocen.
 *
 * b)
 * La solución sera crear una linea en particular, con el fin de  limpiar las posiciones de la izquierda del pin de interes
@@ -61,22 +65,23 @@
 * se mantenia en ese estado, sin sobreescribir en ningun otro punto. Ya después de corregirlo se observa que se puede
 * variar entre los 3 estados que pedian y todo ocurre sin problemas.
 *
-* el codigo usado fue el siguiente: (omitiendo el main y el puerto del led del micro)
+* N O T A : el codigo usado fue el siguiente: (omitiendo el main y el puerto del led del micro)
 *
 *     //Coonfigurando otro Pin para externo
         GPIO_Handler_t handlerUserLedExtern = {0};
 
 
         //configurando el pin
+         * Se configuro el puerto del pin
            handlerUserLedExtern.pGPIOx = GPIOB;
-           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinNumber              = PIN_9;
-           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida
-           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; //Corriente
+           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinNumber              = PIN_9;  // Numero de puerto
+           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida // Como salida
+           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; //Corriente // Necesita prender el led
            handlerUserLedExtern.GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // La mayoria de veces que se tiene salida va en nothing
-           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
-           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Mirar funciones y en pi
+           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad siempre igual
+           handlerUserLedExtern.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones que aun no usamos
 
-           //Cargarlo
+           // Se cargo la configuración
            GPIO_Config(&handlerUserLedExtern);
 
       // Configurando pin del Boton
@@ -87,22 +92,23 @@
            handlerUserBExtern.GPIO_PinConfig.GPIO_PinNumber              = PIN_6;
            handlerUserBExtern.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_IN; // Salida
            handlerUserBExtern.GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; //Corriente
-           handlerUserBExtern.GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_PULLUP; // La mayoria de veces que se tiene salida va en nothing
+           handlerUserBExtern.GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_PULLUP; // Asi a que es una entrada
            handlerUserBExtern.GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
-           handlerUserBExtern.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Mirar funciones y en pi
+           handlerUserBExtern.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones que aun no usamos
 
-       // Lo cargo
+       //Se cargo el pin
            GPIO_Config(&handlerUserBExtern);
 
            //toca llamar la función que me lee el estado del pin
+            *
         while(1){
         	if(GPIO_ReadPin(&handlerUserBExtern) == 1 &&  GPIO_ReadPin(&handlerUserButtom) == 0 ){
         	for(unsigned int i = 0; i < 500000; i++){
         	    		NOP();
             }
 
-        	GPIO_WritePin(&handlerUserLedPin, SET);
-        	GPIO_WritePin(&handlerUserLedExtern, RESET);
+        	GPIO_WritePin(&handlerUserLedPin, SET); // Prendo este pin
+        	GPIO_WritePin(&handlerUserLedExtern, RESET); // Apago este pin
 
         	for (unsigned int i = 0; i < 500000; i++){
         		NOP();
@@ -115,13 +121,13 @@
 
         	 else if(GPIO_ReadPin(&handlerUserBExtern) == 0  &&  GPIO_ReadPin(&handlerUserButtom) == 1 ){
 
-             GPIO_WritePin(&handlerUserLedPin, SET);
+             GPIO_WritePin(&handlerUserLedPin, SET);  // Prendo este pin
 
         	 for(unsigned int i = 0; i < 50000; i++){
         						NOP();
 			  }
 
-			 GPIO_WritePin(&handlerUserLedExtern, RESET);
+			 GPIO_WritePin(&handlerUserLedExtern, RESET); // Apago este pin
 
 			 for (unsigned int i = 0; i < 50000; i++){
 				 NOP();
@@ -148,32 +154,42 @@
 
         	 }
              }
-
-*
-*
 */
+
+/* Desarrollo del punto 2  */
+
+
+// Se procede a crear  una función para que este programa la reconoce, esta estara definida en la parte inferior ( despues del main)
+
+void GPIOxTooglePin(GPIO_Handler_t*pPinHandler); // Se crea para que se una función global
 
 
 /* Función principal del programa. Es acá donde se ejecuta todo */
 int main(void){
 
 	// ***************
-	// Definimos el handler para el PIN que deseamos configurar
+	// Definimos el handler para el pin que usaremos que tendra por nombre  USER_PIN y que se configurara
+
 
 	GPIO_Handler_t handlerUserLedPin = {0};  // Creando un objeto con ese nombre iniciando en cero
 
-	//Deseamos trabajar con el puerto GPIOA
+	//Deseamos trabajar con el puerto GPIOA por facilidad, no obstante se podria usar otro puerto. En nuestro caso
+	// el led interno del micro esta en el PIN 5 como salida, asi que:
 
     handlerUserLedPin.pGPIOx = GPIOA;
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinNumber              = PIN_5;
-    handlerUserLedPin.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida
-    handlerUserLedPin.GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; //Corriente
-    handlerUserLedPin.GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // La mayoria de veces que se tiene salida va en nothing
+    handlerUserLedPin.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida del Pin que se tiene
+    handlerUserLedPin.GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; //Corriente pero no se tiene aun entrada
+    handlerUserLedPin.GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // No hay entrada, asi que se mantiene este registro
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
-    handlerUserLedPin.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Mirar funciones y en pin 5 no hacer nada
+    handlerUserLedPin.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Función alternativa aun no se requiere
 
-    // Cargamos al configuración del PIN especifico
-    GPIO_Config(&handlerUserLedPin);  // Lllama y configura al PIN
+    // Recordar que es necesario cargar la configuración del PIN especifico
+
+    GPIO_Config(&handlerUserLedPin);  // Este llama y configura al PIN el pin especifico.
+
+    // Ahora necesitamos configurar el boton para el led asi que se debe hacer lo mismo pero con el boton que nos cambiara
+    // Los diferentes parametros del led
 
     // Hacemos que el PIN_A5 quede encedido
     GPIO_WritePin(&handlerUserLedPin, SET); // Se ve prendido porque lo estoy colocando en 1
