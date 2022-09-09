@@ -49,29 +49,30 @@
 * a)
 * Principalmente el error seria por la falta de una linea en el codigo, ya que siempre es necesario
 * hacer limpieza antes de sobreescribir en una posición, se esta sobre escribiendo o guardando en ese espacio de memoria
-* asi que si se realizaba una primera operación sobre ese pin quedaba guardando esa posición, y al hacer otra puede quedar
-* como se encontraba, ya que no se sabe que se tiene en ese lugar y modificarlo como esta, puede cambiar el estado, dejarlo igual
+* asi que si se realizaba una primera operación sobre ese pin, queda  guardan en esa posición, y al hacer otra puede quedar
+* como se encontraba, ya que no se sabe que hay en esa posición de memoria o modificar la posición, como también puede cambiar el estado,
 * o alterarlo de alguna manera que no se quiere. El registro IDR está desplazado a el lado derecho tantas veces como la magnitud
 * de la ubicación del pin especifico, pero no las otras posiciones que se desconocen.
 *
 * b)
-* La solución sera crear una linea en particular, con el fin de  limpiar las posiciones de la izquierda del pin de interes
+* La solución sera crear una linea en particular, con el fin de  limpiar las posiciones tantas veces a derecha del pin de interes
 * Esta solución seria agregar el siguiente comando:
-* pinValue &= 0b1;  y se pondra obtener un mejor desarrollo del cogido
+* pinValue &= 0b1;  que sera el operador  And con la mascara ya nombrada, asi se podra cumplir que los otros bits estan en valor cero
 *
-* c) La correción del codigo se probo con los ejercicios de escritura del GPIO, por lo tal se uso el siguiente cogido
 *
-* 1: Sin el codigo, se hacia alguno de los 3 estados que pedian y se desarrolla, no obstante al hacer otro no ocurria nada
+* c) La correción del codigo se probo con los ejercicios de escritura del GPIO, por lo tal se uso el siguiente codigo:
+*
+* 1: Sin el codigo, se hacia alguno de los 3 estados que pedian y se desarrolla, no obstante al hacer otro (cambio de estado) no ocurria nada
 * se mantenia en ese estado, sin sobreescribir en ningun otro punto. Ya después de corregirlo se observa que se puede
 * variar entre los 3 estados que pedian y todo ocurre sin problemas.
 *
 * N O T A : el codigo usado fue el siguiente: (omitiendo el main y el puerto del led del micro)
 *
-*     //Coonfigurando otro Pin para externo
+*     //Coonfigurando otro Pin para externo utilizado
         GPIO_Handler_t handlerUserLedExtern = {0};
 
 
-        //configurando el pin
+        //configurando el pin de interes
          * Se configuro el puerto del pin
            handlerUserLedExtern.pGPIOx = GPIOB;
            handlerUserLedExtern.GPIO_PinConfig.GPIO_PinNumber              = PIN_9;  // Numero de puerto
@@ -81,13 +82,13 @@
            handlerUserLedExtern.GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad siempre igual
            handlerUserLedExtern.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones que aun no usamos
 
-           // Se cargo la configuración
+           // Se cargo la configuración del pin de interes
            GPIO_Config(&handlerUserLedExtern);
 
-      // Configurando pin del Boton
+      // Configurando pin del Boton de interes externo
            GPIO_Handler_t handlerUserBExtern = {0};
 
-       // Configurando
+       // Configurando el boton
            handlerUserBExtern.pGPIOx = GPIOC;
            handlerUserBExtern.GPIO_PinConfig.GPIO_PinNumber              = PIN_6;
            handlerUserBExtern.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_IN; // Salida
@@ -96,7 +97,7 @@
            handlerUserBExtern.GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
            handlerUserBExtern.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Funciones que aun no usamos
 
-       //Se cargo el pin
+       //Se carga el pin externo
            GPIO_Config(&handlerUserBExtern);
 
            //toca llamar la función que me lee el estado del pin
@@ -156,15 +157,22 @@
              }
 */
 
+
+// Con  los puntos A-B-C de codigo anterior se observo que algo no funcionaba correctamente, ya que al querer hacer esos diversos
+// cambios de estados , empezando por el B, y luego el A, al querer realizar el C no pasaba nada, ya que tenia en esta configuración
+// una informacion ya aplicada, pero las nuevas no se modificaban para variar al estado, ya que no se le indicaba correctamente.
+
 /* Desarrollo del punto 2  */
 
 
 // Se procede a crear  una función para que este programa la reconoce, esta estara definida en la parte inferior ( despues del main)
 
+//Se llama la función ya que al usarse en el Main y no estar llamada con anterioridad se genera un warning.
 void GPIOxTooglePin(GPIO_Handler_t *pPinHandler ); // Se crea para que se una función global en los While del main
 
 
-/* Función principal del programa. Es acá donde se ejecuta todo */
+/* Función principal del programa. Es acá donde se ejecuta todo los puntos siguientes */
+
 int main(void){
 
 	// ***************
@@ -179,14 +187,14 @@ int main(void){
     handlerUserLedPin.pGPIOx = GPIOA;
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinNumber              = PIN_5;
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida del Pin que se tiene
-    handlerUserLedPin.GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; //Corriente pero no se tiene aun entrada
+    handlerUserLedPin.GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; //Corriente pero no se desea prender en este caso
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_NOTHING; // No hay entrada, asi que se mantiene este registro
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinSpeed               = GPIO_OSPEED_MEDIUM; // Velocidad
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinAltFunMode          = AF0;              // Función alternativa aun no se requiere
 
     // Recordar que es necesario cargar la configuración del PIN especifico
 
-    GPIO_Config(&handlerUserLedPin);  // Este llama y configura al PIN el pin especifico.
+    GPIO_Config(&handlerUserLedPin);  // Este llama y configura al PIN en el pin especifico.
 
     // Ahora necesitamos configurar el boton para el led asi que se debe hacer lo mismo pero con el boton que nos cambiara
     // Los diferentes parametros del led
@@ -220,7 +228,7 @@ int main(void){
     /* Agregando boton externo en Pull Down*/
 
 
-    //Configurando boton externo
+    //Configurando el boton externo
          GPIO_Handler_t handlerExtBut= {0};  // Creando un objeto con ese nombre iniciando en cero
 
          handlerExtBut .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
@@ -243,7 +251,7 @@ int main(void){
     //Configurando Led PC10
       GPIO_Handler_t handlerLedPC10= {0};  // Creando un objeto con ese nombre iniciando en cero
 
-      handlerLedPC10 .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+      handlerLedPC10 .pGPIOx = GPIOC; //Puerto del pin
       handlerLedPC10 .GPIO_PinConfig.GPIO_PinNumber              = PIN_10; // Numero del pin Led
       handlerLedPC10.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
       handlerLedPC10 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prender el led
@@ -260,7 +268,7 @@ int main(void){
  //Configurando Led PC11
    GPIO_Handler_t handlerLedPC11= {0};  // Creando un objeto con ese nombre iniciando en cero
 
-   handlerLedPC11 .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+   handlerLedPC11 .pGPIOx = GPIOC; //Puerto del pin
    handlerLedPC11 .GPIO_PinConfig.GPIO_PinNumber              = PIN_11; // Numero del pin Led
    handlerLedPC11.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
    handlerLedPC11 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prender el led
@@ -275,10 +283,10 @@ int main(void){
 
 
 
-   //Configurando Led PC11
+   //Configurando Led PC12
 	GPIO_Handler_t handlerLedPC12= {0};  // Creando un objeto con ese nombre iniciando en cero
 
-	handlerLedPC12 .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+	handlerLedPC12 .pGPIOx = GPIOC;                            //Puerto del pin
 	handlerLedPC12 .GPIO_PinConfig.GPIO_PinNumber              = PIN_12; // Numero del pin Led
 	handlerLedPC12.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
 	handlerLedPC12 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prender el led
