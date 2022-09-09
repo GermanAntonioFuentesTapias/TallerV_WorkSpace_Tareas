@@ -209,7 +209,7 @@ int main(void){
     GPIO_Handler_t handlerButtom = {0};  // Creando un objeto con ese nombre iniciando en cero
 
     handlerButtom .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
-    handlerButtom .GPIO_PinConfig.GPIO_PinNumber              = PIN_13; // Numero del pin
+    handlerButtom .GPIO_PinConfig.GPIO_PinNumber              = PIN_13; // Numero del pin a configurar
     handlerButtom .GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_IN; // Entrada porque esta mandando informacion al micro con la presión
     handlerButtom .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Normalmente se deja en este registro
     handlerButtom .GPIO_PinConfig.GPIO_PinPuPdControl         = GPIO_PUPDR_PULLUP; // Es entrada en configuración PULL Up, lo que nos dice que 1 es inactivo y 0 es activo
