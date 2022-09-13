@@ -184,7 +184,7 @@ int main(void){
 	//Deseamos trabajar con el puerto GPIOA por facilidad, no obstante se podria usar otro puerto. En nuestro caso
 	// el led interno del micro esta en el PIN 5 como salida, asi que:
 
-    handlerUserLedPin.pGPIOx = GPIOA;
+    handlerUserLedPin.pGPIOx                                     = GPIOA;
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinNumber              = PIN_5;
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida del Pin que se tiene
     handlerUserLedPin.GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; //Corriente pero no se desea prender en este caso
@@ -208,7 +208,7 @@ int main(void){
     //Coonfigurando otro Pin
     GPIO_Handler_t handlerButtom = {0};  // Creando un objeto con ese nombre iniciando en cero
 
-    handlerButtom .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+    handlerButtom .pGPIOx                                     = GPIOC; //Salida del buton respecto al diagrama
     handlerButtom .GPIO_PinConfig.GPIO_PinNumber              = PIN_13; // Numero del pin a configurar
     handlerButtom .GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_IN; // Entrada porque esta mandando informacion al micro con la presión
     handlerButtom .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Normalmente se deja en este registro
@@ -231,7 +231,7 @@ int main(void){
     //Configurando el boton externo
          GPIO_Handler_t handlerExtBut= {0};  // Creando un objeto con ese nombre iniciando en cero
 
-         handlerExtBut .pGPIOx = GPIOC; //Salida del buton respecto al diagrama
+         handlerExtBut .pGPIOx                                     = GPIOC; //Salida del buton respecto al diagrama
          handlerExtBut .GPIO_PinConfig.GPIO_PinNumber              = PIN_6; // Numero del pin del boton externo
          handlerExtBut .GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_IN; // Entrada, esta dando info al micro
          handlerExtBut .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente para operación
@@ -251,7 +251,7 @@ int main(void){
     //Configurando Led PC10
       GPIO_Handler_t handlerLedPC10= {0};  // Creando un objeto con ese nombre iniciando en cero
 
-      handlerLedPC10 .pGPIOx = GPIOC; //Puerto del pin
+      handlerLedPC10 .pGPIOx =                                    GPIOC; //Puerto del pin
       handlerLedPC10 .GPIO_PinConfig.GPIO_PinNumber              = PIN_10; // Numero del pin Led
       handlerLedPC10.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
       handlerLedPC10 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prender el led
@@ -268,7 +268,7 @@ int main(void){
  //Configurando Led PC11
    GPIO_Handler_t handlerLedPC11= {0};  // Creando un objeto con ese nombre iniciando en cero
 
-   handlerLedPC11 .pGPIOx = GPIOC; //Puerto del pin
+   handlerLedPC11 .pGPIOx                                     = GPIOC; //Puerto del pin
    handlerLedPC11 .GPIO_PinConfig.GPIO_PinNumber              = PIN_11; // Numero del pin Led
    handlerLedPC11.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
    handlerLedPC11 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prender el led
@@ -286,7 +286,7 @@ int main(void){
    //Configurando Led PC12
 	GPIO_Handler_t handlerLedPC12= {0};  // Creando un objeto con ese nombre iniciando en cero
 
-	handlerLedPC12 .pGPIOx = GPIOC;                            //Puerto del pin
+	handlerLedPC12 .pGPIOx                                      = GPIOC;                            //Puerto del pin
 	handlerLedPC12 .GPIO_PinConfig.GPIO_PinNumber              = PIN_12; // Numero del pin Led
 	handlerLedPC12.GPIO_PinConfig.GPIO_PinMode                = GPIO_MODE_OUT; // Salida porque se quiere prender el led
 	handlerLedPC12 .GPIO_PinConfig.GPIO_PinOPType              = GPIO_OTYPE_PUSHPULL; // Corriente pa prender el led
@@ -307,7 +307,8 @@ int main(void){
 
 		 if(GPIO_ReadPin(&handlerButtom) == RESET){ // Se uso con read para leer el estado del boton, si su estado es cero o uno y comparar
 
-			GPIOxTooglePin(&handlerUserLedPin); // Se escribe con el Toogle de la nueva función, haciendo lo que hace la función con la configuracion que tiene el handlerUserLedPin
+			GPIOxTooglePin(&handlerUserLedPin); // Se escribe con el Toogle de la nueva función, haciendo lo que hace la función con
+			//la configuracion que tiene el handlerUserLedPin
 
 			for(int i = 0; i < 500000; i++){ // Se hace una variación en el tiempo del micro para variar su estado
 
@@ -352,7 +353,8 @@ int main(void){
 			   }
 			   /* Despues de ocurrido lo anterior necesitamos que el led 11 se apaga despues de 2 segundos */
 
-			   GPIO_WritePin(&handlerLedPC11, RESET);   // Se apaga este led despues de cumplidos los ciclos anteriores del for garantizando el tiempo aproximado
+			   GPIO_WritePin(&handlerLedPC11, RESET);   // Se apaga este led despues de cumplidos los ciclos anteriores
+			   //del for garantizando el tiempo aproximado
 
 			   for(unsigned int i = 0; i < 1200000; i++){
 
@@ -380,10 +382,11 @@ int main(void){
 
     pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
 
-    // Se elaboro la función de manera que el puntero señale la estructura GPIO_Handler_t, en esta se esta dirigiendo dentro de esta
-    // a la dirección del puerto que se esta utilizando y este en nuestro caso sera el puerto:  port output data register
-    // Este se encargara de leer y escribir en la posición dada por el GPIO_PinConfig.GPIO_PinNumber asi que ya en operacion la funcion
-    // por ejemplo si es posicion 5, con el XOR se encargara de escribir unicamente en esa posición manteniendo las otras en el mismo estado
-    // y asi respectivamente, entonces ese una función general para distintos pines.
-    // Si se le coloca un condicional se podria crear un codigo de manera que lea y mire si ya esta registrado ese pin o es necesario agregarlo
+    // Se elaboro la función de manera que el puntero señale la estructura GPIO_Handler_t, en esta se esta dirigiendo
+    //dentro de esta a la dirección del puerto que se esta utilizando y este en nuestro caso sera el puerto:
+     //port output data registe, Este se encargara de leer y escribir en la posición dada por el GPIO_PinConfig.GPIO_PinNumber
+     //asi que ya en operacion la funcion por ejemplo si es posicion 5, con el XOR se encargara de escribir unicamente en esa
+     //posición manteniendo las otras en el mismo estado y asi respectivamente, entonces ese una función general para distintos pines.
+    // Si se le coloca un condicional se podria crear un codigo de manera que lea y mire si ya esta registrado ese pin o es necesario
+     //agregarlo
     }
