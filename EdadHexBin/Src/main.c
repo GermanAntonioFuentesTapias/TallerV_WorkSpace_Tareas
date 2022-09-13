@@ -70,6 +70,7 @@ int main(){
     /* Se definen las 3 variables necesarias durante todo el codigo, las cuales son Año, numero de dias y segundos de una hora*/
 
 	Age = 23; // Mi edad completa desde el 17/11/1998 hasta el 17/11/2021
+	// Te costaba mucho poner la efcha de nacimiento en la cabecera del código, te rebajo por ponerme a perder tiempo...
 	N_days_Year = 365;// Los dias del año sin año bisiesto
 	N_Seconds_hours = 3600;// Segundos que tiene una hora
 
