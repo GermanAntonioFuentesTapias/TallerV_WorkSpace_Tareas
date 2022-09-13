@@ -160,6 +160,8 @@ int main(){
 	// y se "caerian" al no tener donde ocupar mas espacio. Si la variable se declara como int y no como short
 	// No pasara ese problema, ya que se seguira desplaando hasta que ocurra el overflow en ese espacio de memoria
 
+	// No explicas que se observa, cual es la operación matemática.
+
 
 	/* Se realizaran operaciones shif-derecha >> */
 
@@ -181,6 +183,8 @@ int main(){
 	// del almacenamiento, esto en decimal se vera como si estuvieramos dividiendo por 16, que seria
 	//dividir por 2 en cada desplazamiento. Paso de 0b110010110010010100 a 0b11001011001001
 	//esto sin haber operado las >> anteriores de 1 unidad.
+
+	// Falta explicar mejor...
 
 
     /* Se hara operacion NOT a numero de dias*/
