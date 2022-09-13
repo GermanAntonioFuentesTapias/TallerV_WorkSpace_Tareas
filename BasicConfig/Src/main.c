@@ -42,6 +42,8 @@ int main(void){
 
 
 	GPIO_Config(&handlerBlinkyLed);
+	GPIO_WritePin(&handlerBlinkyLed, SET);
+
 	 handlerTimer2.ptrTIMx = TIM2;
 	 handlerTimer2.TIMx_Config.TIMx_mode = BTIMER_MODE_UP; // CUENTA HACIA ARRIBA
 	 handlerTimer2.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us; // La velocidad
@@ -79,7 +81,7 @@ int main(void){
 
 // Call Back del timer
 }
-void BasicTimerX_CallBack(void){
+void BasicTimer2_CallBack(void){
 
 	blinky = !blinky;
 

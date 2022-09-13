@@ -38,12 +38,12 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	if(ptrBTimerHandler->ptrTIMx == TIM2){
 		// Registro del RCC que nos activa la señal de reloj para el TIM2
 
-		RCC ->AHB1ENR |= RCC_APB1ENR_TIM2EN;
+		RCC ->APB1ENR |= RCC_APB1ENR_TIM2EN;
 	}
 	else if(ptrBTimerHandler->ptrTIMx == TIM3){
 		// Registro del RCC que nos activa la señal de reloj para el TIM2
 
-		RCC ->AHB1ENR |= RCC_APB1ENR_TIM3EN; //ACTIVAMOS LA SEÑAL DEL PERIFERICO Y SE PUEDE INICIAR A USAR
+		RCC ->APB1ENR |= RCC_APB1ENR_TIM3EN; //ACTIVAMOS LA SEÑAL DEL PERIFERICO Y SE PUEDE INICIAR A USAR
 	}
 	else{
 		__NOP();
@@ -73,16 +73,19 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 
 	}else{
 		/* 3a. Estamos en DOWN_Mode, el limite se carga en ARR (0) y se comienza en un valor alto
-		 * Trabaja contando en direccion descendente*/
-		/* Escriba codigo aca */
+		 * Trabaja contando en direccion descendente, OJO CON LA OPERACIÓN QUE SE NECESITA EN ESTE CASO OJO 0 AND- 1 OR*/
+
+		ptrBTimerHandler->ptrTIMx->CR1 |= TIM_CR1_DIR; // Se hace asi porque necesitamos 1 en esa posición de memoria
 
 		/* 3b. Configuramos el Auto-reload. Este es el "limite" hasta donde el CNT va a contar
 		 * En modo descendente, con numero positivos, cual es el minimi valor al que ARR puede llegar*/
-		/* Escriba codigo aca */
+
+		ptrBTimerHandler->ptrTIMx->ARR = 0; //minimo valor que tendra el contador
 
 		/* 3c. Reiniciamos el registro counter
 		 * Este es el valor con el que el counter comienza */
-		ptrBTimerHandler->ptrTIMx->CNT = ptrBTimerHandler->TIMx_Config.TIMx_period - 1;
+
+		ptrBTimerHandler->ptrTIMx->CNT = ptrBTimerHandler->TIMx_Config.TIMx_period - 1; //desde el numero que da la configuración que entra el usuario
 	}
 
 	/* 4. Activamos el Timer (el CNT debe comenzar a contar*/
@@ -109,7 +112,7 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	__enable_irq();
 }
 
-__attribute__((weak)) void BasicTimerX_Callback(void){
+__attribute__((weak)) void BasicTimer2_Callback(void){
 	  /* NOTE : This function should not be modified, when the callback is needed,
 	            the BasicTimerX_Callback could be implemented in the main file
 	   */
@@ -126,6 +129,6 @@ void TIM2_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE 
 	TIM2->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
 
 	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
-	BasicTimerX_Callback();  // LLamamos al call para la función particular de nosotros
+	BasicTimer2_Callback();  // LLamamos al call para la función particular de nosotros
 
 }

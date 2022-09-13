@@ -7,6 +7,8 @@
  *      Author: German Antonio Fuentes Tapias
  *      Estudiante de Ingeniería Física
  *
+ *      Fecha de nacimiento = 17 / 11 / 1998
+ *
  *                    E L A B O R A C I Ó N   D E  L A  T A R E A - I
  *
  *      <<<<<<<<<Nota= Recordar que cumplo el mismo dia de Luis Felipe>>>>>>>>>>
