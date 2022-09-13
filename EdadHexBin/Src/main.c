@@ -72,6 +72,7 @@ int main(){
     /* Se definen las 3 variables necesarias durante todo el codigo, las cuales son Año, numero de dias y segundos de una hora*/
 
 	Age = 23; // Mi edad completa desde el 17/11/1998 hasta el 17/11/2021
+	// Te costaba mucho poner la efcha de nacimiento en la cabecera del código, te rebajo por ponerme a perder tiempo...
 	N_days_Year = 365;// Los dias del año sin año bisiesto
 	N_Seconds_hours = 3600;// Segundos que tiene una hora
 
@@ -161,6 +162,8 @@ int main(){
 	// y se "caerian" al no tener donde ocupar mas espacio. Si la variable se declara como int y no como short
 	// No pasara ese problema, ya que se seguira desplaando hasta que ocurra el overflow en ese espacio de memoria
 
+	// No explicas que se observa, cual es la operación matemática.
+
 
 	/* Se realizaran operaciones shif-derecha >> */
 
@@ -182,6 +185,8 @@ int main(){
 	// del almacenamiento, esto en decimal se vera como si estuvieramos dividiendo por 16, que seria
 	//dividir por 2 en cada desplazamiento. Paso de 0b110010110010010100 a 0b11001011001001
 	//esto sin haber operado las >> anteriores de 1 unidad.
+
+	// Falta explicar mejor...
 
 
     /* Se hara operacion NOT a numero de dias*/
