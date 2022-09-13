@@ -42,13 +42,13 @@ int main(void){
 
 
 	GPIO_Config(&handlerBlinkyLed);
-	GPIO_WritePin(&handlerBlinkyLed, SET);
+//	GPIO_WritePin(&handlerBlinkyLed, SET);
 
 	 handlerTimer2.ptrTIMx = TIM2;
 	 handlerTimer2.TIMx_Config.TIMx_mode = BTIMER_MODE_UP; // CUENTA HACIA ARRIBA
 	 handlerTimer2.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us; // La velocidad
 	 handlerTimer2.TIMx_Config.TIMx_period = 2500;
-	 handlerTimer2.TIMx_Config.TIMx_interruptEnable = 1;
+//	 handlerTimer2.TIMx_Config.TIMx_interruptEnable = 0;
 	 BasicTimer_Config(&handlerTimer2);
 
 //	data= 57;
@@ -74,7 +74,7 @@ int main(void){
 //
 //
 	while(1){
-//
+
    }
 
 	return 0;

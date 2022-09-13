@@ -8,7 +8,7 @@
 #include "BasicTimer.h"
 
 /* Variable que guarda la referencia del periférico que se esta utilizando*/
-TIM_TypeDef	*ptrTimerUsed;
+//TIM_TypeDef	*ptrTimerUsed;
 
 /* Función en la que cargamos la configuración del Timer
  * Recordar que siempre se debe comenzar con activar la señal de reloj
@@ -30,7 +30,7 @@ TIM_TypeDef	*ptrTimerUsed;
  */
 void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	// Guardamos una referencia al periferico que estamos utilizando...
-	ptrTimerUsed = ptrBTimerHandler->ptrTIMx;
+//	ptrTimerUsed = ptrBTimerHandler->ptrTIMx;
 
 	/* 0. Desactivamos las interrupciones globales mientras configuramos el sistema.*/
 	__disable_irq();
@@ -54,7 +54,7 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	 * periodo_incremento * veces_incremento_counter = periodo_update
 	 * Modificar el valor del registro PSC en el TIM utilizado
 	 */
-	ptrBTimerHandler->ptrTIMx->PSC = ptrBTimerHandler->TIMx_Config.TIMx_speed -1; // porque cuenta desde cero
+	ptrBTimerHandler->ptrTIMx->PSC = ptrBTimerHandler->TIMx_Config.TIMx_speed;
 
 	/* 3. Configuramos la dirección del counter (up/down)*/
 	if(ptrBTimerHandler->TIMx_Config.TIMx_mode == BTIMER_MODE_UP){ // modo hacia arriba
@@ -93,7 +93,7 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 
 	/* 5. Activamos la interrupción debida al Timerx Utilizado
 	 * Modificar el registro encargado de activar la interrupcion generada por el TIMx*/
-	ptrBTimerHandler->ptrTIMx->DIER |= TIM_DIER_UIE; // Poner 1 en la posición cero del registro DIER, levante la bandera
+	ptrBTimerHandler->ptrTIMx->DIER |= TIM_DIER_UIE; // Poner 1 en la posición cero del registro DIER, levante la bandera, esa posicion cero
 
 	/* 6. Activamos el canal del sistema NVIC para que lea la interrupción*/
 	if(ptrBTimerHandler->ptrTIMx == TIM2){
@@ -129,6 +129,6 @@ void TIM2_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE 
 	TIM2->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
 
 	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
-	BasicTimer2_Callback();  // LLamamos al call para la función particular de nosotros
+	BasicTimer2_CallBack();  // LLamamos al call para la función particular de nosotros
 
 }
