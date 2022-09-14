@@ -25,7 +25,7 @@
 //uint16_t *ptrEjemplo;
 //uint32_t ValorPuntero = 0;
 
-BasicTimer_Handler_t  handlerTimer2 ={0};
+BasicTimer_Handler_t  handlerTimerX ={0};
 GPIO_Handler_t       handlerBlinkyLed = {0};
 
 uint8_t blinky = 0;
@@ -44,12 +44,12 @@ int main(void){
 	GPIO_Config(&handlerBlinkyLed);
 //	GPIO_WritePin(&handlerBlinkyLed, SET);
 
-	 handlerTimer2.ptrTIMx = TIM2;
-	 handlerTimer2.TIMx_Config.TIMx_mode = BTIMER_MODE_UP; // CUENTA HACIA ARRIBA
-	 handlerTimer2.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us; // La velocidad
-	 handlerTimer2.TIMx_Config.TIMx_period = 2500;
+	 handlerTimerX.ptrTIMx = TIM4;
+	 handlerTimerX.TIMx_Config.TIMx_mode = BTIMER_MODE_UP; // CUENTA HACIA ARRIBA
+	 handlerTimerX.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us; // La velocidad
+	 handlerTimerX.TIMx_Config.TIMx_period = 2500;
 //	 handlerTimer2.TIMx_Config.TIMx_interruptEnable = 0;
-	 BasicTimer_Config(&handlerTimer2);
+	 BasicTimer_Config(&handlerTimerX);
 
 //	data= 57;
 //
@@ -81,7 +81,7 @@ int main(void){
 
 // Call Back del timer
 }
-void BasicTimer2_CallBack(void){
+void BasicTimer4_CallBack(void){
 
 	blinky = !blinky;
 
@@ -92,5 +92,15 @@ void BasicTimer2_CallBack(void){
 	}
 }
 
+void BasicTimer3_CallBack(void){
+
+	blinky = !blinky;
+
+	if(blinky){
+		GPIO_WritePin(&handlerBlinkyLed, SET);
+	}else{
+		GPIO_WritePin(&handlerBlinkyLed, RESET);
+	}
+}
 
 

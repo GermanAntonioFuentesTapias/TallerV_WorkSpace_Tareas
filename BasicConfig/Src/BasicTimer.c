@@ -41,10 +41,22 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 		RCC ->APB1ENR |= RCC_APB1ENR_TIM2EN;
 	}
 	else if(ptrBTimerHandler->ptrTIMx == TIM3){
-		// Registro del RCC que nos activa la señal de reloj para el TIM2
+		// Registro del RCC que nos activa la señal de reloj para el TIM3
 
 		RCC ->APB1ENR |= RCC_APB1ENR_TIM3EN; //ACTIVAMOS LA SEÑAL DEL PERIFERICO Y SE PUEDE INICIAR A USAR
 	}
+
+	else if(ptrBTimerHandler->ptrTIMx == TIM4){
+			// Registro del RCC que nos activa la señal de reloj para el TIM4
+
+			RCC ->APB1ENR |= RCC_APB1ENR_TIM4EN; //ACTIVAMOS LA SEÑAL DEL PERIFERICO Y SE PUEDE INICIAR A USAR
+	}
+
+	else if(ptrBTimerHandler->ptrTIMx == TIM5){
+			// Registro del RCC que nos activa la señal de reloj para el TIM5
+
+			RCC ->APB1ENR |= RCC_APB1ENR_TIM5EN; //ACTIVAMOS LA SEÑAL DEL PERIFERICO Y SE PUEDE INICIAR A USAR
+		}
 	else{
 		__NOP();
 	}
@@ -104,6 +116,15 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 		// Activando en NVIC para la interrupción del TIM3
 		NVIC_EnableIRQ(TIM3_IRQn); // Si se quiere para mas se va agregando mas, periferico usted va lanzar interrupción
 	}
+	else if(ptrBTimerHandler->ptrTIMx == TIM4){
+			// Activando en NVIC para la interrupción del TIM3
+
+		NVIC_EnableIRQ(TIM4_IRQn); // Si se quiere para mas se va agregando mas, periferico usted va lanzar interrupción
+	}
+	else if(ptrBTimerHandler->ptrTIMx == TIM5){
+				// Activando en NVIC para la interrupción del TIM3
+		NVIC_EnableIRQ(TIM5_IRQn); // Si se quiere para mas se va agregando mas, periferico usted va lanzar interrupción
+	}
 	else{
 		__NOP();
 	}
@@ -119,16 +140,48 @@ __attribute__((weak)) void BasicTimer2_Callback(void){
 	__NOP();
 }
 
+__attribute__((weak)) void BasicTimer3_Callback(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void BasicTimer4_Callback(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void BasicTimer5_Callback(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
 
 /* Esta es la función a la que apunta el sistema en el vector de interrupciones.
  * Se debe utilizar usando exactamente el mismo nombre definido en el vector de interrupciones,
  * Al hacerlo correctamente, el sistema apunta a esta función y cuando la interrupción se lanza
  * el sistema inmediatamente salta a este lugar en la memoria*/
-void TIM2_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
+void TIM4_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
-	TIM2->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
+	TIM4->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
 
 	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
-	BasicTimer2_CallBack();  // LLamamos al call para la función particular de nosotros
+	BasicTimer4_CallBack();  // LLamamos al call para la función particular de nosotros
 
 }
+// OJO VERIFICAR QUE TIMER SE NECESITA , SI NO SE LLAMA EN EL MAIN SALE ERRORES, SE PUEDEN TENER VARIOS AL TIEMPO
+// ASI QUE SERIA UTIL EN VARIOS A LA VEZ PERO SI SE USAN EN DIFERENTES
+void TIM3_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
+	/* Limpiamos la bandera que indica que la interrupción se ha generado */
+	TIM3->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
+
+	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
+	BasicTimer3_CallBack();  // LLamamos al call para la función particular de nosotros
+
+}
+
