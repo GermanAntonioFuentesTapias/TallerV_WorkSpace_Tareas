@@ -21,12 +21,17 @@
 #include "stm32f4xx.h"
 #include "GPIOxDriver.h"
 #include "BasicTimer.h"
+#include "USARTxDriver.h"
 //uint16_t data = 0;
 //uint16_t *ptrEjemplo;
 //uint32_t ValorPuntero = 0;
 
+int dato = 0;
+
 BasicTimer_Handler_t  handlerTimerX ={0};
 GPIO_Handler_t       handlerBlinkyLed = {0};
+GPIO_Handler_t       handlerTx = {0};
+USART_Handler_t     handlerUsar = {0};
 
 uint8_t blinky = 0;
 int main(void){
@@ -40,7 +45,7 @@ int main(void){
 	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinSpeed =         GPIO_OSPEED_MEDIUM;
 	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinAltFunMode =    AF0;
 
-
+// Estte el blinky pai
 	GPIO_Config(&handlerBlinkyLed);
 //	GPIO_WritePin(&handlerBlinkyLed, SET);
 
@@ -71,9 +76,50 @@ int main(void){
 //    *ptrEjemplo= 0xAC;
 //
 //
-//
+//Listo main pa como asi? R  donde ?
+	 //    Iniciando variables
+	 	handlerTx.pGPIOx= GPIOB;
+	 //
+	 	handlerTx.GPIO_PinConfig.GPIO_PinNumber =        PIN_6;
+	 	handlerTx.GPIO_PinConfig.GPIO_PinMode   =        GPIO_MODE_ALTFN; // ah mk jajajaj, no olvidar colocar funcion alternativa ome hueva
+	 	handlerTx.GPIO_PinConfig.GPIO_PinOPType  =       GPIO_OTYPE_PUSHPULL;
+	 	handlerTx.GPIO_PinConfig.GPIO_PinPuPdControl =   GPIO_PUPDR_NOTHING;
+	 	handlerTx.GPIO_PinConfig.GPIO_PinSpeed =         GPIO_OSPEED_MEDIUM;
+	 	handlerTx.GPIO_PinConfig.GPIO_PinAltFunMode =    AF7;
+
+//Listo sigamos viendo pai, mera hueva ome, R
+
+	 	GPIO_Config(&handlerTx);
+	 //	GPIO_WritePin(&handlerBlinkyLed, SET);
+// magia
+
+	 	// Configuración Usart
+
+	 	handlerUsar.ptrUSARTx = USART1 ;
+//Yo entiendo ome
+
+	 	handlerUsar.USART_Config.USART_mode =       USART_MODE_TX;
+	    handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_19200;
+	    handlerUsar.USART_Config.USART_datasize =   USART_DATASIZE_8BIT;
+	    handlerUsar.USART_Config.USART_parity   =   USART_PARITY_NONE;
+	    handlerUsar.USART_Config.USART_stopbits  =  USART_STOPBIT_1;
+
+
+
+// Cargo de configguracion  , como?
+
+	    USART_Config(&handlerUsar);
+
+
+
 //
 	while(1){
+
+
+
+    writeChar(&handlerUsar,'l');
+
+
 
    }
 
