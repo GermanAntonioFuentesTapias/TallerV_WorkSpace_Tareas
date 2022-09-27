@@ -166,7 +166,7 @@ __attribute__((weak)) void BasicTimer5_Callback(void){
  * Se debe utilizar usando exactamente el mismo nombre definido en el vector de interrupciones,
  * Al hacerlo correctamente, el sistema apunta a esta función y cuando la interrupción se lanza
  * el sistema inmediatamente salta a este lugar en la memoria*/
-void TIM4_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
+void TIM_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
 	TIM4->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
 
@@ -176,12 +176,12 @@ void TIM4_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE 
 }
 // OJO VERIFICAR QUE TIMER SE NECESITA , SI NO SE LLAMA EN EL MAIN SALE ERRORES, SE PUEDEN TENER VARIOS AL TIEMPO
 // ASI QUE SERIA UTIL EN VARIOS A LA VEZ PERO SI SE USAN EN DIFERENTES
-void TIM3_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
+void TIM2_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
-	TIM3->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
+	TIM2->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
 
 	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
-	BasicTimer3_CallBack();  // LLamamos al call para la función particular de nosotros
+	BasicTimer2_CallBack();  // LLamamos al call para la función particular de nosotros
 
 }
 

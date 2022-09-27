@@ -161,7 +161,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 		// Mantiza = 8 = 0x8, fraction = 16 * 0.6875 = 1
 	    // Valor a cargar 0x08b
 		// Configurando el Baudrata generator bara una velocidad de 115200
-		ptrUsartHandler->ptrUSARTx->BRR = 0x0b;
+		ptrUsartHandler->ptrUSARTx->BRR = 0x08B;
 
 		// Recordar que estamos en Hex
 	}
