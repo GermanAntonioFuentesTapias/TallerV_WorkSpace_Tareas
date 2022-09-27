@@ -56,20 +56,20 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 		ptrUsartHandler->ptrUSARTx->CR1   |= (USART_CR1_PCE); //Activando segun el resultado de paridad
 
 		// Verificamos si se ha seleccionado ODD or EVEN
-		if(ptrUsartHandler->USART_Config.USART_parity == USART_PARITY_EVEN){
-			// Es even, entonces cargamos la configuracion adecuada
+			if(ptrUsartHandler->USART_Config.USART_parity == USART_PARITY_EVEN){
+				// Es even, entonces cargamos la configuracion adecuada
 
-		 ptrUsartHandler->ptrUSARTx->CR1	&= ~(USART_CR1_PS); //
+			 ptrUsartHandler->ptrUSARTx->CR1	&= ~(USART_CR1_PS); //
 
-		 ptrUsartHandler->ptrUSARTx->CR1   |= (USART_CR1_M);
+			 ptrUsartHandler->ptrUSARTx->CR1   |= (USART_CR1_M);
 
-		}else{
-			// Si es "else" significa que la paridad seleccionada es ODD, y cargamos esta configuracion
+			}else{
+				// Si es "else" significa que la paridad seleccionada es ODD, y cargamos esta configuracion
 
-		ptrUsartHandler->ptrUSARTx->CR1 |= (USART_CR1_PS);
+			ptrUsartHandler->ptrUSARTx->CR1 |= (USART_CR1_PS);
 
-		ptrUsartHandler->ptrUSARTx->CR1 |= (USART_CR1_M);
-		}
+			ptrUsartHandler->ptrUSARTx->CR1 |= (USART_CR1_M);
+			}
 	}else{
 		// Si llegamos aca, es porque no deseamos tener el parity-check
 		// La desactivamos en Parity control enable CR1 bit 10
