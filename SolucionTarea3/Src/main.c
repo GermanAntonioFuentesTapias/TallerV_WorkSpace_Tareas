@@ -25,9 +25,9 @@
 #include "USARTxDriver.h"
 
 
-uint8_t variable = 0;
-uint8_t Lectura = 0;
-uint8_t Lectura2 = 0;
+int variable = 0;
+int Lectura = 0;
+int Lectura2 = 0;
 
 BasicTimer_Handler_t  handlerTimer2 ={0};
 GPIO_Handler_t       BlinkySimplePin = {0};
@@ -84,7 +84,7 @@ int main(void){
 	 	handlerUsar.ptrUSARTx = USART1 ;
 //Yo entiendo ome
 		handlerUsar.USART_Config.USART_mode =       USART_MODE_TX;
-	    handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_115200;
+	    handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_19200;
 	    handlerUsar.USART_Config.USART_datasize =   USART_DATASIZE_8BIT;
 	    handlerUsar.USART_Config.USART_parity   =   USART_PARITY_NONE;
 	    handlerUsar.USART_Config.USART_stopbits  =  USART_STOPBIT_1;
@@ -112,27 +112,26 @@ int main(void){
 
 		//Cada 250 ms estaria enviando un cambio de estado
 
-		    variable = 11;
-			//writeChar(&handlerUsar,variable);
 
 			if(GPIO_ReadPin(&UsarButton) == (RESET)){
 
 				if(Lectura){
-					writeChar(&handlerUsar,variable++);
+					writeChar(&handlerUsar,variable);
+					variable ++;
 					Lectura = 0;
 				}
-
+			  }
 
 			else{
 				 if(Lectura2){
 
-					 writeChar(&handlerUsar,'f');
+					 writeChar(&handlerUsar,'m');
 					 Lectura2 = 0;
 				 }
                }
 			}
 
-	}
+
 	return 0;
 }
 // CallBack del timer!!!!
