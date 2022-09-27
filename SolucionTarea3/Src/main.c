@@ -25,7 +25,9 @@
 #include "USARTxDriver.h"
 
 
-int dato = 0;
+uint8_t variable = 0;
+uint8_t Lectura = 0;
+uint8_t Lectura2 = 0;
 
 BasicTimer_Handler_t  handlerTimer2 ={0};
 GPIO_Handler_t       BlinkySimplePin = {0};
@@ -76,18 +78,18 @@ int main(void){
 //Listo sigamos viendo pai, mera hueva ome, R
 
 	 	GPIO_Config(&handlerTx);
-	 //	GPIO_WritePin(&BlinkySimplePin, SET);
+
 	 	// Configuración Usart
 
 	 	handlerUsar.ptrUSARTx = USART1 ;
 //Yo entiendo ome
 		handlerUsar.USART_Config.USART_mode =       USART_MODE_TX;
-	    handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_19200;
+	    handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_115200;
 	    handlerUsar.USART_Config.USART_datasize =   USART_DATASIZE_8BIT;
 	    handlerUsar.USART_Config.USART_parity   =   USART_PARITY_NONE;
 	    handlerUsar.USART_Config.USART_stopbits  =  USART_STOPBIT_1;
 
-// Cargo de configguracion  , como?
+// Cargo de configuracion
 
 	    USART_Config(&handlerUsar);
 // Configuración para el USARBotton
@@ -95,7 +97,7 @@ int main(void){
 	    //Inicialiación
 	    UsarButton.pGPIOx = GPIOC;
 
-	    //Configuración de usario
+	    //Configuración de usuario
 	    UsarButton.GPIO_PinConfig.GPIO_PinNumber      =  PIN_13;
 	    UsarButton.GPIO_PinConfig.GPIO_PinMode        =  GPIO_MODE_IN;
 	    UsarButton.GPIO_PinConfig.GPIO_PinOPType      =  GPIO_OTYPE_PUSHPULL;
@@ -107,36 +109,49 @@ int main(void){
 
 //
 	while(1){
-   }
+
+		//Cada 250 ms estaria enviando un cambio de estado
+
+		    variable = 11;
+			//writeChar(&handlerUsar,variable);
+
+			if(GPIO_ReadPin(&UsarButton) == (RESET)){
+
+				if(Lectura){
+					writeChar(&handlerUsar,variable++);
+					Lectura = 0;
+				}
+
+
+			else{
+				 if(Lectura2){
+
+					 writeChar(&handlerUsar,'f');
+					 Lectura2 = 0;
+				 }
+               }
+			}
+
+	}
 	return 0;
-int  Cambio = 0;
-// CallBack del timer!!!!
 }
+// CallBack del timer!!!!
+
 void BasicTimer2_CallBack(void){
     //Se tiene el blinker segun los 250 ms
 	BlinkySimple = !BlinkySimple;
-//Cada 250 ms estaria enviando un cambio de estado
-
-	//writeChar(&handlerUsar,Cambio);
-
-	if(GPIO_ReadPin(&UsarButton) == (RESET)){
-
-
-	  for(int i =0 ; i < 255;i++){
-
-		 int casa = Cambio + i;
-		 writeChar(&handlerUsar,casa);
-	 }
-
-	}else{
-		writeChar(&handlerUsar,Cambio);
-	 }
 
 	if(BlinkySimple){
 		GPIO_WritePin(&BlinkySimplePin, SET);
 	}else{
 		GPIO_WritePin(&BlinkySimplePin, RESET);
 	}
-}
+
+	Lectura = 1;
+
+	Lectura2 = 1;
+
+    }
+
 
 
