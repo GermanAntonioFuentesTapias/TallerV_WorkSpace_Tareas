@@ -2,7 +2,8 @@
  ******************************************************************************
  * @file           : main.c
  * @author         : German Antonio Fuentes Tapias
- * @brief          : Main program body
+ * @Correo         : gafuentest@unal.edu.co
+ * @brief          : Elaboración de la tarea 3 Taller V
  ******************************************************************************
  * @attention
  *
