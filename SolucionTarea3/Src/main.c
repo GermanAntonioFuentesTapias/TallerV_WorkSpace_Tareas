@@ -5,19 +5,17 @@
  * @Correo         : gafuentest@unal.edu.co
  * @brief          : Elaboración de la tarea 3 Taller V
  ******************************************************************************
- * @attention
- *
- * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
- * All rights reserved.</center></h2>
- *
- * This software component is licensed by ST under BSD 3-Clause license,
- * the "License"; You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at:
- *                        opensource.org/licenses/BSD-3-Clause
- *
+ * El codigo que se vera a continuación es la elaboración de la tarea #3 de taller 5
+ * En la cual se desarrollan 3 puntos
+ * 1. Hacer que el USER_LED actúe como el LED de estado
+ * 2 .El sistema debe enviar cada 250ms un carácter por el puerto serial de su elección (USART_1 o USART_6).
+ * 3 .Utilizando el USER_BUTTON, si se presiona el botón, se continúa enviando el carácter cada 250ms,
+ * pero esta vez el carácter a ser enviado debe cambiar en cada envío, o sea,  siempre será diferente del anterior.
+ *  Si se deja de presionar, el sistema regresa a la descripción de cómo funciona en el punto 2
  ******************************************************************************
  */
 
+/* Inc necesario para la realización de la tarea */
 
 #include <stdint.h>
 #include "stm32f4xx.h"
@@ -25,19 +23,23 @@
 #include "BasicTimer.h"
 #include "USARTxDriver.h"
 
+/* Variables necesarias la activación de banderas,blinky y sumatoria al ser presionado el boton*/
 
-int variable = 0;
-int Lectura = 0;
-int Lectura2 = 0;
+int variable          = 0;
+int Lectura           = 0;
+int Lectura2          = 0;
+uint8_t BlinkySimple  = 0;
 
-BasicTimer_Handler_t  handlerTimer2 ={0};
-GPIO_Handler_t       BlinkySimplePin = {0};
-GPIO_Handler_t       UsarButton = {0};
-GPIO_Handler_t       handlerTx = {0};
-USART_Handler_t     handlerUsar = {0};
+/* La variables tendran los diferentes tipos */
 
+BasicTimer_Handler_t   handlerTimer2    = {0};
+GPIO_Handler_t         BlinkySimplePin  = {0};
+GPIO_Handler_t         UsarButton       = {0};
+GPIO_Handler_t         handlerTx        = {0};
+USART_Handler_t        handlerUsar      = {0};
 
-uint8_t BlinkySimple = 0;
+/* Creacioón de el programa principal a utilizar en la tarea */
+
 int main(void){
 //   Esta es la inicialización del punto 1
 
@@ -86,8 +88,8 @@ int main(void){
 //Yo entiendo ome
 		handlerUsar.USART_Config.USART_mode =       USART_MODE_TX;
 	    handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_19200;
-	    handlerUsar.USART_Config.USART_datasize =   USART_DATASIZE_8BIT;
-	    handlerUsar.USART_Config.USART_parity   =   USART_PARITY_NONE;
+	    handlerUsar.USART_Config.USART_datasize =   USART_DATASIZE_9BIT;
+	    handlerUsar.USART_Config.USART_parity   =   USART_PARITY_EVEN;
 	    handlerUsar.USART_Config.USART_stopbits  =  USART_STOPBIT_1;
 
 // Cargo de configuracion
