@@ -23,19 +23,19 @@
 #include "BasicTimer.h"
 #include "USARTxDriver.h"
 
-/* Variables necesarias la activación de banderas,blinky y sumatoria al ser presionado el boton*/
+/* Variables necesarias para la activación de banderas,blinky y sumatoria al ser presionado el boton*/
 
 int variable               = 0; //Caracter encargado de hacer una adición al momento de ser pulsado el botón
 int Bandera                = 0; //Bandera encargada de mostrar cuando se esta presionando USAR_BUTTON
 int Bandera_Normal         = 0; //Bandera encargada de mostrar cuando no esta presionando el USAR_BUTTON
-uint8_t BlinkySimple       = 0; //Asignación a el blinkyn de led de estado
+uint8_t BlinkySimple       = 0; //Asignación a el blinky de led de estado
 
 /* La variables tendran los diferentes tipos */
 
 BasicTimer_Handler_t   handlerTimer2    = {0}; // Handler para el timer 2
 GPIO_Handler_t         BlinkySimplePin  = {0}; // Handler para el BlinkySimple
 GPIO_Handler_t         UsarButton       = {0}; // Handler para el UsarButton
-GPIO_Handler_t         handlerTx        = {0}; // Handler para la trasmisión serial bit a bit
+GPIO_Handler_t         handlerTx        = {0}; // Handler para la transmisión serial bit a bit
 USART_Handler_t        handlerUsar      = {0}; // Handler para el Usar1
 
 /* Creación del programa principal a utilizar en la tarea*/
@@ -58,7 +58,7 @@ int main(void){
      // Cargando la configuración del Led de Blinky
 	 GPIO_Config(&BlinkySimplePin);
 
-	 //	GPIO_WritePin(&BlinkySimplePin, SET);
+
 	 handlerTimer2.ptrTIMx = TIM2;
 	 handlerTimer2.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP; // CUENTA HACIA ARRIBA
 	 handlerTimer2.TIMx_Config.TIMx_speed           = BTIMER_SPEED_100us; // La velocidad
@@ -77,7 +77,7 @@ int main(void){
 	handlerTx.pGPIOx= GPIOB;
 	// Configuración del usuario para el pin
 	handlerTx.GPIO_PinConfig.GPIO_PinNumber      =   PIN_6;
-	handlerTx.GPIO_PinConfig.GPIO_PinMode        =   GPIO_MODE_ALTFN; // Función para la comunicación serian
+	handlerTx.GPIO_PinConfig.GPIO_PinMode        =   GPIO_MODE_ALTFN; // Función para la comunicación serial
 	handlerTx.GPIO_PinConfig.GPIO_PinOPType      =   GPIO_OTYPE_PUSHPULL;
 	handlerTx.GPIO_PinConfig.GPIO_PinPuPdControl =   GPIO_PUPDR_NOTHING;
 	handlerTx.GPIO_PinConfig.GPIO_PinSpeed       =   GPIO_OSPEED_MEDIUM;
@@ -88,8 +88,8 @@ int main(void){
 
 	/* Inicialización de la configuración para el USART1*/
 	handlerUsar.ptrUSARTx = USART1 ;
-	// Configuración del usuario para el pin -->> Paridad actividad en modo Even
-	handlerUsar.USART_Config.USART_mode     =   USART_MODE_TX;       // En modo de trasmisión
+	// Configuración del usuario para el pin -->> Paridad activa en modo Even
+	handlerUsar.USART_Config.USART_mode     =   USART_MODE_TX;       // En modo de transmisión
 	handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_19200;
 	handlerUsar.USART_Config.USART_datasize =   USART_DATASIZE_9BIT; // Se tiene paridad por lo que se asigna ese tamaño
 	handlerUsar.USART_Config.USART_parity   =   USART_PARITY_EVEN;   // Paridad en even
@@ -134,8 +134,13 @@ int main(void){
 					variable ++;
                     // Se reinicia el valor de la bandera para volver a estar lista para otro evento
 					Bandera = 0;
+					//Se reinicia la bandera que no se utilizo
+					Bandera_Normal = 0;
 				}
-			  }
+				else
+					__NOP();
+
+			    }
 
 			else{
 				 //
@@ -144,12 +149,17 @@ int main(void){
 					 writeChar(&handlerUsar,'m');
 					 //Se reinicia el valor de la bandera para volver a estar lista para otro evento
 					 Bandera_Normal = 0;
+					 //Se reinicia la bandera que no se utilizó
+					 Bandera = 0;
+				 }
+				 else{
+					 __NOP();
 				 }
                }
 			}
 	return 0;
 }
-/* CallBack del timer*/
+/* CallBack del timer 2*/
 
 void BasicTimer2_CallBack(void){
 
@@ -160,14 +170,14 @@ void BasicTimer2_CallBack(void){
 
 	if(BlinkySimple){
 
-		GPIO_WritePin(&BlinkySimplePin, SET); // Desactiva
+		GPIO_WritePin(&BlinkySimplePin, SET); // Activa
 
 	}else{
 
-		GPIO_WritePin(&BlinkySimplePin, RESET); // Activa
+		GPIO_WritePin(&BlinkySimplePin, RESET); // Desactiva
 	}
 
-	// Asignaciones a comparar con el condicional del if para cada evento
+	// Asignaciones de bandera a comparar en el evento
 	Bandera = 1;
 	Bandera_Normal = 1;
 
