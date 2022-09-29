@@ -2,7 +2,7 @@
  * USARTxDriver.c
  *
  *  Created on: Apr 6, 2022
- *      Author: German Antonio Fuentes modificado de Nerio
+ *      Author: German Antonio Fuentes modificación de Nerio para Taller V
  */
 
 #include <stm32f4xx.h>
@@ -51,7 +51,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	// 2.2 Configuracion del Parity:
 	// Verificamos si el parity esta activado o no
     // Tenga cuidado, el parity hace parte del tamaño de los datos...
-	if(ptrUsartHandler->USART_Config.USART_parity != USART_PARITY_NONE){
+	if(ptrUsartHandler->USART_Config.USART_parity != USART_PARITY_NONE){ //Si es distinto a desactivado entonces -->
 
 		ptrUsartHandler->ptrUSARTx->CR1   |= (USART_CR1_PCE); //Activando segun el resultado de paridad
 
@@ -82,12 +82,12 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	// 2.3 Configuramos el tamaño del dato
     // Miramos es el bit 10
 
-    if(ptrUsartHandler->USART_Config.USART_datasize == USART_DATASIZE_9BIT){ // Se configure asi porque pregunta si esta activa la paridad
-
+    if(ptrUsartHandler->USART_Config.USART_datasize == USART_DATASIZE_9BIT){
+   // Se configuro asi porque asi viene del usuario, asi que se verifica que coloco el usuario
        ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_M; // Asi se coloca con peso 9
     }
        else{
-    	   ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_M; // Seria 8 porque esta desactivada
+    	   ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_M; // Seria 8 porque la configuración del usuario fue 8
        }
 
 
@@ -102,7 +102,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 		break;
 	}
 	case USART_STOPBIT_0_5: {
-		// Debemoscargar el valor 0b01 en los dos bits de STOP
+		// Debemos cargar el valor 0b01 en los dos bits de STOP
 
 		ptrUsartHandler->ptrUSARTx->CR2 |= (USART_CR2_STOP_0);
 
@@ -110,7 +110,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 		break;
 	}
 	case USART_STOPBIT_2: {
-		// Debemoscargar el valor 0b10 en los dos bits de STOP
+		// Debemos cargar el valor 0b10 en los dos bits de STOP
 
 		ptrUsartHandler->ptrUSARTx->CR2 |= (USART_CR2_STOP_1);
 
@@ -119,16 +119,16 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 		break;
 	}
 	case USART_STOPBIT_1_5: {
-		// Debemoscargar el valor 0b11 en los dos bits de STOP
+		// Debemos cargar el valor 0b11 en los dos bits de STOP
 
 		ptrUsartHandler->ptrUSARTx->CR2 |= (USART_CR2_STOP);
 
 
-		// Se realiza OR porque es 00 y estamos escribiendo eso ahi
+		// Se realiza OR porque es 00 y estamos escribiendo eso ahi segun el valor de USART_CR2_STOP
 		break;
 	}
 	default: {
-		// En el casopor defecto seleccionamos 1 bit de parada
+		// En el caso por defecto seleccionamos 1 bit de parada
 
 		ptrUsartHandler->ptrUSARTx->CR2 &= ~ (USART_CR2_STOP);
 
@@ -237,7 +237,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	}
 
 	// 2.7 Activamos el modulo serial.
-	if(ptrUsartHandler->USART_Config.USART_mode != USART_MODE_DISABLE){
+	if(ptrUsartHandler->USART_Config.USART_mode != USART_MODE_DISABLE){ // El modo activa el modulo serial para las comunicaciones
 
 		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_UE;
 	}
@@ -247,7 +247,9 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
 	while( !(ptrUsartHandler->ptrUSARTx->SR & USART_SR_TXE)){
 		__NOP();
-	}
+	} // Entonces si en SR se tiene negación, se tiene vacio, pero si
+	// se encuentra un dato, seria true, por lo que si tiene algo, si debe escribir
+	// en el DR y guardarse en dataToSend para ser enviado bit a bit
 
 	ptrUsartHandler ->ptrUSARTx ->DR = dataToSend;
 

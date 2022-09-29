@@ -2,7 +2,7 @@
  ******************************************************************************
  * @file           : main.c
  * @author         : German Antonio Fuentes Tapias
- * @Mail        : gafuentest@unal.edu.co
+ * @Mail           : gafuentest@unal.edu.co
  * @Resum          : Elaboración de la tarea 3 Taller V
  ******************************************************************************
  * El codigo que se vera a continuación es la elaboración de la tarea #3 de taller 5
@@ -177,7 +177,7 @@ void BasicTimer2_CallBack(void){
 		GPIO_WritePin(&BlinkySimplePin, RESET); // Desactiva
 	}
 
-	// Asignaciones de bandera a comparar en el evento
+	// Asignaciones de bandera a comparar en el evento a realizar cuando se llama la bandera
 	Bandera = 1;
 	Bandera_Normal = 1;
 
