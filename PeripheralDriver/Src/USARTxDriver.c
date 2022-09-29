@@ -2,7 +2,7 @@
  * USARTxDriver.c
  *
  *  Created on: Apr 6, 2022
- *      Author: namontoy
+ *      Author: German Antonio Fuentes modificado de Nerio
  */
 
 #include <stm32f4xx.h>
@@ -249,7 +249,7 @@ int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
 		__NOP();
 	}
 
-	ptrUsartHandler ->ptrUSARTx ->DR = dataToSend; // No quedo claro el orden de la función
+	ptrUsartHandler ->ptrUSARTx ->DR = dataToSend;
 
 	return dataToSend;
 }
