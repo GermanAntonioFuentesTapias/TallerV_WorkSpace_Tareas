@@ -8,6 +8,7 @@
 #include <stm32f4xx.h>
 #include "USARTxDriver.h"
 
+uint8_t auxRxData = 0;
 /**
  * Configurando el puerto Serial...
  * Recordar que siempre se debe comenzar con activar la señal de reloj
@@ -241,7 +242,37 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 
 		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_UE;
 	}
-}
+
+	//2.8 Interrupciones
+	//Interrupción para recepción
+	if(ptrUsartHandler->USART_Config.USART_EI_Rx == USART_RX_INTERRUP_ENABLE){
+      // Como se afirmaria que esta activida se debe configurar la interrupción por recepción
+
+		/*Tenemos que activar la interrupción en el USART*/
+
+		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_RXNEIE;
+
+		// Despues de esto se tiene que matricular en el NVIC
+
+		if(ptrUsartHandler->ptrUSARTx == USART1){
+		   __NVIC_EnableIRQ(USART1_IRQn);
+		}
+		else if(ptrUsartHandler->ptrUSARTx == USART2){
+			__NVIC_EnableIRQ(USART2_IRQn);
+		}
+		else if(ptrUsartHandler->ptrUSARTx == USART6){
+			__NVIC_EnableIRQ(USART6_IRQn);
+		}
+
+		else{
+			__NOP();
+		}
+
+	}
+
+
+
+} // Va dentro del USART_Config
 
 /* funcion para escribir un solo char */
 int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
@@ -255,3 +286,70 @@ int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
 
 	return dataToSend;
 }
+
+/**/
+void writeMsg(USART_Handler_t * ptrUsartHandler, char *msgToSend){
+	while(*msgToSend != '\0'){
+		writeChar(ptrUsartHandler, *msgToSend);
+		msgToSend++;
+	}
+
+}
+
+uint8_t getRxData(void){
+	return auxRxData;
+}
+
+/* Handler de la interrupción del USART
+ * Se asociana todas la interrupciones: TX, RX , PE...
+ */
+
+
+void USART2_IRQHandler(void){
+	//Evaluamos si la interrupción que se dio es por RX
+	if(USART2->SR & USART_SR_RXNE){
+		auxRxData = (uint8_t) USART2->DR;
+		Usart2Rx_CallBack();
+	}
+}
+
+void USART1_IRQHandler(void){
+	//Evaluamos si la interrupción que se dio es por RX
+	if(USART1->SR & USART_SR_RXNE){
+		auxRxData = (uint8_t) USART1->DR;
+		Usart1Rx_CallBack();
+	}
+}
+
+void USART6_IRQHandler(void){
+	//Evaluamos si la interrupción que se dio es por RX
+	if(USART6->SR & USART_SR_RXNE){
+		auxRxData = (uint8_t) USART6->DR;
+		Usart6Rx_CallBack();
+	}
+}
+
+__attribute__((weak)) void Usart1Rx_CallBack(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the Usart1Rx could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void Usart2Rx_CallBack(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the Usart1Rx could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void Usart6Rx_CallBack(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the Usart1Rx could be implemented in the main file
+	   */
+	__NOP();
+}
+
+/* Asocianones de la interrupcion del USART*/
+
+

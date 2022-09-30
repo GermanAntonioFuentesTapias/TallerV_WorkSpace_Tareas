@@ -166,6 +166,7 @@ __attribute__((weak)) void BasicTimer5_Callback(void){
  * Se debe utilizar usando exactamente el mismo nombre definido en el vector de interrupciones,
  * Al hacerlo correctamente, el sistema apunta a esta función y cuando la interrupción se lanza
  * el sistema inmediatamente salta a este lugar en la memoria*/
+//Este es de caracter generico
 void TIM_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
 	TIM4->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
