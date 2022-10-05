@@ -50,17 +50,25 @@ int main(void)
     /* Ciclo principal del programa*/
 	while(1){
 
+		// El sistema siempre esta verificando si el valor de rxData ha cambiado
+		// (lo cual sucede en la ISR de la recepcion) (RX)
+		// Si este valor deja de ser '\0\' significa que se recibio un caracter
+		// por lo tanto entra en el bloque if para analizar que se recibio
+
+		/* Configuración del Blincky */
 		GPIO_WritePin(&handlerBlinkyPin, estadoBlinky);
 
 		if (rxData != '\0'){
+			//Imprimimos el caracter recibido
 			writeChar(&handlerUsart2, rxData);
 
 			if (rxData == 'm'){
-
+				//Presentamos un mensaje
 				writeMsg(&handlerUsart2 , greetingMsg);
 			}
 
 			if (rxData == 's'){
+				//Lanzamos una nueva conversión ADC
 				startSingleADC();
 			}
 
@@ -119,7 +127,7 @@ void initSystem(void){
 	handlerTx.GPIO_PinConfig.GPIO_PinOPType			= GPIO_OTYPE_PUSHPULL;
 	handlerTx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
 	handlerTx.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_MEDIUM;
-	handlerTx.GPIO_PinConfig.GPIO_PinAltFunMode		= AF7;					// Función alternativa USART1
+	handlerTx.GPIO_PinConfig.GPIO_PinAltFunMode		= AF7;					// Función alternativa USART2
 
 	/* Se carga la configuración */
 	GPIO_Config(&handlerTx);
@@ -153,9 +161,9 @@ void initSystem(void){
 	handlerUsart2.USART_Config.USART_mode				= USART_MODE_RXTX;
 	handlerUsart2.USART_Config.USART_parity				= USART_PARITY_NONE;
 	handlerUsart2.USART_Config.USART_stopbits			= USART_STOPBIT_1;
-	handlerUsart2.USART_Config.USART_IntRx			= USART_RX_INTERRUPT_ENABLE;
+	handlerUsart2.USART_Config.USART_IntRx			    = USART_RX_INTERRUPT_ENABLE;
 
-	/* Se carga la configuración */
+	/* Se carga la configuración para la conversión ADC */
 	USART_Config(&handlerUsart2);
 
 	adcConfig.channel     			 = ADC_CHANNEL_0;
@@ -168,16 +176,32 @@ void initSystem(void){
 
 }
 
+/*
+ *  Configuramos el micro, la interrupción esta activa por defecto
+ */
 void BasicTimer2_CallBack(void){
 
 	estadoBlinky ^= 1;
 
 }
 
+/* CallBack relacionado con la recepción del USART2
+ * El puerto es leido en la ISR (para bajar la bandera de la interrupción)
+ * El caracter que se lee es devuelto por la función getRxData
+ *
+ */
+
 void USART2Rx_CallBack(void){
+	//Leemos el valor del registro DR, donde se almacena el dato que llegga
+	//Esto además debe bajar la bandera de la interrupción
 	rxData = getRxData();
 }
 
+/*
+ *  Esta función se ejecuta luego de una conversion ADC
+ *   (es llamada por la ISR de la conversion ADC)
+ *
+ */
 void adcComplete_CallBack (void){
 	adcData = getADC();
 	adcIsComplete  = true;

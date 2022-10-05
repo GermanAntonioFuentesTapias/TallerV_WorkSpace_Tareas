@@ -2,7 +2,7 @@
  * BasicTimer.h
  *
  *  Created on: Apr 18, 2022
- *      Author: namontoy
+ *      Author: German Fuentes
  */
 
 #ifndef INC_BASICTIMER_H_

@@ -1,7 +1,7 @@
 /*
  * USARTxDriver.c
  *
- *  Created on: 7 Septiembre, 2022
+ *  Created on: 7 Septiembre, 2022-2
  *      Author: German Fuentes
  */
 
@@ -76,7 +76,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	}
 
 	// 2.3 Configuramos el tamaño del dato
-
+    // Miramos es el bit 10
 	if(ptrUsartHandler->USART_Config.USART_datasize == USART_DATASIZE_8BIT ){
 
 		ptrUsartHandler -> ptrUSARTx -> CR1 &=  ~USART_CR1_M;
@@ -98,6 +98,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	case USART_STOPBIT_0_5: {
 		// Debemoscargar el valor 0b01 en los dos bits de STOP
 		ptrUsartHandler -> ptrUSARTx -> CR2 |= USART_CR2_STOP_0;
+		// Se realiza Or porque es como escribiendo un 1 en esa posición
 		break;
 	}
 	case USART_STOPBIT_2: {
@@ -129,14 +130,14 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 
 	else if (ptrUsartHandler->USART_Config.USART_baudrate == USART_BAUDRATE_19200) {
 		// El valor a cargar es 52.0625 -> Mantiza = 52,fraction = 0.0625
-		// Mantiza = 52 = 0x34, fraction = 16 * 0.1875 = 1
+		// Mantiza = 52 = 0x34, fraction = 16 * 0.625 = 1
 		ptrUsartHandler -> ptrUSARTx -> BRR = 0x0341;
 	}
 
 	else if(ptrUsartHandler->USART_Config.USART_baudrate == USART_BAUDRATE_115200){
 		// El valor a cargar es 8.6875 -> Mantiza = 8, fraction = 0.6875
 		// Mantiza = 8 = 8, fraction = 0.6875*16= 11 = B
-		// valor a cargar 0x0811
+		// valor a cargar 0x0811 o 0x08B
 		ptrUsartHandler -> ptrUSARTx -> BRR = 0x08B;
 	}
 
@@ -146,6 +147,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	{
 		// Activamos la parte del sistema encargada de enviar
 //		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_UE;
+
 		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_TE;
 		break;
 	}
@@ -169,7 +171,9 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	{
 		// Desactivamos ambos canales
 		ptrUsartHandler -> ptrUSARTx -> CR1 &= ~USART_CR1_RE;
+		
 		ptrUsartHandler -> ptrUSARTx -> CR1 &= ~USART_CR1_TE;
+		
 		ptrUsartHandler->  ptrUSARTx ->CR1  &= ~USART_CR1_UE;
 		break;
 	}
@@ -178,14 +182,16 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	{
 		// Actuando por defecto, desactivamos ambos canales
 		ptrUsartHandler -> ptrUSARTx -> CR1 &= ~USART_CR1_RE;
+		
 		ptrUsartHandler -> ptrUSARTx -> CR1 &= ~USART_CR1_TE;
+		
 		ptrUsartHandler -> ptrUSARTx ->CR1  &= ~USART_CR1_UE;
 		break;
 	}
 	}
 
 	/* Verificamos la configuración de las interrupciones */
-	/* 2.8 Interrupción por recepción */
+	/* 2.7 Interrupción por recepción */
 
 	if (ptrUsartHandler -> USART_Config.USART_IntRx == USART_RX_INTERRUPT_ENABLE){
 		/* Como está activada configuramos la interrupción por recepción */
@@ -213,7 +219,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	}
 
 
-	// 2.7 Activamos el modulo serial.
+	// 2.8 Activamos el modulo serial.
 	if(ptrUsartHandler->USART_Config.USART_mode != USART_MODE_DISABLE){
 		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_UE;
 	}
@@ -228,7 +234,9 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
 	while( !(ptrUsartHandler->ptrUSARTx->SR & USART_SR_TXE)){
 		__NOP();
-	}
+	}// Entonces si en SR se tiene negación, se tiene vacio, pero si
+	// se encuentra un dato, seria true, por lo que si tiene algo, si debe escribir
+	// en el DR y guardarse en dataToSend para ser enviado bit a bit
 
 	/* Se carga en el registro DataRegister el valor de la variable dataToSend */
 	ptrUsartHandler->ptrUSARTx->DR = dataToSend;
@@ -271,7 +279,7 @@ __attribute__((weak)) void USART6Rx_CallBack(void){
 }
 
 void USART1_IRQHandler(void){
-	/* Evaluamos la interrupción que se dio por RX */
+	/* Evaluamos la interrupción que se dio es por RX */
 	if(USART1 -> SR & USART_SR_RXNE){
 		auxRxData = (uint8_t) USART1 -> DR;
 		USART1Rx_CallBack();
@@ -280,7 +288,7 @@ void USART1_IRQHandler(void){
 
 
 void USART2_IRQHandler(void){
-	/* Evaluamos la interrupción que se dio por RX */
+	/* Evaluamos la interrupción que se dio es por RX */
 	if(USART2 -> SR & USART_SR_RXNE){
 		auxRxData = (uint8_t) USART2 -> DR;
 		USART2Rx_CallBack();
