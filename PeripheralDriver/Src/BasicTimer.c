@@ -8,7 +8,6 @@
 #include "BasicTimer.h"
 
 /* Variable que guarda la referencia del periférico que se esta utilizando*/
-//TIM_TypeDef	*ptrTimerUsed;
 
 /* Función en la que cargamos la configuración del Timer
  * Recordar que siempre se debe comenzar con activar la señal de reloj
@@ -30,7 +29,6 @@
  */
 void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	// Guardamos una referencia al periferico que estamos utilizando...
-//	ptrTimerUsed = ptrBTimerHandler->ptrTIMx;
 
 	/* 0. Desactivamos las interrupciones globales mientras configuramos el sistema.*/
 	__disable_irq();
@@ -66,7 +64,7 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	 * periodo_incremento * veces_incremento_counter = periodo_update
 	 * Modificar el valor del registro PSC en el TIM utilizado
 	 */
-	ptrBTimerHandler->ptrTIMx->PSC = ptrBTimerHandler->TIMx_Config.TIMx_speed;
+	ptrBTimerHandler->ptrTIMx->PSC = ptrBTimerHandler->TIMx_Config.TIMx_speed ;
 
 	/* 3. Configuramos la dirección del counter (up/down)*/
 	if(ptrBTimerHandler->TIMx_Config.TIMx_mode == BTIMER_MODE_UP){ // modo hacia arriba
@@ -133,28 +131,28 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	__enable_irq();
 }
 
-__attribute__((weak)) void BasicTimer2_Callback(void){
+__attribute__((weak)) void BasicTimer2_CallBack(void){
 	  /* NOTE : This function should not be modified, when the callback is needed,
 	            the BasicTimerX_Callback could be implemented in the main file
 	   */
 	__NOP();
 }
 
-__attribute__((weak)) void BasicTimer3_Callback(void){
+__attribute__((weak)) void BasicTimer3_CallBack(void){
 	  /* NOTE : This function should not be modified, when the callback is needed,
 	            the BasicTimerX_Callback could be implemented in the main file
 	   */
 	__NOP();
 }
 
-__attribute__((weak)) void BasicTimer4_Callback(void){
+__attribute__((weak)) void BasicTimer4_CallBack(void){
 	  /* NOTE : This function should not be modified, when the callback is needed,
 	            the BasicTimerX_Callback could be implemented in the main file
 	   */
 	__NOP();
 }
 
-__attribute__((weak)) void BasicTimer5_Callback(void){
+__attribute__((weak)) void BasicTimer5_CallBack(void){
 	  /* NOTE : This function should not be modified, when the callback is needed,
 	            the BasicTimerX_Callback could be implemented in the main file
 	   */
@@ -167,7 +165,7 @@ __attribute__((weak)) void BasicTimer5_Callback(void){
  * Al hacerlo correctamente, el sistema apunta a esta función y cuando la interrupción se lanza
  * el sistema inmediatamente salta a este lugar en la memoria*/
 //Este es de caracter generico
-void TIM_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
+void TIM4_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
 	TIM4->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
 
@@ -184,5 +182,19 @@ void TIM2_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE 
 	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
 	BasicTimer2_CallBack();  // LLamamos al call para la función particular de nosotros
 
+}
+
+void TIM3_IRQHandler(void){
+
+	TIM3->SR &= ~TIM_SR_UIF;
+
+	BasicTimer3_CallBack();
+}
+
+void TIM5_IRQHandler(void){
+
+	TIM3->SR &= ~TIM_SR_UIF;
+
+	BasicTimer5_CallBack();
 }
 

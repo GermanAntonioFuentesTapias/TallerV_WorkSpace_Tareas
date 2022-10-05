@@ -1,8 +1,8 @@
 /*
  * USARTxDriver.h
  *
- *  Created on: Apr 6, 2022
- *      Author: namontoy
+ *  Created on: 7 Septiembre, 2022
+ *      Author: German Fuentes
  */
 
 #include <stdio.h>
@@ -31,7 +31,8 @@
 #define USART_STOPBIT_2		2
 #define USART_STOPBIT_1_5	3
 
-#define USART_RX_INTERRUP_ENABLE   1
+#define USART_RX_INTERRUPT_ENABLE	   1
+#define USART_RX_INTERRUPT_DISABLE     0
 
 /* Estructura para la configuración de la comunicacion:
  * Velocidad (baudrate)
@@ -46,7 +47,7 @@ typedef struct
 	uint8_t USART_datasize;
 	uint8_t USART_parity;
 	uint8_t USART_stopbits;
-	uint8_t USART_EI_Rx; // Activacioón de interrupción
+	uint8_t USART_IntRx;
 }USART_Config_t;
 
 /*
@@ -69,14 +70,14 @@ typedef struct
 }USART_Handler_t;
 
 
-/* Definicion de los prototipos para las funciones del USART */
+
+/* Definición de los prototipos para las funciones del USART */
 void USART_Config(USART_Handler_t *ptrUsartHandler);
-void Usart1Rx_CallBack(void);
-void Usart2Rx_CallBack(void);
-void Usart6Rx_CallBack(void);
-
-int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend );
-void writeMsg(USART_Handler_t * ptrUsartHandler, char *msgToSend);
-
+int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend);
+void writeMsg(USART_Handler_t *ptrUsartHandler, char *msgToSend);
+uint8_t getRxData(void);
+void USART2Rx_CallBack(void);
+void USART1Rx_CallBack(void);
+void USART6Rx_CallBack(void);
 
 #endif /* INC_USARTXDRIVER_H_ */

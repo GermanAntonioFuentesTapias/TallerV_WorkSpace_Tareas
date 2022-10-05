@@ -2,7 +2,7 @@
  * AdcDriver.h
  *
  *  Created on: Month XX, 2022
- *      Author: namontoy
+ *      Author: German Antonio Fuentes Tapias
  */
 
 #ifndef INC_ADCDRIVER_H_
@@ -56,7 +56,7 @@ typedef struct
 
 void adc_Config(ADC_Config_t *adcConfig);
 void configAnalogPin(uint8_t adcChannel);
-void adcComplete_Callback(void);
+void adcComplete_CallBack(void);
 void startSingleADC(void);
 void startContinousADC(void);
 uint16_t getADC(void);
