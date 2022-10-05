@@ -40,6 +40,9 @@ void BasicTimer2_CallBack(void); /* Esta función debe ser sobre-escrita en el m
 void BasicTimer3_CallBack(void);
 void BasicTimer4_CallBack(void);
 void BasicTimer5_CallBack(void);
+
+void startCounterTimer(BasicTimer_Handler_t *ptrTimerConfig);
+void StopCounterTimer(BasicTimer_Handler_t *ptrTimerConfig);
 //void GPIOxTooglePin (GPIO_Handler_t *pPinHandler)
 
 #endif /* INC_BASICTIMER_H_ */

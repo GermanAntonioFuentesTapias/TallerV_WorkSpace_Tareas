@@ -100,7 +100,7 @@ void initSystem(void){
 	handlerBlinkyPin.pGPIOx									= GPIOA;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinNumber 			= PIN_5;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
-	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinOPType  = GPIO_OTYPE_PUSHPULL;
+	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinOPType          = GPIO_OTYPE_PUSHPULL;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinPuPdControl		= GPIO_PUPDR_NOTHING;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_FAST;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinAltFunMode		= AF0;
@@ -166,13 +166,15 @@ void initSystem(void){
 	/* Se carga la configuración para la conversión ADC */
 	USART_Config(&handlerUsart2);
 
-	adcConfig.channel     			 = ADC_CHANNEL_0;
-	adcConfig.resolution  			 = ADC_RESOLUTION_12_BIT;
+	adcConfig.channel     			 = ADC_CHANNEL_0; // Configuración, ojo A0 es este canal, recordar las definiciones de este
+	adcConfig.resolution  			 = ADC_RESOLUTION_12_BIT; // Esto nos da el tamaño, osea en cuanto de divide los 3,3 V para detectar cambios
 	adcConfig.dataAlignment 		 = ADC_ALIGNMENT_RIGHT;
 	adcConfig.samplingPeriod		 = ADC_SAMPLING_PERIOD_28_CYCLES;
 
 //	/* La interrupción está activada por defecto */
 	adc_Config(&adcConfig);
+
+	//startCounterTimer(&handlerStateTimer);
 
 }
 

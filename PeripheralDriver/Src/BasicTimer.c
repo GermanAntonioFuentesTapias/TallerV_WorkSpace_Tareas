@@ -101,6 +101,8 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	/* 4. Activamos el Timer (el CNT debe comenzar a contar*/
 	ptrBTimerHandler->ptrTIMx->CR1 |= TIM_CR1_CEN; // estamos escribiendo en la pos 0 en CR1
 
+	//Esto podria ser una limitación cuando configuramos los timers
+
 	/* 5. Activamos la interrupción debida al Timerx Utilizado
 	 * Modificar el registro encargado de activar la interrupcion generada por el TIMx*/
 	ptrBTimerHandler->ptrTIMx->DIER |= TIM_DIER_UIE; // Poner 1 en la posición cero del registro DIER, levante la bandera, esa posicion cero
@@ -130,6 +132,16 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	/* 7. Volvemos a activar las interrupciones del sistema */
 	__enable_irq();
 }
+
+//void startCounterTimer(BasicTimer_Handler_t *ptrTimerConfig){
+//
+//	ptrTimerConfig->ptrTIMx->CR1 |= TIM_CR1_CEN;
+//}
+//
+//void StopCounterTimer(BasicTimer_Handler_t *ptrTimerConfig){
+//
+//	ptrTimerConfig->ptrTIMx->CR1 &= ~TIM_CR1_CEN;
+//}
 
 __attribute__((weak)) void BasicTimer2_CallBack(void){
 	  /* NOTE : This function should not be modified, when the callback is needed,
