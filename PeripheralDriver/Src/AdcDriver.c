@@ -89,7 +89,7 @@ void adc_Config(ADC_Config_t *adcConfig){
 		ADC1->SMPR2 |= (adcConfig -> samplingPeriod << (3 * (adcConfig->channel)));
 	}
 	else{
-		ADC1->SMPR1 |= (adcConfig -> samplingPeriod << (3* (adcConfig->channel)));
+		ADC1->SMPR1 |= (adcConfig -> samplingPeriod << (3* (adcConfig->channel)-9));
 	}
 
 	/* 8. Configuramos la secuencia y cuantos elementos hay en la secuencia */

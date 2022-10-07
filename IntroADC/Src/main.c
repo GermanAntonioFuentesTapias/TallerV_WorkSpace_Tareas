@@ -86,6 +86,7 @@ int main(void)
 			adcIsComplete = false;
 		}
 	}
+	//return 0;
 }
 
 
