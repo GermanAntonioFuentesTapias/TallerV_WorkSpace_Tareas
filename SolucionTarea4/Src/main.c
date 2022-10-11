@@ -41,7 +41,9 @@ uint8_t BlinkySimple       = 0; //Asignación a el blinky de led de estado
 
 BasicTimer_Handler_t   handlerTimer2      = {0}; // Handler para el timer 2
 GPIO_Handler_t         BlinkySimplePin    = {0}; // Handler para el BlinkySimple
-GPIO_Handler_t         handlerExtBut      = {0}; // Handler para el handlerExtBut
+GPIO_Handler_t         handlerGPIOBut     = {0}; // Handler para el handlerGPIOBut
+GPIO_Handler_t         handlerGPIOClock   = {0};
+GPIO_Handler_t         handlerGPIOData    = {0};
 GPIO_Handler_t         handlerTx          = {0}; // Handler para la transmisión serial bit a bit
 USART_Handler_t        handlerUsar        = {0}; // Handler para el Usar1
 
@@ -248,30 +250,45 @@ int main(void){
 	// Configuración del Exti
 
 
-	handlerExtiButton.pGPIOHandler = &handlerExtBut;
 
-	handlerExtiButton.edgeType =  EXTERNAL_INTERRUPT_FALLING_EDGE;
 
-    //Para el punto 3 se requiere presionar el Usar_Button, por lo cual se configura
-	//en este espacio
-
+    //Se requiere presionar el Boton para cambiar estados, por lo cual se configura
 	/* Inicialización de la configuración del Exti*/
-	handlerExtBut.pGPIOx = GPIOA;
+	handlerGPIOBut .pGPIOx = GPIOA;
 
 	//Configuración de usuario para el Usar_Button
-	handlerExtBut.GPIO_PinConfig.GPIO_PinNumber      =  PIN_0;
-	handlerExtBut.GPIO_PinConfig.GPIO_PinMode        =  GPIO_MODE_IN;
-	handlerExtBut.GPIO_PinConfig.GPIO_PinOPType      =  GPIO_OTYPE_PUSHPULL;
-	handlerExtBut.GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_PULLUP;
-	handlerExtBut.GPIO_PinConfig.GPIO_PinSpeed       =  GPIO_OSPEED_HIGH;
-	handlerExtBut.GPIO_PinConfig.GPIO_PinAltFunMode  =  AF0;
+	handlerGPIOBut .GPIO_PinConfig.GPIO_PinNumber      =  PIN_0;
+	handlerGPIOBut .GPIO_PinConfig.GPIO_PinMode        =  GPIO_MODE_IN;
+	handlerGPIOBut .GPIO_PinConfig.GPIO_PinOPType      =  GPIO_OTYPE_PUSHPULL;
+	handlerGPIOBut .GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_PULLUP;
+	handlerGPIOBut .GPIO_PinConfig.GPIO_PinSpeed       =  GPIO_OSPEED_HIGH;
+	handlerGPIOBut .GPIO_PinConfig.GPIO_PinAltFunMode  =  AF0;
 
 	/*Cargando la configuración para el Usar_Button */
-	GPIO_Config(&handlerExtBut);
+	GPIO_Config(&handlerGPIOBut );
+
+    /* Clock */
+
+	handlerClock.pGPIOHandler = &handlerGPIOClock ;
+
+	handlerClock.edgeType = EXTERNAL_INTERRUPT_FALLING_EDGE;
+
+	/* Button Externo Coder */
 
 	handlerExtiButton.edgeType = EXTERNAL_INTERRUPT_FALLING_EDGE;
 
-	handlerExtiButton.pGPIOHandler = &handlerExtBut;
+	handlerExtiButton.pGPIOHandler = &handlerGPIOBut ;
+
+	/*  Data */
+
+	handlerData.pGPIOHandler = &handlerGPIOData;
+
+	handlerData.pGPIOHandler = &handlerGPIOData;
+
+
+
+
+
 
 
 	UsarButton.pGPIOx = GPIOC;
