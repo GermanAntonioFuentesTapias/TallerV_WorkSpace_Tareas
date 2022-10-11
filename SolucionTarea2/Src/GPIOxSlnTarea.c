@@ -373,9 +373,9 @@ int main(void){
     return 0;
 
     }
-    /* Se crea la condición de GPIOxTooglePin*/
 
-    void GPIOxTooglePin(GPIO_Handler_t *pPinHandler){ // Se creo con un parametro tipo GPIO_Handler_t
+/* Se crea la condición de GPIOxTooglePin*/
+void GPIOxTooglePin(GPIO_Handler_t *pPinHandler){ // Se creo con un parametro tipo GPIO_Handler_t
 
 	  // ODR me dice el registro del pin a la salida
      // Void seria una función que no retorna nada
@@ -390,3 +390,4 @@ int main(void){
     // Si se le coloca un condicional se podria crear un codigo de manera que lea y mire si ya esta registrado ese pin o es necesario
      //agregarlo
     }
+//Esta función corresponde al gpio driver.

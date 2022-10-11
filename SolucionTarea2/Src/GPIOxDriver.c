@@ -167,6 +167,7 @@ uint32_t GPIO_ReadPin(GPIO_Handler_t *pPinHandler){ // Para leer el pin especifi
 	pinValue = (pPinHandler->pGPIOx->IDR >> pPinHandler->GPIO_PinConfig.GPIO_PinNumber);
 	pinValue &= 0b1; // Se limpian las posiciones de la derecha del pin de interes que se apunto con el puntero pPinHandler a  GPIO_PinConfig.GPIO_PinNumber
 	// Faltaba hacer esta limpiezaa
+	// OK
 
 	return pinValue;
 }
