@@ -169,3 +169,12 @@ uint32_t GPIO_ReadPin(GPIO_Handler_t *pPinHandler){ // Para leer el pin especifi
 
 	return pinValue;
 }
+
+void GPIOxTooglePin(GPIO_Handler_t *pPinHandler){ // Se creo con un parametro tipo GPIO_Handler_t
+
+	  // ODR me dice el registro del pin a la salida
+   // Void seria una función que no retorna nada
+
+  pPinHandler -> pGPIOx -> ODR ^=(0b1 << (pPinHandler -> GPIO_PinConfig.GPIO_PinNumber));
+
+}

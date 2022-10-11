@@ -42,7 +42,7 @@ typedef struct
 void GPIO_Config (GPIO_Handler_t *pGPIOHandler);  // Para configurar el Pin
 void GPIO_WritePin(GPIO_Handler_t *pPinHandler, uint8_t newState); // Para escribir sobre un pin
 uint32_t GPIO_ReadPin (GPIO_Handler_t *pPinHandler);  // Para leer un pin en especifico
-
+void GPIOxTooglePin(GPIO_Handler_t *pPinHandler);
 /* Valores estandar para las configuraciones*/ // Son posibles configuraciones y salidas
 /* 8.4.1 GPIOx_Moder (dos bit por cada PIN) */
 #define GPIO_MODE_IN      0
