@@ -95,6 +95,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 			__NOP();
 		}
 
+		break;
+
 
 	}
 
@@ -139,6 +141,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 			else{
 				__NOP();
 			}
+
+			break;
 	   }
 
 	case 3: {
@@ -179,6 +183,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 			else{
 				__NOP();
 			}
+
+			break;
 	}
 
 	case 4:{
@@ -219,6 +225,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 		else{
 			__NOP();
 		}
+
+		break;
 	}
 
 	case 5:{
@@ -259,6 +267,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 		else{
 			__NOP();
 		}
+
+		break;
 	}
 
 	case 6: {
@@ -299,6 +309,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 		else{
 			__NOP();
 		}
+
+		break;
 	}
 
 	case 7:{
@@ -339,6 +351,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 		else{
 			__NOP();
 		}
+
+		break;
 	}
 	
 	case 8:{
@@ -379,6 +393,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 		else{
 			__NOP();
 		}
+
+		break;
 	}
 
 	case 9:{
@@ -420,6 +436,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 			__NOP();
 		}
 
+		break;
+
 	}
 
 	case 10: {
@@ -460,6 +478,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 		else{
 			__NOP();
 		}
+
+		break;
 	}
 
 	case 11: {
@@ -500,6 +520,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 		else{
 			__NOP();
 		}
+
+		break;
 	}
 
 	case 12: {
@@ -540,6 +562,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 		else{
 			__NOP();
 		}
+
+		break;
 	}
 
 	case 13:{
@@ -581,6 +605,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 			__NOP();
 		}
 
+		break;
+
 	}
 
 	case 14: {
@@ -621,6 +647,8 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 		else{
 			__NOP();
 		}
+
+		break;
 	}
 
 	/* Configurando para el todos los pines GPIOX_15 */

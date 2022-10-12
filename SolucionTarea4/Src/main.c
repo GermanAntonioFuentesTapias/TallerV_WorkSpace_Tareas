@@ -68,8 +68,8 @@ GPIO_Handler_t         handlerSegmentoE   = {0};
 GPIO_Handler_t         handlerSegmentoF   = {0};
 GPIO_Handler_t         handlerSegmentoG   = {0};
 GPIO_Handler_t         UsarButton         = {0};
-GPIO_Handler_t         BaseTransistor1    = {0};
-GPIO_Handler_t         BaseTransistor2    = {0};
+GPIO_Handler_t         TransistorDecenas  = {0};
+GPIO_Handler_t         TransistorUnidades = {0};
 
 
 //Variables para boton
@@ -92,12 +92,112 @@ uint8_t NumerosSwitch = 0;;
 uint8_t Decenas = 0;
 uint8_t Unidades = 0;
 
+/* Cabeceras de funciones */
+void initSystem (void);
 
-void DefNumerosPrueba(NumerosSwitch);
+//void DefNumerosPrueba(NumerosSwitch);
 /* Creación del programa principal a utilizar en la tarea*/
 
 int main(void){
-    //   Esta es la inicialización del punto 1
+
+
+	//Pasos para el desarrollo -->  Tengo decenas y unidades como variables y una bandera para ambas
+
+	//Hago el primer condicional if la bandera de switch esta prendida o sea entonces sigo, entro a verificar
+
+	//cual bandera tengo, tengo bandera de unidades y de centena
+
+	initSystem();
+
+	DefNumerosPrueba(NumerosSwitch);
+
+
+
+	while(1){
+		/* Escritura de las variables con sus estados */
+
+		GPIO_WritePin(&BlinkySimplePin, BlinkySimple);
+
+		GPIO_WritePin(&TransistorUnidades, Unidades);
+
+		GPIO_WritePin(&TransistorDecenas, Decenas);
+
+//		void DefNumerosPrueba(NumerosSwitch){
+//
+//			if(ClockEnconder == 1 && BanderaUnidad == RESET){
+//
+//				if(NumerosSwitch < 10){
+//
+//					NumerosSwitch =
+//					Unidades = 1;
+//
+//				}
+//
+//				if(NumerosSwitch >10){
+//
+//					Numero
+//				}
+//			}
+//
+//		}
+		if(NumerosSwitch){
+
+		if(BanderaDecena == SET){
+			GPIO_WritePin(&TransistorDecenas, RESET);
+			GPIO_WritePin(&TransistorUnidades, SET);
+
+			BanderaDecena = 0;
+		}
+			if(BanderaUnidad == SET){
+
+				GPIO_WritePin(&TransistorDecenas, SET);
+				GPIO_WritePin(&TransistorUnidades, RESET);
+
+			//prendo
+		 }
+
+			else if(BanderaDecena == SET && BanderaUnidad == SET){
+
+				GPIO_WritePin(&TransistorDecenas, RESET);
+				GPIO_WritePin(&TransistorUnidades,RESET);
+
+			}
+
+		}
+		if (Code){
+
+			writeMsg(&handlerUsar, greetingMsgBu);
+
+			Code = 0;
+
+					}
+		else if(ClockEnconder){
+
+			writeMsg(&handlerUsar, greetingMsg);
+
+			ClockEnconder = 0;
+		}
+
+		else if (DataEnconder){
+
+			writeMsg(&handlerUsar, greetingMsgLeft);
+
+			DataEnconder = 0;
+
+		}
+
+		//}
+		if (rxData != '\0'){
+
+		writeChar(&handlerUsar, rxData);
+
+		rxData = '\0';
+		}
+			}
+		return 0;
+	}
+
+void initSystem(void){
 
 
     /* Led de estado */
@@ -209,29 +309,29 @@ int main(void){
 // Salidas de los transistores
 
 
-	     BaseTransistor1.pGPIOx  =GPIOC;
+	     TransistorDecenas.pGPIOx  =GPIOC;
 
-		 BaseTransistor1.GPIO_PinConfig.GPIO_PinNumber        = PIN_10;
-		 BaseTransistor1.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
-		 BaseTransistor1.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
-		 BaseTransistor1.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
-		 BaseTransistor1.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
-		 BaseTransistor1.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
-
-
-	     GPIO_Config(&BaseTransistor1);
-
-	     BaseTransistor2.pGPIOx  =GPIOC;
-
-		 BaseTransistor2.GPIO_PinConfig.GPIO_PinNumber       = PIN_12;
-		 BaseTransistor2.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
-		 BaseTransistor2.GPIO_PinConfig.GPIO_PinOPType       = GPIO_OTYPE_PUSHPULL;
-		 BaseTransistor2.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
-		 BaseTransistor2.GPIO_PinConfig.GPIO_PinSpeed        = GPIO_OSPEED_MEDIUM;
-		 BaseTransistor2.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+		 TransistorDecenas.GPIO_PinConfig.GPIO_PinNumber        = PIN_10;
+		 TransistorDecenas.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
+		 TransistorDecenas.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
+		 TransistorDecenas.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+		 TransistorDecenas.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
+		 TransistorDecenas.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
 
 
-		 GPIO_Config(&BaseTransistor2);
+	     GPIO_Config(&TransistorDecenas);
+
+	     TransistorUnidades.pGPIOx  =GPIOC;
+
+		 TransistorUnidades.GPIO_PinConfig.GPIO_PinNumber       = PIN_12;
+		 TransistorUnidades.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+		 TransistorUnidades.GPIO_PinConfig.GPIO_PinOPType       = GPIO_OTYPE_PUSHPULL;
+		 TransistorUnidades.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+		 TransistorUnidades.GPIO_PinConfig.GPIO_PinSpeed        = GPIO_OSPEED_MEDIUM;
+		 TransistorUnidades.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+
+
+		 GPIO_Config(&TransistorUnidades);
      // Configuración para el Blinky
 	 handlerTimer2.ptrTIMx = TIM2;
 	 handlerTimer2.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP; // CUENTA HACIA ARRIBA
@@ -296,11 +396,7 @@ int main(void){
 
 /********************************************************************************/
 
-
 	// Configuración del Exti
-
-
-
 
     //Se requiere presionar el Boton para cambiar estados, por lo cual se configura
 	/* Inicialización de la configuración del Exti*/
@@ -338,6 +434,8 @@ int main(void){
 	handlerGPIOData.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerGPIOData.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEED_HIGH;
 	handlerGPIOData.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
+
+	GPIO_Config(&handlerGPIOData);
 
     /* Clock */
 
@@ -377,91 +475,7 @@ int main(void){
 		/*Cargando la configuración para el Usar_Button */
 		GPIO_Config(&UsarButton);
 
-
-
-	while(1){
-
-//		if (GPIO_ReadPin(&handlerGPIOBut) == SET){
-
-		if (Code){
-
-			writeMsg(&handlerUsar, greetingMsgBu);
-
-			Code = 0;
-
-					}
-		else if(ClockEnconder){
-
-			writeMsg(&handlerUsar, greetingMsg);
-
-			ClockEnconder = 0;
-		}
-
-		else if (DataEnconder){
-
-			writeMsg(&handlerUsar, greetingMsgLeft);
-
-			DataEnconder = 0;
-
-		}
-
-		//}
-		if (rxData != '\0'){
-
-		writeChar(&handlerUsar, rxData);
-
-		rxData = '\0';
-		}
-
-//		if(adcIsComplete == true){
-//		sprintf(bufferData, "ADC = %u \n\r", (unsigned int) adcData);
-//		writeMsg(&handlerUsart, bufferData);
-//		adcIsComplete = false;
-//
-//	    }
-		//}
-
-			/*
-			 * Necesitamos enviar cada 250 ms, por lo que se asigno una bandera llamada  Bandera y Bandera_Normal
-			 * asi que cada que suceda el evento asignado la bandera se levanta, tendra el valor asignado en el Call
-			 * y se desarrollara, se reinicia el valor a cero y vuelve a preguntar cual desarrollar (evento 1 o 2) y
-			 *  asi ciclicamente. Con esto se desarrolla el punto 3
-			 */
-	           // Tenemos presionado el botón
-//				if(GPIO_ReadPin(&UsarButton) == (RESET)){
-//	                //Nuestra bandera dara un afirmativo
-//					if(Bandera){
-//	                    //Escribimos el valor de variable
-//						writeChar(&handlerUsar,variable);
-//	                    // Sumamos una unidad a variable
-//						variable ++;
-//	                    // Se reinicia el valor de la bandera para volver a estar lista para otro evento
-//						Bandera = 0;
-//						//Se reinicia la bandera que no se utilizo
-//						Bandera_Normal = 0;
-//					}
-//					else
-//						__NOP();
-//
-//				    }
-//
-//				else{
-//					 //
-//					 if(Bandera_Normal){
-//	                     // Si no se presiona el boton, la bandera_normal se activa y escribe el caracter
-//						 writeChar(&handlerUsar,'m');
-//						 //Se reinicia el valor de la bandera para volver a estar lista para otro evento
-//						 Bandera_Normal = 0;
-//						 //Se reinicia la bandera que no se utilizó
-//						 Bandera = 0;
-//					 }
-//					 else{
-//						 __NOP();
-//					 }
-//	               }
-			}
-		return 0;
-	}
+}
 /* CallBack del timer 2*/
 
 void BasicTimer2_CallBack(void){
@@ -483,9 +497,18 @@ void BasicTimer2_CallBack(void){
 
 void BasicTimer3_CallBack(void){
 
-	BanderaDecena = 1;
+//	if(&handlerGPIOData == SET & &handlerGPIOClock == RESET){
+//
+//		NumerosSwitch ++;
+//	}
+//
+//	else if(&handlerGPIOData == RESET & &handlerGPIOClock == RESET){
+//
+//		NumerosSwitch --;
+	//}
+	BanderaDecena ^= 1;
 
-	BanderaUnidad = 1;
+	BanderaUnidad ^= 1;
 
 }
 void USART2Rx_CallBack(void){
@@ -508,10 +531,9 @@ void callback_extInt5(void){
 	ClockEnconder =  1;
 }
 
-void DefNumerosPrueba(NumerosSwitch){
+void DefNumerosPrueba(uint8_t NumerosSwitch){
 
 	switch(NumeroSwitch){
-
 
 	case 0:{
 
@@ -522,6 +544,8 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoE, RESET);
 		GPIO_WritePin(&handlerSegmentoF, RESET);
 		GPIO_WritePin(&handlerSegmentoG, SET);
+
+		break;
 
 	}
 
@@ -535,6 +559,9 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoF, SET);
 		GPIO_WritePin(&handlerSegmentoG, SET);
 
+
+		break;
+
 	}
 
 	case 2: {
@@ -547,6 +574,8 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoF, SET);
 		GPIO_WritePin(&handlerSegmentoG, RESET);
 
+		break;
+
 	}
 
 	case 3: {
@@ -558,6 +587,8 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoE, RESET);
 		GPIO_WritePin(&handlerSegmentoF, SET);
 		GPIO_WritePin(&handlerSegmentoG, RESET);
+
+		break;
 	}
 
 	case 4: {
@@ -569,6 +600,8 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoE, SET);
 		GPIO_WritePin(&handlerSegmentoF, RESET);
 		GPIO_WritePin(&handlerSegmentoG, RESET);
+
+		break;
       }
 
 	case 5: {
@@ -582,6 +615,8 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoF, SET);
 		GPIO_WritePin(&handlerSegmentoG, RESET);
 
+		break;
+
 	  }
 
 	case 6: {
@@ -593,6 +628,8 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoE, RESET);
 		GPIO_WritePin(&handlerSegmentoF, RESET);
 		GPIO_WritePin(&handlerSegmentoG, RESET);
+
+		break;
     }
 
 	case 7: {
@@ -604,6 +641,8 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoE, SET);
 		GPIO_WritePin(&handlerSegmentoF, SET);
 		GPIO_WritePin(&handlerSegmentoG, SET);
+
+		break;
 	}
 
 	case 8: {
@@ -615,6 +654,8 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoE, RESET);
 		GPIO_WritePin(&handlerSegmentoF, RESET);
 		GPIO_WritePin(&handlerSegmentoG, RESET);
+
+		break;
 	}
 
 	case 9: {
@@ -626,13 +667,11 @@ void DefNumerosPrueba(NumerosSwitch){
 		GPIO_WritePin(&handlerSegmentoE, SET);
 		GPIO_WritePin(&handlerSegmentoF, RESET);
 		GPIO_WritePin(&handlerSegmentoG, RESET);
+
+		break;
 	}
-
-
-
+//    return  NumeroSwitch;
 	}
-
-
 
 }
 
