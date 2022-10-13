@@ -35,10 +35,11 @@ este botón era utilizado para cambiar la frecuencia de refresco del display de 
 
 /* Variables necesarias para la activación de banderas,blinky y sumatoria al ser presionado el boton*/
 
-int variable               = 0; //Caracter encargado de hacer una adición al momento de ser pulsado el botón
-int BanderaUnidad          = 0; //Bandera encargada de mostrar cuando se esta presionando USAR_BUTTON
+uint8_t variable               = 0; //Caracter encargado de hacer una adición al momento de ser pulsado el botón
+int BanderaUnidad          = 1; //Bandera encargada de mostrar cuando se esta presionando USAR_BUTTON
 int BanderaDecena          = 0; //Bandera encargada de mostrar cuando no esta presionando el USAR_BUTTON
 uint8_t BlinkySimple       = 0; //Asignación a el blinky de led de estado
+uint8_t BanderaOperacion   = 0;
 
 /* La variables tendran los diferentes tipos */
 
@@ -77,7 +78,7 @@ uint8_t rxData       =  0;
 char bufferData[64] =  {0};
 char greetingMsg[] = "Los caminos de la vida son duros, pero llevables \n";
 char greetingMsgLeft[] = "CWW \n";
-char greetingMsgBu  [] = "Botones \n";
+char greetingMsgBu  [] = "Por muy dificil que sea el problema, tiene solucion \n";
 bool adcIsComplete 	 = false;
 uint16_t adcData = 0;
 
@@ -85,17 +86,17 @@ uint8_t Code   = 0;
 uint8_t DataEnconder = 0;
 uint8_t ClockEnconder  = 0;
 
-uint8_t NumerosSwitch = 0;;
+//uint8_t NumerosSwitch = 0;
 
 //Variables de los numeros
 
 uint8_t Decenas = 0;
 uint8_t Unidades = 0;
-
+uint8_t LoadDisplay = 0;
 /* Cabeceras de funciones */
 void initSystem (void);
 
-//void DefNumerosPrueba(NumerosSwitch);
+void DefNumerosPrueba(uint8_t NumerosSwitch);
 /* Creación del programa principal a utilizar en la tarea*/
 
 int main(void){
@@ -107,9 +108,9 @@ int main(void){
 
 	//cual bandera tengo, tengo bandera de unidades y de centena
 
-	initSystem();
+initSystem();
 
-	DefNumerosPrueba(NumerosSwitch);
+//	DefNumerosPrueba(NumerosSwitch);
 
 
 
@@ -118,84 +119,93 @@ int main(void){
 
 		GPIO_WritePin(&BlinkySimplePin, BlinkySimple);
 
-		GPIO_WritePin(&TransistorUnidades, Unidades);
+		GPIO_WritePin(&TransistorUnidades, BanderaUnidad);
 
-		GPIO_WritePin(&TransistorDecenas, Decenas);
+		GPIO_WritePin(&TransistorDecenas, BanderaDecena);
 
-//		void DefNumerosPrueba(NumerosSwitch){
-//
-//			if(ClockEnconder == 1 && BanderaUnidad == RESET){
-//
-//				if(NumerosSwitch < 10){
-//
-//					NumerosSwitch =
-//					Unidades = 1;
-//
-//				}
-//
-//				if(NumerosSwitch >10){
-//
-//					Numero
-//				}
-//			}
-//
-//		}
-		if(NumerosSwitch){
 
-		if(BanderaDecena == SET){
-			GPIO_WritePin(&TransistorDecenas, RESET);
-			GPIO_WritePin(&TransistorUnidades, SET);
+     /* Operación matematica para el proceso */
+			if(LoadDisplay){
 
-			BanderaDecena = 0;
+				if(variable < 10){
+
+					Unidades = variable % 10 ;
+
+					Decenas = 0;
+				}
+
+				else{
+
+					Decenas = variable / 10;
+
+					Unidades = (variable - Decenas* 10) % 10;
+
+				}
+
+		if(BanderaUnidad){
+
+			DefNumerosPrueba(Unidades);
+			GPIO_WritePin(&TransistorDecenas, SET);
+			GPIO_WritePin(&TransistorUnidades, RESET);
 		}
-			if(BanderaUnidad == SET){
 
-				GPIO_WritePin(&TransistorDecenas, SET);
-				GPIO_WritePin(&TransistorUnidades, RESET);
+		else{
+
+				DefNumerosPrueba(Decenas);
+				GPIO_WritePin(&TransistorDecenas, RESET);
+				GPIO_WritePin(&TransistorUnidades, SET);
 
 			//prendo
 		 }
 
-			else if(BanderaDecena == SET && BanderaUnidad == SET){
+		LoadDisplay = 0;
 
-				GPIO_WritePin(&TransistorDecenas, RESET);
-				GPIO_WritePin(&TransistorUnidades,RESET);
-
-			}
-
-		}
-		if (Code){
-
-			writeMsg(&handlerUsar, greetingMsgBu);
-
-			Code = 0;
-
-					}
-		else if(ClockEnconder){
-
-			writeMsg(&handlerUsar, greetingMsg);
-
-			ClockEnconder = 0;
-		}
-
-		else if (DataEnconder){
-
-			writeMsg(&handlerUsar, greetingMsgLeft);
-
-			DataEnconder = 0;
 
 		}
 
-		//}
-		if (rxData != '\0'){
 
-		writeChar(&handlerUsar, rxData);
+      if(variable >= 51 && variable <= 255){
 
-		rxData = '\0';
-		}
-			}
-		return 0;
+    	  variable = 0;
+
+      }
+
+      if(BanderaOperacion){
+
+      	if(GPIO_ReadPin(&handlerGPIOClock) == RESET && (GPIO_ReadPin(&handlerGPIOData))  == RESET){
+
+		sprintf(bufferData, "CW = %u \n\r", (variable));
+		writeMsg(&handlerUsar, bufferData);
+
+
+
+      		variable ++;
+      	}
+
+      	else if ((GPIO_ReadPin(&handlerGPIOClock) == SET && (GPIO_ReadPin(&handlerGPIOData))  == RESET)){
+
+      		sprintf(bufferData, "CWW = %u \n\r", (variable));
+      		writeMsg(&handlerUsar, bufferData);
+
+        	variable --;
+
+
+
+ 	}
+      	BanderaOperacion = 0;
 	}
+
+      if (Code){
+
+      			writeMsg(&handlerUsar, greetingMsgBu);
+
+      			Code = 0;
+
+      					}
+
+      }
+
+} // Cierra el main
 
 void initSystem(void){
 
@@ -344,7 +354,7 @@ void initSystem(void){
 	 handlerTimer3.ptrTIMx = TIM3;
 	 handlerTimer3.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP;
 	 handlerTimer3.TIMx_Config.TIMx_speed           = BTIMER_SPEED_1ms;
-	 handlerTimer3.TIMx_Config.TIMx_period          = 25;
+	 handlerTimer3.TIMx_Config.TIMx_period          = 10;
 	 handlerTimer3.TIMx_Config.TIMx_interruptEnable = 1;
 
 
@@ -406,7 +416,7 @@ void initSystem(void){
 	handlerGPIOBut .GPIO_PinConfig.GPIO_PinNumber      =  PIN_3;
 	handlerGPIOBut .GPIO_PinConfig.GPIO_PinMode        =  GPIO_MODE_IN;
 	handlerGPIOBut .GPIO_PinConfig.GPIO_PinOPType      =  GPIO_OTYPE_PUSHPULL;
-	handlerGPIOBut .GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_NOTHING;
+	handlerGPIOBut .GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_PULLUP;
 	handlerGPIOBut .GPIO_PinConfig.GPIO_PinSpeed       =  GPIO_OSPEED_HIGH;
 	handlerGPIOBut .GPIO_PinConfig.GPIO_PinAltFunMode  =  AF0;
 
@@ -440,16 +450,15 @@ void initSystem(void){
     /* Clock */
 
 	handlerClock.pGPIOHandler = &handlerGPIOClock ;
-
 	handlerClock.edgeType = EXTERNAL_INTERRUPT_FALLING_EDGE;
 
 	extInt_Config(&handlerClock);
 
 	/* Button Externo Coder */
 
+	handlerExtiButton.pGPIOHandler = &handlerGPIOBut ;
 	handlerExtiButton.edgeType = EXTERNAL_INTERRUPT_FALLING_EDGE;
 
-	handlerExtiButton.pGPIOHandler = &handlerGPIOBut ;
 
 	extInt_Config(&handlerExtiButton);
 
@@ -457,7 +466,7 @@ void initSystem(void){
 
 	handlerData.pGPIOHandler = &handlerGPIOData;
 
-	handlerData.edgeType     = EXTERNAL_INTERRUPT_RISING_EDGE;
+	handlerData.edgeType     = EXTERNAL_INTERRUPT_FALLING_EDGE;
 
 	extInt_Config(&handlerData);
 
@@ -510,6 +519,8 @@ void BasicTimer3_CallBack(void){
 
 	BanderaUnidad ^= 1;
 
+	LoadDisplay   = 1;
+
 }
 void USART2Rx_CallBack(void){
 	rxData = getRxData();
@@ -518,22 +529,42 @@ void USART2Rx_CallBack(void){
 void callback_extInt3(void){
 
 	Code = 1;
+
 }
 
 void callback_extInt4(void){
 
-	DataEnconder = 1;
-
+	BanderaOperacion = 1;
+//
+//	if(GPIO_ReadPin(&handlerGPIOClock) == RESET && (GPIO_ReadPin(&handlerGPIOData))  == RESET){
+//
+//					sprintf(bufferData, "CW = %u \n\r", (variable));
+//					writeMsg(&handlerUsar, bufferData);
+//
+//
+//
+//		variable ++;
+//	}
+//
+//	else if ((GPIO_ReadPin(&handlerGPIOClock) == SET && (GPIO_ReadPin(&handlerGPIOData))  == RESET)){
+//
+//		sprintf(bufferData, "CWW = %u \n\r", (variable));
+//		writeMsg(&handlerUsar, bufferData);
+//
+//	variable --;
+//}
 }
-
-void callback_extInt5(void){
-
-	ClockEnconder =  1;
-}
+//
+//void callback_extInt5(void){
+////
+////	ClockEnconder =  1;
+//
+////	variable ++;
+//}
 
 void DefNumerosPrueba(uint8_t NumerosSwitch){
 
-	switch(NumeroSwitch){
+	switch(NumerosSwitch){
 
 	case 0:{
 
@@ -582,9 +613,9 @@ void DefNumerosPrueba(uint8_t NumerosSwitch){
 
 		GPIO_WritePin(&handlerSegmentoA, RESET);
 		GPIO_WritePin(&handlerSegmentoB, RESET);
-		GPIO_WritePin(&handlerSegmentoC, SET);
+		GPIO_WritePin(&handlerSegmentoC, RESET);
 		GPIO_WritePin(&handlerSegmentoD, RESET);
-		GPIO_WritePin(&handlerSegmentoE, RESET);
+		GPIO_WritePin(&handlerSegmentoE, SET);
 		GPIO_WritePin(&handlerSegmentoF, SET);
 		GPIO_WritePin(&handlerSegmentoG, RESET);
 
@@ -608,11 +639,11 @@ void DefNumerosPrueba(uint8_t NumerosSwitch){
 
 
 	    GPIO_WritePin(&handlerSegmentoA, RESET);
-		GPIO_WritePin(&handlerSegmentoB, RESET);
-		GPIO_WritePin(&handlerSegmentoC, SET);
+		GPIO_WritePin(&handlerSegmentoB, SET);
+		GPIO_WritePin(&handlerSegmentoC, RESET);
 		GPIO_WritePin(&handlerSegmentoD, RESET);
-		GPIO_WritePin(&handlerSegmentoE, RESET);
-		GPIO_WritePin(&handlerSegmentoF, SET);
+		GPIO_WritePin(&handlerSegmentoE, SET);
+		GPIO_WritePin(&handlerSegmentoF, RESET);
 		GPIO_WritePin(&handlerSegmentoG, RESET);
 
 		break;
@@ -671,8 +702,22 @@ void DefNumerosPrueba(uint8_t NumerosSwitch){
 		break;
 	}
 //    return  NumeroSwitch;
+
+	default:{
+
+
+		GPIO_WritePin(&handlerSegmentoA, SET);
+		GPIO_WritePin(&handlerSegmentoB, SET);
+		GPIO_WritePin(&handlerSegmentoC, SET);
+		GPIO_WritePin(&handlerSegmentoD, SET);
+		GPIO_WritePin(&handlerSegmentoE, SET);
+		GPIO_WritePin(&handlerSegmentoF, SET);
+		GPIO_WritePin(&handlerSegmentoG, RESET);
+
+		break;
+	}
 	}
 
-}
+    }
 
 
