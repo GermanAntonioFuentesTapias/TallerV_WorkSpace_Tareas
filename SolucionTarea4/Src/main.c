@@ -120,7 +120,8 @@ initSystem();
 
 		  if(BanderaOperacion){
 
-		      	if(GPIO_ReadPin(&handlerGPIOClock) == RESET && (GPIO_ReadPin(&handlerGPIOData))  == RESET){
+//		      	if(GPIO_ReadPin(&handlerGPIOClock) == RESET && (GPIO_ReadPin(&handlerGPIOData))  == RESET){
+			   	if(GPIO_ReadPin(&handlerGPIOClock) == RESET){
 
 		      		variable ++;
 
@@ -138,12 +139,23 @@ initSystem();
 				 	}
 
 		      	}
+//
+//		      	else if ((GPIO_ReadPin(&handlerGPIOClock) == SET && (GPIO_ReadPin(&handlerGPIOData))  == RESET)){
 
-		      	else if ((GPIO_ReadPin(&handlerGPIOClock) == SET && (GPIO_ReadPin(&handlerGPIOData))  == RESET)){
+		      	else if ((GPIO_ReadPin(&handlerGPIOClock) == SET )){
 
-		      		variable --;
+		      		 if (variable ==0){
+
+		      			 variable =0;
+
+		      		 } else {
+
+		      			 variable --;
+		      		 }
+
 		      		sprintf(bufferData, "Enconder CCW, pasos = %u \n\r", (variable));
 		      		writeMsg(&handlerUsar, bufferData);
+
 			 }
 
 		      	BanderaOperacion = 0;
@@ -161,7 +173,7 @@ initSystem();
      /* Operación matematica para el proceso */
 			if(LoadDisplay){
 
-				if(variable < 10){
+				if(variable < 10 ){
 
 					Unidades = variable % 10 ;
 
@@ -175,7 +187,6 @@ initSystem();
 					Unidades = (variable - Decenas* 10) % 10;
 
 				}
-
 		if(BanderaUnidad){
 
 			DefNumerosPrueba(Unidades);
@@ -402,7 +413,7 @@ void initSystem(void){
 	handlerUsar.ptrUSARTx = USART2 ;
 	// Configuración del usuario para el pin -->> Paridad activa en modo Even
 	handlerUsar.USART_Config.USART_mode     =   USART_MODE_RXTX;       // En modo de transmisión
-	handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_19200;
+	handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_115200;
 	handlerUsar.USART_Config.USART_datasize =   USART_DATASIZE_8BIT; // Se tiene paridad por lo que se asigna ese tamaño
 	handlerUsar.USART_Config.USART_parity   =   USART_PARITY_NONE;   // Paridad en even
 	handlerUsar.USART_Config.USART_stopbits =   USART_STOPBIT_1;
@@ -456,7 +467,7 @@ void initSystem(void){
     /* Clock */
 
 	handlerClock.pGPIOHandler = &handlerGPIOClock ;
-	handlerClock.edgeType = EXTERNAL_INTERRUPT_FALLING_EDGE;
+	handlerClock.edgeType = EXTERNAL_INTERRUPT_RISING_EDGE;
 
 	extInt_Config(&handlerClock);
 
