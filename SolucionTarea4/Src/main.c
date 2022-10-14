@@ -36,6 +36,7 @@ este botón era utilizado para cambiar la frecuencia de refresco del display de 
 /* Variables necesarias para la activación de banderas,blinky y sumatoria al ser presionado el boton*/
 
 uint8_t variable               = 0; //Caracter encargado de hacer una adición al momento de ser pulsado el botón
+uint8_t variable1          = 0;
 int BanderaUnidad          = 1; //Bandera encargada de mostrar cuando se esta presionando USAR_BUTTON
 int BanderaDecena          = 0; //Bandera encargada de mostrar cuando no esta presionando el USAR_BUTTON
 uint8_t BlinkySimple       = 0; //Asignación a el blinky de led de estado
@@ -76,8 +77,7 @@ GPIO_Handler_t         TransistorUnidades = {0};
 //Variables para boton
 uint8_t rxData       =  0;
 char bufferData[64] =  {0};
-char greetingMsg[] = "Los caminos de la vida son duros, pero llevables \n";
-char greetingMsgLeft[] = "CWW \n";
+char greetingMsg    [] = "No se puede restar más \n";
 char greetingMsgBu  [] = "Por muy dificil que sea el problema, tiene solucion \n";
 bool adcIsComplete 	 = false;
 uint16_t adcData = 0;
@@ -115,6 +115,40 @@ initSystem();
 
 
 	while(1){
+
+
+
+		  if(BanderaOperacion){
+
+		      	if(GPIO_ReadPin(&handlerGPIOClock) == RESET && (GPIO_ReadPin(&handlerGPIOData))  == RESET){
+
+		      		variable ++;
+
+		      if( variable < 51){
+
+				 sprintf(bufferData, "Enconder CW, pasos = %u \n\r", (variable));
+				 writeMsg(&handlerUsar, bufferData);
+
+				 	} else {
+				 		variable = 0;
+
+						sprintf(bufferData, "Enconder CW, pasos = %u \n\r", (variable));
+						 writeMsg(&handlerUsar, bufferData);
+
+				 	}
+
+		      	}
+
+		      	else if ((GPIO_ReadPin(&handlerGPIOClock) == SET && (GPIO_ReadPin(&handlerGPIOData))  == RESET)){
+
+		      		variable --;
+		      		sprintf(bufferData, "Enconder CCW, pasos = %u \n\r", (variable));
+		      		writeMsg(&handlerUsar, bufferData);
+			 }
+
+		      	BanderaOperacion = 0;
+			}
+
 		/* Escritura de las variables con sus estados */
 
 		GPIO_WritePin(&BlinkySimplePin, BlinkySimple);
@@ -164,36 +198,8 @@ initSystem();
 		}
 
 
-      if(variable >= 51 && variable <= 255){
 
-    	  variable = 0;
-
-      }
-
-      if(BanderaOperacion){
-
-      	if(GPIO_ReadPin(&handlerGPIOClock) == RESET && (GPIO_ReadPin(&handlerGPIOData))  == RESET){
-
-		sprintf(bufferData, "CW = %u \n\r", (variable));
-		writeMsg(&handlerUsar, bufferData);
-
-
-
-      		variable ++;
-      	}
-
-      	else if ((GPIO_ReadPin(&handlerGPIOClock) == SET && (GPIO_ReadPin(&handlerGPIOData))  == RESET)){
-
-      		sprintf(bufferData, "CWW = %u \n\r", (variable));
-      		writeMsg(&handlerUsar, bufferData);
-
-        	variable --;
-
-
-
- 	}
-      	BanderaOperacion = 0;
-	}
+      /* Codigo para enviar el mensaje cuando el boton es oprimido */
 
       if (Code){
 
