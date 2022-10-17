@@ -155,6 +155,7 @@ initSystem(); // Se llama la función de configuración de pines
 				 }
 
 		  /* Punto 5,imprimir mensaje segun la dirección*/
+
 		  // Si es menor a 51 se imprime el valor en el Coolterm de "Variable"
 
 		  if( variable < 51){
@@ -173,7 +174,7 @@ initSystem(); // Se llama la función de configuración de pines
 		// El clock nos da la interrupción y el data la información, por eso se llama al 11
 		// y no al 12 en el exti, este seria caso CW
 
-		/* Caso CCW para la sustración */
+		/* Caso CCW para la resta*/
 
 		 if ((GPIO_ReadPin(&handlerGPIOClock) == SET )){
 
@@ -249,42 +250,57 @@ initSystem(); // Se llama la función de configuración de pines
 					//Se supero unidades, se necesita el incremento en decenas por lo que se tienen dos operaciones
 					// distintas para ambas variables.
 
-					Decenas = variable / 10; //
+					Decenas = variable / 10; // De aqui al dividir por 10 se queda el numero entero, asi que 12/10, nos da 1.2, pero como
+					// trabajamos con enteros queda el 1 que seria la decena entre el 10 y el 19
 
-					Unidades = (variable - Decenas* 10) % 10;
+					Unidades = (variable - Decenas* 10) % 10; //  Se esta la propiedad distributiva (a-b) mod c = ( a mod c- b mod c ) mod c
+					// asi que con esto en cada proceso se garantizara obtener el valor de unidades deseado estan en cualquier decena.
+					// asi que por ejemplo variable vale 12 --> el valor despues del la distribucion y modulo a cada uno es 2. que seria el
+					// valor deseado para unidades en ese caso
 
 				}
+
+				/* Banderas para configuriación de encendido */
 		if(banderaUnidad){
 
-			DefNumerosPrueba(Unidades);
+			/* Caso de unidades, la función trabajara sobre estos numeros */
+
+			DefNumerosPrueba(Unidades); // Llamado de la función de los numeros
 			GPIO_WritePin(&transistorDecenas, SET);
 			GPIO_WritePin(&transistorUnidades, RESET);
 		}
 
 		else{
 
-				DefNumerosPrueba(Decenas);
+			/* Caso de decenas, la función trabajara sobre estos numeros */
+
+				DefNumerosPrueba(Decenas); // Llamado de la función de los numeros
 				GPIO_WritePin(&transistorDecenas, RESET);
 				GPIO_WritePin(&transistorUnidades, SET);
 
-			//prendo
+
 		 }
 
-		loadDisplay = 0;
+		loadDisplay = 0; // Reinicio de bandera de visualización
 
 		}
+
+	  /* P u n t o 6 */
+
       /* Codigo para enviar el mensaje cuando el boton es oprimido */
 
+	  // Si hay interrupción , la bandera Code se activa
       if (Code){
-
+                // Se busca la configuración del handlerUsart para enviar el mensanje guardado en "greetingMsgBu"
       			writeMsg(&handlerUsart, greetingMsgBu);
 
+      			// Se baja la bandera para otra interrupción
       			Code = 0;
 
-      					}
+      }
       }
 
-   } // Cierra el main
+   } // Cierre del main principal
 
   /******************************************************************************************************************************/
 
@@ -642,6 +658,10 @@ void DefNumerosPrueba(uint8_t numerosSwitch){
 
 	/* Cada case es la representación de un numero, del 0 al 9 */
 
+	//La configuración de estos esta basado en que el 7 segmetos es de anodo común
+	// segun esto se requiere un cero --> reset para encender el segmento deseado
+	// y un uno --> set para mantener el segmento apagado
+
 	case 0:{
 
 		GPIO_WritePin(&handlerSegmentoA, RESET);
@@ -779,6 +799,7 @@ void DefNumerosPrueba(uint8_t numerosSwitch){
 	}
 
 	default:{
+        // Caso de error, se visualizaran dos lineas
 
 		GPIO_WritePin(&handlerSegmentoA, SET);
 		GPIO_WritePin(&handlerSegmentoB, SET);
@@ -794,5 +815,7 @@ void DefNumerosPrueba(uint8_t numerosSwitch){
 	}
 
     }
+
+/* F I N    D E L     P R O G R A M A */
 
 
