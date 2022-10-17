@@ -4,20 +4,33 @@
  * @author         : German Antonio Fuentes Tapias
  * @Mail           : gafuentest@unal.edu.co
  * @Resum          : Elaboración de la tarea 4 Taller V
+ *
+ *
+ *  Nota --->>>>>>>> El encoder utilizado se debe realizar dos movimientos para que lea un estado y no hace los dos cambios de una.
+ *                   pero si lee el flanco de subida o de bajada
+ *
+ * Velocidad utilizada --> 115200
  ******************************************************************************
  * 1. Implementación del LED de estado (obligatorio). 0 puntos.
- 2. Implementar adecuadamente una interrupción del EXTI driver, de forma que reciba la señal Clock del encoder
- y lance las interrupciones debida a un cambio de estado. La selección del flanco se deja a criterio del estudiante. 15 puntos.
- 3.Identificación de la dirección de giro del encoder, utilizando la interrupción generada por el pin Clock y la lectura del pin Data.
- 4 .Controlar los display de 7 segmentos de forma que cada movimiento del encoder en dirección de las manecillas del reloj (CW) aumenta
- en 1 el número presentado en el display (hasta llegar a 50), y cada movimiento del encoder en contra de las manecillas del reloj (CCW)
-  decrementa en 1 el valor presentado en los display de 7 segmentos (hasta llegar a cero). 10 puntos.
- 5. Imprimir un mensaje cada vez que la posición del encoder cambia (aumenta o disminuye),
- en el cual se debe presentar hacia donde fue el cambio (CW o CCW) y el valor del contador
- (que debe ser igual al valor presentado en los display de 7 segmentos). 10 puntos.
- 6. Imprimir un mensaje cualquiera, cada vez que se presione el botón. En el video del ejemplo,
-este botón era utilizado para cambiar la frecuencia de refresco del display de 7 segmentos.
- Por favor solo imprima un mensaje, el que usted desee. 5 puntos.
+ *
+  2. Implementar adecuadamente una interrupción del EXTI driver, de forma que reciba la señal Clock del encoder
+
+  y lance las interrupciones debida a un cambio de estado. La selección del flanco se deja a criterio del estudiante.
+
+  3. Identificación de la dirección de giro del encoder, utilizando la interrupción generada por el pin Clock y la lectura del pin Data.
+
+  4. Controlar los display de 7 segmentos de forma que cada movimiento del encoder en dirección de las manecillas del reloj (CW) aumenta
+
+    en 1 el número presentado en el display (hasta llegar a 50), y cada movimiento del encoder en contra de las manecillas del reloj (CCW)
+
+   decrementa en 1 el valor presentado en los display de 7 segmentos (hasta llegar a cero).
+
+  5. Imprimir un mensaje cada vez que la posición del encoder cambia (aumenta o disminuye),
+
+  en el cual se debe presentar hacia donde fue el cambio (CW o CCW) y el valor del contador
+
+  6. Imprimir un mensaje cualquiera, cada vez que se presione el botón.
+
  ******************************************************************************
  */
 
@@ -33,34 +46,37 @@ este botón era utilizado para cambiar la frecuencia de refresco del display de 
 #include "ExtiDriver.h"
 
 
-/* Variables necesarias para la activación de banderas,blinky y sumatoria al ser presionado el boton*/
+/* Variables necesarias para la activación de banderas,blinky y sumatoria */
 
-uint8_t variable               = 0; //Caracter encargado de hacer una adición al momento de ser pulsado el botón
-uint8_t variable1          = 0;
-int BanderaUnidad          = 1; //Bandera encargada de mostrar cuando se esta presionando USAR_BUTTON
-int BanderaDecena          = 0; //Bandera encargada de mostrar cuando no esta presionando el USAR_BUTTON
-uint8_t BlinkySimple       = 0; //Asignación a el blinky de led de estado
-uint8_t BanderaOperacion   = 0;
+uint8_t variable           = 0; //Caracter encargado de hacer una adición al momento de haber interrupción
+int banderaUnidad          = 1; //Bandera encargada de las unidades del 7 segmentos
+int banderaDecena          = 0; //Bandera encargada de las decenas del 7 segmentos
+uint8_t blinkySimple       = 0; //Asignación a el blinky de led de estado
+uint8_t banderaOperacion   = 0; // Bandera que opera al momento de la interrupción externa
+
+// Se crea bandera unidad con valor 1 debido a que se necesita un cambio de estado con respecto a decenas,
+// por lo que cuando uno esta encendido, el otro estara apagado, ocurriendo esto rapidamente,esto no es
+// percibido por nuestro ojos.
 
 /* La variables tendran los diferentes tipos */
 
 BasicTimer_Handler_t   handlerTimer2      = {0}; // Handler para el timer 2
 BasicTimer_Handler_t   handlerTimer3      = {0}; // Handler para el timer 3
-GPIO_Handler_t         BlinkySimplePin    = {0}; // Handler para el BlinkySimple
+GPIO_Handler_t         blinkySimplePin    = {0}; // Handler para el blinkySimple
 GPIO_Handler_t         handlerGPIOBut     = {0}; // Handler para el handlerGPIOBut
-GPIO_Handler_t         handlerGPIOClock   = {0};
-GPIO_Handler_t         handlerGPIOData    = {0};
-GPIO_Handler_t         handlerTx          = {0};
-GPIO_Handler_t         handlerRx          = {0};// Handler para la transmisión serial bit a bit
-USART_Handler_t        handlerUsar        = {0}; // Handler para el Usar1
+GPIO_Handler_t         handlerGPIOClock   = {0}; // Handler para el Clock enconder
+GPIO_Handler_t         handlerGPIOData    = {0}; // Handler para el Data del enconder
+GPIO_Handler_t         handlerTx          = {0}; // Handler para transmisión
+GPIO_Handler_t         handlerRx          = {0}; // Handler para la recepción serial bit a bit
+USART_Handler_t        handlerUsart       = {0}; // Handler para el Usart
 
 /* Interrupciones externas */
 
-EXTI_Config_t          handlerExtiButton  = {0}; // Configuración para el exti
+EXTI_Config_t          handlerExtiButton  = {0}; // Configuración para el boton externo
 EXTI_Config_t          handlerClock       = {0}; // Configuración Clock
 EXTI_Config_t          handlerData        = {0}; // Configuración Data
 
-/* Segmetos de 7 Segmentos */
+/* Segmetos de 7 Segmentos y boton de enconder */
 
 GPIO_Handler_t         handlerSegmentoA   = {0};
 GPIO_Handler_t         handlerSegmentoB   = {0};
@@ -69,34 +85,33 @@ GPIO_Handler_t         handlerSegmentoD   = {0};
 GPIO_Handler_t         handlerSegmentoE   = {0};
 GPIO_Handler_t         handlerSegmentoF   = {0};
 GPIO_Handler_t         handlerSegmentoG   = {0};
-GPIO_Handler_t         UsarButton         = {0};
-GPIO_Handler_t         TransistorDecenas  = {0};
-GPIO_Handler_t         TransistorUnidades = {0};
+GPIO_Handler_t         transistorDecenas  = {0};
+GPIO_Handler_t         transistorUnidades = {0};
 
 
-//Variables para boton
-uint8_t rxData       =  0;
-char bufferData[64] =  {0};
-char greetingMsg    [] = "No se puede restar más \n";
-char greetingMsgBu  [] = " Millonarios el mas grande °/M \n \r";
-bool adcIsComplete 	 = false;
-uint16_t adcData = 0;
+/*Variables para envio de mensaje e interrupción */
 
-uint8_t Code   = 0;
-uint8_t DataEnconder = 0;
-uint8_t ClockEnconder  = 0;
+char bufferData[64]    =  {0};
+char greetingMsgBu[]   = " Millonarios el mas grande :) \n \r";
+uint8_t Code           =    0;
+uint8_t DataEnconder   =    0;
+uint8_t ClockEnconder  =    0;
 
-//uint8_t NumerosSwitch = 0;
 
 //Variables de los numeros
 
 uint8_t Decenas = 0;
 uint8_t Unidades = 0;
-uint8_t LoadDisplay = 0;
-/* Cabeceras de funciones */
-void initSystem (void);
+uint8_t loadDisplay = 0;
 
-void DefNumerosPrueba(uint8_t NumerosSwitch);
+/* Cabeceras de funciones */
+
+void initSystem (void);                        // Función con configuración del GPIO
+
+void DefNumerosPrueba(uint8_t numerosSwitch); // Función con numeros a visualizar
+
+
+
 /* Creación del programa principal a utilizar en la tarea*/
 
 int main(void){
@@ -106,421 +121,461 @@ int main(void){
 
 	//Hago el primer condicional if la bandera de switch esta prendida o sea entonces sigo, entro a verificar
 
-	//cual bandera tengo, tengo bandera de unidades y de centena
+	//cual bandera tengo, tengo bandera de unidades y de centenas con distinta inicialización por lo que
 
-initSystem();
+	// encenderan a distinto periodo que se determinara por el Timer 3
 
-//	DefNumerosPrueba(NumerosSwitch);
-
-
+initSystem(); // Se llama la función de configuración de pines
 
 	while(1){
 
+		/* Punto 2-6 */
 
+		  /* Implementación de bandera de la interrupción externa */
 
-		  if(BanderaOperacion){
+		  if(banderaOperacion){
 
-//		      	if(GPIO_ReadPin(&handlerGPIOClock) == RESET && (GPIO_ReadPin(&handlerGPIOData))  == RESET){
-             	if(GPIO_ReadPin(&handlerGPIOClock) == RESET){
+			 /* Caso de CW Y CCW del reloj Punto 2 y 3 */
 
-             		 if (variable == 50){
+			 // Si se tiene el Clock con valor cero o un Falling se entra a este condicional
+			 // El clock nos da la interrupción y el data la información, por eso se llama al 11
+			 // y no al 12 en el exti, este seria caso CW
 
-						 variable = 50;
+			if(GPIO_ReadPin(&handlerGPIOClock) == RESET){
 
-					 } else {
+				/* Si nuestra variable es 50 queda igual y no supera este tope*/
+				 if (variable == 50){
 
-						 variable ++;
-					 }
+					 variable = 50;
 
+				 } else {
 
-//		      		variable ++;
+			     /* Sino, empieza a sumar unidad por unidad segun el condicional de arriba*/
+					 variable ++;
+				 }
 
-		      if( variable < 51){
+		  /* Punto 5,imprimir mensaje segun la dirección*/
+		  // Si es menor a 51 se imprime el valor en el Coolterm de "Variable"
 
-				 sprintf(bufferData, "Enconder CW, pasos = %u \n\r", (variable));
-				 writeMsg(&handlerUsar, bufferData);
+		  if( variable < 51){
 
-				 	} else {
-				 		variable = 0;
+			  // Almacenamiento de las variables en un arreglo para ser visualizadas en la
+			  //comunicación serial --> almacenan en bufferData tomando el valor de "variable"
+			 sprintf(bufferData, "Enconder CW, pasos = %u \n\r", (variable));
 
-						sprintf(bufferData, "Enconder CW, pasos = %u \n\r", (variable));
-						 writeMsg(&handlerUsar, bufferData);
+			 writeMsg(&handlerUsart, bufferData);
 
-				 	}
+				}
 
-		      	}
-//
-	//	      	else if ((GPIO_ReadPin(&handlerGPIOClock) == SET && (GPIO_ReadPin(&handlerGPIOData))  == SET)){
+			}
 
-	      	 if ((GPIO_ReadPin(&handlerGPIOClock) == SET )){
+		// Si se tiene el Clock con valor uno o un Rising se entra a este condicional
+		// El clock nos da la interrupción y el data la información, por eso se llama al 11
+		// y no al 12 en el exti, este seria caso CW
 
-		      		 if (variable ==0){
+		/* Caso CCW para la sustración */
 
-		      			 variable =0;
+		 if ((GPIO_ReadPin(&handlerGPIOClock) == SET )){
 
-		      		 } else {
+			 /* Condicionales */
+			 // Si es cero, no baje de ahi, ya que habria desbordamiento
 
-		      			 variable --;
-		      		 }
+			 if (variable ==0){
 
-		      		sprintf(bufferData, "Enconder CCW, pasos = %u \n\r", (variable));
-		      		writeMsg(&handlerUsar, bufferData);
+				variable =0;
+
+			 } else {
+
+             // Como es distinto de cero, realizara la sustración
+
+				variable --;
 
 			 }
 
-		      	BanderaOperacion = 0;
-			}
+			 // Almacenamiento de las variables en un arreglo para ser visualizadas en la
+		     //comunicación serial --> almacenan en bufferData tomando el valor de "variable"
+
+			 sprintf(bufferData, "Enconder CCW, pasos = %u \n\r", (variable));
+
+			 writeMsg(&handlerUsart, bufferData);
+
+		     }
+
+			banderaOperacion = 0; // Se baja la bandera
+
+		    }
 
 		/* Escritura de las variables con sus estados */
 
-		GPIO_WritePin(&BlinkySimplePin, BlinkySimple);
+		GPIO_WritePin(&blinkySimplePin, blinkySimple);     // Para el led de estado
 
-		GPIO_WritePin(&TransistorUnidades, BanderaUnidad);
+		GPIO_WritePin(&transistorUnidades, banderaUnidad); // Para la bandera de unidad
 
-		GPIO_WritePin(&TransistorDecenas, BanderaDecena);
+		GPIO_WritePin(&transistorDecenas, banderaDecena);  // Para la bandera de decena
 
 
      /* Operación matematica para el proceso */
-			if(LoadDisplay){
+
+		// Esta es una parte importante, ya que de aqui parten los valores para observar
+		// mediante el 7 segmentos de manera externa. De manera interna ve en el Cool
+		// el valor de variable que es el mismo valor que representan unidades y decenas
+
+		    /* Condicional que actualiza dato*/
+
+		    //Se estara entrando a esta condición a la velocidad configurada, no obstante si variable
+		    // sigue igual no se realizara la operación y se baja la bandera, pero si sucede ocurre
+		    // la operación descrita segun el caso
+
+		    /* P U N T O  4*/
+
+			if(loadDisplay){
+
+				/* Caso unidades */
 
 				if(variable < 10 ){
+                    // Las unidades van del 0 al 9 por lo cual no esta el 10, decenas se tendra en cero
+					// por gusto personal pero podría estar apagada también.
 
-					Unidades = variable % 10 ;
+					// Operación modulo
+					Unidades = variable % 10 ; // A medida que aumenta variable hace la operación modulo
+					                           // dejando el valor del resIDUO y guardando ese valor en unidades
+					                           // Que se utilizara más abajo para la visualización
 
-					Decenas = 0;
+					Decenas = 0;               // Visualización del cero en decenas
 				}
 
 				else{
 
-					Decenas = variable / 10;
+					//Se supero unidades, se necesita el incremento en decenas por lo que se tienen dos operaciones
+					// distintas para ambas variables.
+
+					Decenas = variable / 10; //
 
 					Unidades = (variable - Decenas* 10) % 10;
 
 				}
-		if(BanderaUnidad){
+		if(banderaUnidad){
 
 			DefNumerosPrueba(Unidades);
-			GPIO_WritePin(&TransistorDecenas, SET);
-			GPIO_WritePin(&TransistorUnidades, RESET);
+			GPIO_WritePin(&transistorDecenas, SET);
+			GPIO_WritePin(&transistorUnidades, RESET);
 		}
 
 		else{
 
 				DefNumerosPrueba(Decenas);
-				GPIO_WritePin(&TransistorDecenas, RESET);
-				GPIO_WritePin(&TransistorUnidades, SET);
+				GPIO_WritePin(&transistorDecenas, RESET);
+				GPIO_WritePin(&transistorUnidades, SET);
 
 			//prendo
 		 }
 
-		LoadDisplay = 0;
-
+		loadDisplay = 0;
 
 		}
-
-
-
       /* Codigo para enviar el mensaje cuando el boton es oprimido */
 
       if (Code){
 
-      			writeMsg(&handlerUsar, greetingMsgBu);
+      			writeMsg(&handlerUsart, greetingMsgBu);
 
       			Code = 0;
 
       					}
-
       }
 
-} // Cierra el main
+   } // Cierra el main
+
+  /******************************************************************************************************************************/
 
 void initSystem(void){
 
+    /* Punto 1/*/
 
     /* Led de estado */
 
-	BlinkySimplePin.pGPIOx= GPIOA; // Selección del GPIOA
+	blinkySimplePin.pGPIOx= GPIOA; // Selección del GPIOA
 
 	/*Configuración del Led de Blinky*/
-	BlinkySimplePin.GPIO_PinConfig.GPIO_PinNumber         = PIN_5;
-	BlinkySimplePin.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_OUT;
-	BlinkySimplePin.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
-	BlinkySimplePin.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
-	BlinkySimplePin.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEED_MEDIUM;
-	BlinkySimplePin.GPIO_PinConfig.GPIO_PinAltFunMode     = AF0;
+	blinkySimplePin.GPIO_PinConfig.GPIO_PinNumber           = PIN_5;
+	blinkySimplePin.GPIO_PinConfig.GPIO_PinMode             = GPIO_MODE_OUT;
+	blinkySimplePin.GPIO_PinConfig.GPIO_PinOPType           = GPIO_OTYPE_PUSHPULL;
+	blinkySimplePin.GPIO_PinConfig.GPIO_PinPuPdControl      = GPIO_PUPDR_NOTHING;
+	blinkySimplePin.GPIO_PinConfig.GPIO_PinSpeed            = GPIO_OSPEED_MEDIUM;
+	blinkySimplePin.GPIO_PinConfig.GPIO_PinAltFunMode       = AF0;
 
      // Cargando la configuración del Led de Blinky
-	 GPIO_Config(&BlinkySimplePin);
+	 GPIO_Config(&blinkySimplePin);
 
 
 	/* Configuración de segmentos */
 
      /* Segmento A*/
-	 handlerSegmentoA.pGPIOx = GPIOB;
+	 handlerSegmentoA.pGPIOx = GPIOB; // Selección del GPIOB
 
-	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinNumber      = PIN_2;
-	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_OUT;
-	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEED_MEDIUM;
-	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
+	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinNumber        = PIN_2;
+	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
+	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
+	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
+	 handlerSegmentoA.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
 
      /* Cagando configuración A*/
 	 GPIO_Config(&handlerSegmentoA);
 
      /* Segmento B*/
 
-	 handlerSegmentoB.pGPIOx  =GPIOC;
+	 handlerSegmentoB.pGPIOx  =GPIOC; // Selección del GPIOC
 
-		 handlerSegmentoB.GPIO_PinConfig.GPIO_PinNumber = PIN_4;
-		 handlerSegmentoB.GPIO_PinConfig.GPIO_PinMode   = GPIO_MODE_OUT;
-		 handlerSegmentoB.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-		 handlerSegmentoB.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
-		 handlerSegmentoB.GPIO_PinConfig.GPIO_PinSpeed  = GPIO_OSPEED_MEDIUM;
-		 handlerSegmentoB.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	 handlerSegmentoB.GPIO_PinConfig.GPIO_PinNumber        = PIN_4;
+	 handlerSegmentoB.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
+	 handlerSegmentoB.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
+	 handlerSegmentoB.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+	 handlerSegmentoB.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
+	 handlerSegmentoB.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
 
 	/* Cagando configuración B*/
 	 GPIO_Config(&handlerSegmentoB);
 
      /* Segmento C*/
 
-	 handlerSegmentoC.pGPIOx  =GPIOC;
+	 handlerSegmentoC.pGPIOx  =GPIOC;// Selección del GPIOC
 
-		 handlerSegmentoC.GPIO_PinConfig.GPIO_PinNumber      = PIN_1;
-		 handlerSegmentoC.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_OUT;
-		 handlerSegmentoC.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-		 handlerSegmentoC.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-		 handlerSegmentoC.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEED_MEDIUM;
-		 handlerSegmentoC.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
+	 handlerSegmentoC.GPIO_PinConfig.GPIO_PinNumber        = PIN_1;
+	 handlerSegmentoC.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
+	 handlerSegmentoC.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
+	 handlerSegmentoC.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+	 handlerSegmentoC.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
+	 handlerSegmentoC.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
 
 	 /* Cagando configuración C*/
-		 GPIO_Config(&handlerSegmentoC);
+	 GPIO_Config(&handlerSegmentoC);
 
-	   /* Segmento D*/
+     /* Segmento D*/
 
-		 handlerSegmentoD.pGPIOx  =GPIOC;
+	 handlerSegmentoD.pGPIOx  =GPIOC;// Selección del GPIOC
 
-		 handlerSegmentoD.GPIO_PinConfig.GPIO_PinNumber        = PIN_3;
-		 handlerSegmentoD.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
-		 handlerSegmentoD.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
-		 handlerSegmentoD.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
-		 handlerSegmentoD.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
-		 handlerSegmentoD.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
+	 handlerSegmentoD.GPIO_PinConfig.GPIO_PinNumber        = PIN_3;
+	 handlerSegmentoD.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
+	 handlerSegmentoD.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
+	 handlerSegmentoD.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+	 handlerSegmentoD.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
+	 handlerSegmentoD.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
 
 	 /* Cagando configuración D*/
-		 GPIO_Config(&handlerSegmentoD);
+	 GPIO_Config(&handlerSegmentoD);
 
-	    /* Segmento E*/
+	 /* Segmento E*/
 
-		 handlerSegmentoE.pGPIOx  =GPIOC;
+	 handlerSegmentoE.pGPIOx  =GPIOC;// Selección del GPIOC
 
-		 handlerSegmentoE.GPIO_PinConfig.GPIO_PinNumber       = PIN_2;
-		 handlerSegmentoE.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
-		 handlerSegmentoE.GPIO_PinConfig.GPIO_PinOPType       = GPIO_OTYPE_PUSHPULL;
-		 handlerSegmentoE.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
-		 handlerSegmentoE.GPIO_PinConfig.GPIO_PinSpeed        = GPIO_OSPEED_MEDIUM;
-		 handlerSegmentoE.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	 handlerSegmentoE.GPIO_PinConfig.GPIO_PinNumber        = PIN_2;
+	 handlerSegmentoE.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
+	 handlerSegmentoE.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
+	 handlerSegmentoE.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+	 handlerSegmentoE.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
+	 handlerSegmentoE.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
 
-		/* Cagando configuración E*/
-		GPIO_Config(&handlerSegmentoE);
+	 /* Cagando configuración E*/
+	 GPIO_Config(&handlerSegmentoE);
 
-	     /* Segmento F*/
+	 /* Segmento F*/
 
-		 handlerSegmentoF.pGPIOx  =GPIOB;
+	 handlerSegmentoF.pGPIOx  =GPIOB;// Selección del GPIOB
 
-		 handlerSegmentoF.GPIO_PinConfig.GPIO_PinNumber        = PIN_13;
-		 handlerSegmentoF.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
-		 handlerSegmentoF.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
-		 handlerSegmentoF.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
-		 handlerSegmentoF.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
-		 handlerSegmentoF.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
+	 handlerSegmentoF.GPIO_PinConfig.GPIO_PinNumber        = PIN_13;
+	 handlerSegmentoF.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
+	 handlerSegmentoF.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
+	 handlerSegmentoF.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+	 handlerSegmentoF.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
+	 handlerSegmentoF.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
 
-		 /* Cagando configuración F*/
-	      GPIO_Config(&handlerSegmentoF);
+	 /* Cagando configuración F*/
+	  GPIO_Config(&handlerSegmentoF);
 
+      /* Segmento G*/
+	 handlerSegmentoG.pGPIOx  =GPIOC;// Selección del GPIOC
 
+	 handlerSegmentoG.GPIO_PinConfig.GPIO_PinNumber        = PIN_0;
+	 handlerSegmentoG.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
+	 handlerSegmentoG.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
+	 handlerSegmentoG.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+	 handlerSegmentoG.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
+	 handlerSegmentoG.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
 
-	      /* Segmento G*/
-	     handlerSegmentoG.pGPIOx  =GPIOC;
+	 /* Cagando configuración G*/
+	 GPIO_Config(&handlerSegmentoG);
 
-		 handlerSegmentoG.GPIO_PinConfig.GPIO_PinNumber        = PIN_0;
-		 handlerSegmentoG.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
-		 handlerSegmentoG.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
-		 handlerSegmentoG.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
-		 handlerSegmentoG.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
-		 handlerSegmentoG.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
-
-		 /* Cagando configuración G*/
-	     GPIO_Config(&handlerSegmentoG);
-
-// Salidas de los transistores
+     /* Salidas de los transistores del micro */
 
 
-	     TransistorDecenas.pGPIOx  =GPIOA;
+	 transistorDecenas.pGPIOx  =GPIOA;// Selección del GPIOA
 
-		 TransistorDecenas.GPIO_PinConfig.GPIO_PinNumber        = PIN_1;
-		 TransistorDecenas.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
-		 TransistorDecenas.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
-		 TransistorDecenas.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
-		 TransistorDecenas.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
-		 TransistorDecenas.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
+	 transistorDecenas.GPIO_PinConfig.GPIO_PinNumber        = PIN_1;
+	 transistorDecenas.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_OUT;
+	 transistorDecenas.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_PUSHPULL;
+	 transistorDecenas.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+	 transistorDecenas.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_MEDIUM;
+	 transistorDecenas.GPIO_PinConfig.GPIO_PinAltFunMode    = AF0;
+
+	 /* Cagando configuración de decenas*/
+	 GPIO_Config(&transistorDecenas);
+
+	 transistorUnidades.pGPIOx  =GPIOB; // Selección del GPIOB
+
+	 transistorUnidades.GPIO_PinConfig.GPIO_PinNumber       = PIN_5;
+	 transistorUnidades.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	 transistorUnidades.GPIO_PinConfig.GPIO_PinOPType       = GPIO_OTYPE_PUSHPULL;
+	 transistorUnidades.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	 transistorUnidades.GPIO_PinConfig.GPIO_PinSpeed        = GPIO_OSPEED_MEDIUM;
+	 transistorUnidades.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+
+	 /* Cagando configuración de unidades*/
+     GPIO_Config(&transistorUnidades);
 
 
-	     GPIO_Config(&TransistorDecenas);
-
-	     TransistorUnidades.pGPIOx  =GPIOB;
-
-		 TransistorUnidades.GPIO_PinConfig.GPIO_PinNumber       = PIN_5;
-		 TransistorUnidades.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
-		 TransistorUnidades.GPIO_PinConfig.GPIO_PinOPType       = GPIO_OTYPE_PUSHPULL;
-		 TransistorUnidades.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
-		 TransistorUnidades.GPIO_PinConfig.GPIO_PinSpeed        = GPIO_OSPEED_MEDIUM;
-		 TransistorUnidades.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
-
-
-		 GPIO_Config(&TransistorUnidades);
-     // Configuración para el Blinky
+     /* Configuración para el Blinky */
 	 handlerTimer2.ptrTIMx = TIM2;
-	 handlerTimer2.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP; // CUENTA HACIA ARRIBA
-	 handlerTimer2.TIMx_Config.TIMx_speed           = BTIMER_SPEED_100us; // La velocidad
-	 handlerTimer2.TIMx_Config.TIMx_period          = 2500;
-	 handlerTimer2.TIMx_Config.TIMx_interruptEnable = 1; // Activando la configuración, aunque todavia
+	 handlerTimer2.TIMx_Config.TIMx_mode                    = BTIMER_MODE_UP;     // Cuenta hacia arriba
+	 handlerTimer2.TIMx_Config.TIMx_speed                   = BTIMER_SPEED_100us; // La velocidad
+	 handlerTimer2.TIMx_Config.TIMx_period                  = 2500;               //250ms
+	 handlerTimer2.TIMx_Config.TIMx_interruptEnable         = 1;                  // Activando la configuración, aunque todavia
 	 //no estamos aputando a ese registro
 
+	 /* Configuración para las banderas de unidades y decenas*/
 	 handlerTimer3.ptrTIMx = TIM3;
-	 handlerTimer3.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP;
-	 handlerTimer3.TIMx_Config.TIMx_speed           = BTIMER_SPEED_1ms;
-	 handlerTimer3.TIMx_Config.TIMx_period          = 10;
-	 handlerTimer3.TIMx_Config.TIMx_interruptEnable = 1;
+	 handlerTimer3.TIMx_Config.TIMx_mode                    = BTIMER_MODE_UP;   // Cuenta hacia arriba
+	 handlerTimer3.TIMx_Config.TIMx_speed                   = BTIMER_SPEED_1ms; // La velocidad
+	 handlerTimer3.TIMx_Config.TIMx_period                  = 10;               //10ms
+	 handlerTimer3.TIMx_Config.TIMx_interruptEnable         = 1;
 
 
-	/* Cargando la configuración del timer 2 y 3*/
-	BasicTimer_Config(&handlerTimer2);
-	BasicTimer_Config(&handlerTimer3);
+	 /* Cargando la configuración del timer 2 y 3*/
+	 BasicTimer_Config(&handlerTimer2);
+	 BasicTimer_Config(&handlerTimer3);
 
-/******************************************************************************************************************************/
-	/*Este es el punto -->> */
-
-	// Se elige el GPIOB  y el USART 1 ya que estan en el mismo Bus
+    /******************************************************************************************************************************/
+	/*Esta configuracion es para el punto -->> 5 & 6 */
 
 	/* Inicialización de la configuración para el puerto GPIO serial*/
 	/* Handler para el PIN A2 */
-		handlerTx.pGPIOx                       			= GPIOA;
-		handlerTx.GPIO_PinConfig.GPIO_PinNumber			= PIN_2;				// Pin TX USART2
-		handlerTx.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
-		handlerTx.GPIO_PinConfig.GPIO_PinOPType			= GPIO_OTYPE_PUSHPULL;
-		handlerTx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-		handlerTx.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_MEDIUM;
-		handlerTx.GPIO_PinConfig.GPIO_PinAltFunMode		= AF7;					// Función alternativa USART2
+	handlerTx.pGPIOx                       			= GPIOA;
+	handlerTx.GPIO_PinConfig.GPIO_PinNumber			= PIN_2;				// Pin TX USART2
+	handlerTx.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
+	handlerTx.GPIO_PinConfig.GPIO_PinOPType			= GPIO_OTYPE_PUSHPULL;
+	handlerTx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
+	handlerTx.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_MEDIUM;
+	handlerTx.GPIO_PinConfig.GPIO_PinAltFunMode		= AF7;					// Función alternativa USART2
 
-		/* Se carga la configuración */
-		GPIO_Config(&handlerTx);
+	/* Se carga la configuración */
+	GPIO_Config(&handlerTx);
 
-		/* Handler para el PIN A3 */
-		handlerRx.pGPIOx                       			= GPIOA;
-		handlerRx.GPIO_PinConfig.GPIO_PinNumber			= PIN_3;				// Pin RX USART2
-		handlerRx.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
-		handlerRx.GPIO_PinConfig.GPIO_PinOPType			= GPIO_OTYPE_PUSHPULL;
-		handlerRx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-		handlerRx.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_MEDIUM;
-		handlerRx.GPIO_PinConfig.GPIO_PinAltFunMode		= AF7;					// Función alternativa USART1
+	/* Handler para el PIN A3 */
+	handlerRx.pGPIOx                       			= GPIOA;
+	handlerRx.GPIO_PinConfig.GPIO_PinNumber			= PIN_3;				// Pin RX USART2
+	handlerRx.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
+	handlerRx.GPIO_PinConfig.GPIO_PinOPType			= GPIO_OTYPE_PUSHPULL;
+	handlerRx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
+	handlerRx.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_MEDIUM;
+	handlerRx.GPIO_PinConfig.GPIO_PinAltFunMode		= AF7;					// Función alternativa USART2
 
-		/* Se carga la configuración */
-		GPIO_Config(&handlerRx);
+	/* Se carga la configuración */
+	GPIO_Config(&handlerRx);
 
-	/* Inicialización de la configuración para el USART1*/
-	handlerUsar.ptrUSARTx = USART2 ;
+	/* Inicialización de la configuración para el USART2*/
+
+	handlerUsart.ptrUSARTx = USART2 ;
 	// Configuración del usuario para el pin -->> Paridad activa en modo Even
-	handlerUsar.USART_Config.USART_mode     =   USART_MODE_RXTX;       // En modo de transmisión
-	handlerUsar.USART_Config.USART_baudrate =   USART_BAUDRATE_115200;
-	handlerUsar.USART_Config.USART_datasize =   USART_DATASIZE_8BIT; // Se tiene paridad por lo que se asigna ese tamaño
-	handlerUsar.USART_Config.USART_parity   =   USART_PARITY_NONE;   // Paridad en even
-	handlerUsar.USART_Config.USART_stopbits =   USART_STOPBIT_1;
 
-	/*Cargando la configuración del Usar para la comunicación serial */
-	USART_Config(&handlerUsar);
+	handlerUsart.USART_Config.USART_mode          =  USART_MODE_RXTX;       // En modo de transmisión
+	handlerUsart.USART_Config.USART_baudrate      =  USART_BAUDRATE_115200;
+	handlerUsart.USART_Config.USART_datasize      =  USART_DATASIZE_8BIT;
+	handlerUsart.USART_Config.USART_parity        =  USART_PARITY_NONE;     // Paridad 0
+	handlerUsart.USART_Config.USART_stopbits      =  USART_STOPBIT_1;
 
-/********************************************************************************/
+	/*Cargando la configuración del Usart para la comunicación serial */
+	USART_Config(&handlerUsart);
+
+	/******************************************************************************************************************************/
 
 	// Configuración del Exti
 
     //Se requiere presionar el Boton para cambiar estados, por lo cual se configura
 	/* Inicialización de la configuración del Exti*/
+
+	/* Boton del 7 segmentos */
 	handlerGPIOBut .pGPIOx = GPIOC;
 
 	//Configuración de usuario para el Usar_Button
 	handlerGPIOBut .GPIO_PinConfig.GPIO_PinNumber      =  PIN_7;
-	handlerGPIOBut .GPIO_PinConfig.GPIO_PinMode        =  GPIO_MODE_IN;
+	handlerGPIOBut .GPIO_PinConfig.GPIO_PinMode        =  GPIO_MODE_IN;         // MODO ENTRADA
 	handlerGPIOBut .GPIO_PinConfig.GPIO_PinOPType      =  GPIO_OTYPE_PUSHPULL;
-	handlerGPIOBut .GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_PULLUP;
+	handlerGPIOBut .GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_PULLUP;   //Lectura PULL-UP
 	handlerGPIOBut .GPIO_PinConfig.GPIO_PinSpeed       =  GPIO_OSPEED_HIGH;
 	handlerGPIOBut .GPIO_PinConfig.GPIO_PinAltFunMode  =  AF0;
 
 	/*Cargando la configuración para el Usar_Button */
 	GPIO_Config(&handlerGPIOBut );
 
+    /* Enconder lectura Clock */
 
 	handlerGPIOClock.pGPIOx = GPIOC;
 
-	handlerGPIOClock.GPIO_PinConfig.GPIO_PinNumber      = PIN_11;
-	handlerGPIOClock.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
+	handlerGPIOClock.GPIO_PinConfig.GPIO_PinNumber      = PIN_12;
+	handlerGPIOClock.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;         // MODO ENTRADA
 	handlerGPIOClock.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
 	handlerGPIOClock.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerGPIOClock.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEED_HIGH;
 	handlerGPIOClock.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
 
+	/* Cargando configuración Clock */
 	GPIO_Config(&handlerGPIOClock);
 
-
+	/* Enconder lectura Data*/
 	handlerGPIOData.pGPIOx = GPIOC;
 
-	handlerGPIOData.GPIO_PinConfig.GPIO_PinNumber      = PIN_12;
-	handlerGPIOData.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
-	handlerGPIOData.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-	handlerGPIOData.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerGPIOData.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEED_HIGH;
-	handlerGPIOData.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
+	handlerGPIOData.GPIO_PinConfig.GPIO_PinNumber       = PIN_11;
+	handlerGPIOData.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_IN;         // MODO ENTRADA
+	handlerGPIOData.GPIO_PinConfig.GPIO_PinOPType       = GPIO_OTYPE_PUSHPULL;
+	handlerGPIOData.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerGPIOData.GPIO_PinConfig.GPIO_PinSpeed        = GPIO_OSPEED_HIGH;
+	handlerGPIOData.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
 
+	/* Cargando configuración Clock */
 	GPIO_Config(&handlerGPIOData);
 
-    /* Clock */
 
-	handlerClock.pGPIOHandler = &handlerGPIOClock ;
-	handlerClock.edgeType = EXTERNAL_INTERRUPT_RISING_EDGE;
+	/* Configuraciones directas del Exti */
+
+	handlerClock.pGPIOHandler       = &handlerGPIOClock ;
+	handlerClock.edgeType           = EXTERNAL_INTERRUPT_RISING_EDGE;  // Flanco de subida
+
+	/* Cargando configuración */
 
 	extInt_Config(&handlerClock);
 
 	/* Button Externo Coder */
 
-	handlerExtiButton.pGPIOHandler = &handlerGPIOBut ;
-	handlerExtiButton.edgeType = EXTERNAL_INTERRUPT_FALLING_EDGE;
+	handlerExtiButton.pGPIOHandler  = &handlerGPIOBut ;
+	handlerExtiButton.edgeType      = EXTERNAL_INTERRUPT_FALLING_EDGE; // Flanco de bajada
 
+	/* Cargando configuración */
 
 	extInt_Config(&handlerExtiButton);
 
 	/*  Data */
 
-	handlerData.pGPIOHandler = &handlerGPIOData;
+	handlerData.pGPIOHandler        = &handlerGPIOData;
+	handlerData.edgeType            = EXTERNAL_INTERRUPT_FALLING_EDGE; // Flanco de bajada
 
-	handlerData.edgeType     = EXTERNAL_INTERRUPT_FALLING_EDGE;
+	/* Cargando configuración */
 
 	extInt_Config(&handlerData);
 
+   } // Finalización de Init
 
-	UsarButton.pGPIOx = GPIOC;
+  /******************************************************************************************************************************/
 
-		//Configuración de usuario para el Usar_Button
-		UsarButton.GPIO_PinConfig.GPIO_PinNumber      =  PIN_13;
-		UsarButton.GPIO_PinConfig.GPIO_PinMode        =  GPIO_MODE_IN;
-		UsarButton.GPIO_PinConfig.GPIO_PinOPType      =  GPIO_OTYPE_PUSHPULL;
-		UsarButton.GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_PULLUP;
-		UsarButton.GPIO_PinConfig.GPIO_PinSpeed       =  GPIO_OSPEED_HIGH;
-		UsarButton.GPIO_PinConfig.GPIO_PinAltFunMode  =  AF0;
-
-		/*Cargando la configuración para el Usar_Button */
-		GPIO_Config(&UsarButton);
-
-}
 /* CallBack del timer 2*/
 
 void BasicTimer2_CallBack(void){
@@ -528,79 +583,64 @@ void BasicTimer2_CallBack(void){
     //Nuestro CallBack ocurre a la velocidad asignada en la configuración del usuario,
 	//En nuestro caso 250 ms
 
-	BlinkySimple = !BlinkySimple; // Activación de Blinky
+	blinkySimple = !blinkySimple; // Activación de Blinky
 
-	if(BlinkySimple){
+	if(blinkySimple){
 
-		GPIO_WritePin(&BlinkySimplePin, SET); // Activa
+		GPIO_WritePin(&blinkySimplePin, SET); // Activa
 
 	}else{
 
-		GPIO_WritePin(&BlinkySimplePin, RESET); // Desactiva
+		GPIO_WritePin(&blinkySimplePin, RESET); // Desactiva
 	}
     }
 
+/* CallBack del timer 3*/
+
 void BasicTimer3_CallBack(void){
 
-//	if(&handlerGPIOData == SET & &handlerGPIOClock == RESET){
-//
-//		NumerosSwitch ++;
-//	}
-//
-//	else if(&handlerGPIOData == RESET & &handlerGPIOClock == RESET){
-//
-//		NumerosSwitch --;
-	//}
-	BanderaDecena ^= 1;
+	// La función es crear el cambio de estado en los segmentos del 7 segmentos, al estar conectado
+	// decenas y unidades debe alternarse el encendido de estos para lograr tener ambos encendidos
+	// con esto se busca generar este efecto a un tiempo deseado por el usuario en la configuración
 
-	BanderaUnidad ^= 1;
+	banderaDecena ^= 1; // Cambio de estado a velocidad configurada de bandera Decena
 
-	LoadDisplay   = 1;
+	banderaUnidad ^= 1; // Cambio de estado a velocidad configurada de bandera Unidad
+
+	loadDisplay    = 1; // Bandera con la función  de la creación de los distintos numeros del
+	                   // 7 segmentos
 
 }
+
+/* CallBack para la comunicación serial */
+
 void USART2Rx_CallBack(void){
-	rxData = getRxData();
 }
+
+/* CallBack encargado de la interrupción del boton del enconder */
 
 void callback_extInt7(void){
 
-	Code = 1;
+	Code = 1; // Bandera que da inicio al envio del mensaje mediante comunicación serial
 
 }
 
-void callback_extInt12(void){
+/* CallBack de la interrupción del enconder y la lectura del Data*/
 
-	BanderaOperacion = 1;
-//
-//	if(GPIO_ReadPin(&handlerGPIOClock) == RESET && (GPIO_ReadPin(&handlerGPIOData))  == RESET){
-//
-//					sprintf(bufferData, "CW = %u \n\r", (variable));
-//					writeMsg(&handlerUsar, bufferData);
-//
-//
-//
-//		variable ++;
-//	}
-//
-//	else if ((GPIO_ReadPin(&handlerGPIOClock) == SET && (GPIO_ReadPin(&handlerGPIOData))  == RESET)){
-//
-//		sprintf(bufferData, "CWW = %u \n\r", (variable));
-//		writeMsg(&handlerUsar, bufferData);
-//
-//	variable --;
-//}
+void callback_extInt11(void){
+
+	banderaOperacion = 1;  // Bandera que informa la interrupción para ver si es operación de adición o sustracción
+
 }
-//
-//void callback_extInt5(void){
-////
-////	ClockEnconder =  1;
-//
-////	variable ++;
-//}
 
-void DefNumerosPrueba(uint8_t NumerosSwitch){
+/* Función con los casos para cada numero que se visualizaran en el 7 segmentos */
 
-	switch(NumerosSwitch){
+
+void DefNumerosPrueba(uint8_t numerosSwitch){
+
+	switch(numerosSwitch){
+
+	/* Cada case es la representación de un numero, del 0 al 9 */
 
 	case 0:{
 
@@ -737,10 +777,8 @@ void DefNumerosPrueba(uint8_t NumerosSwitch){
 
 		break;
 	}
-//    return  NumeroSwitch;
 
 	default:{
-
 
 		GPIO_WritePin(&handlerSegmentoA, SET);
 		GPIO_WritePin(&handlerSegmentoB, SET);
@@ -752,6 +790,7 @@ void DefNumerosPrueba(uint8_t NumerosSwitch){
 
 		break;
 	}
+
 	}
 
     }
