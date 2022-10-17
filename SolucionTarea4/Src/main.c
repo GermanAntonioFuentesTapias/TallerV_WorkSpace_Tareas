@@ -78,7 +78,7 @@ GPIO_Handler_t         TransistorUnidades = {0};
 uint8_t rxData       =  0;
 char bufferData[64] =  {0};
 char greetingMsg    [] = "No se puede restar más \n";
-char greetingMsgBu  [] = "Por muy dificil que sea el problema, tiene solucion \n";
+char greetingMsgBu  [] = " Millonarios el mas grande °/M \n \r";
 bool adcIsComplete 	 = false;
 uint16_t adcData = 0;
 
@@ -460,9 +460,9 @@ void initSystem(void){
 	GPIO_Config(&handlerGPIOBut );
 
 
-	handlerGPIOClock.pGPIOx = GPIOB;
+	handlerGPIOClock.pGPIOx = GPIOC;
 
-	handlerGPIOClock.GPIO_PinConfig.GPIO_PinNumber      = PIN_3;
+	handlerGPIOClock.GPIO_PinConfig.GPIO_PinNumber      = PIN_11;
 	handlerGPIOClock.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
 	handlerGPIOClock.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
 	handlerGPIOClock.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
@@ -472,9 +472,9 @@ void initSystem(void){
 	GPIO_Config(&handlerGPIOClock);
 
 
-	handlerGPIOData.pGPIOx = GPIOB;
+	handlerGPIOData.pGPIOx = GPIOC;
 
-	handlerGPIOData.GPIO_PinConfig.GPIO_PinNumber      = PIN_1;
+	handlerGPIOData.GPIO_PinConfig.GPIO_PinNumber      = PIN_12;
 	handlerGPIOData.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
 	handlerGPIOData.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
 	handlerGPIOData.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
@@ -568,7 +568,7 @@ void callback_extInt7(void){
 
 }
 
-void callback_extInt1(void){
+void callback_extInt12(void){
 
 	BanderaOperacion = 1;
 //
