@@ -277,6 +277,9 @@ initSystem(); // Se llama la función de configuración de pines
 				DefNumerosPrueba(Decenas); // Llamado de la función de los numeros
 				GPIO_WritePin(&transistorDecenas, RESET);
 				GPIO_WritePin(&transistorUnidades, SET);
+				// En este bloque if-else tienes un pequeño error que hace que se te cree una pequeña sombra en tu display
+				// pero lo puedes corregir facilmente apagando ambos display antes de actualizar y luego enciendes el que
+				// va a mostrar la info, son solo 2 lineas antes de ejecutar el if()
 
 
 		 }
@@ -608,6 +611,7 @@ void BasicTimer2_CallBack(void){
 	}else{
 
 		GPIO_WritePin(&blinkySimplePin, RESET); // Desactiva
+		// Y para qué teniamos la funcion toogle?
 	}
     }
 
