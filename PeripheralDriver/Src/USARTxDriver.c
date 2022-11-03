@@ -146,7 +146,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	case USART_MODE_TX:
 	{
 		// Activamos la parte del sistema encargada de enviar
-		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_UE;
+//		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_UE;
 
 		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_TE;
 		break;
@@ -154,14 +154,14 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	case USART_MODE_RX:
 	{
 		// Activamos la parte del sistema encargada de recibir
-		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_UE;
+//		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_UE;
 		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_RE;
 		break;
 	}
 	case USART_MODE_RXTX:
 	{
 		// Activamos ambas partes, tanto transmision como recepcion
-		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_UE;
+//		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_UE;
 		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_RE;
 		ptrUsartHandler -> ptrUSARTx -> CR1 |= USART_CR1_TE;
 

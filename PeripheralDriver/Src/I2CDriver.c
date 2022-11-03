@@ -125,7 +125,7 @@ void i2c_startTransaction(I2C_Handler_t *ptrHandlerI2C){
 	/*2a. Esperamos a que la bandera del evento "start" se levante */
 	/* Mientras esperamos, el valor de SB es 0, entonces la negación (!) es 1*/
 
-	while( !(ptrHandlerI2C->ptrI2Cx->CR1 & I2C_SR1_SB)){
+	while( !(ptrHandlerI2C->ptrI2Cx->SR1 & I2C_SR1_SB)){
 
 		__NOP();
 

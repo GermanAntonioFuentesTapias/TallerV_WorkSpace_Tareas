@@ -133,15 +133,15 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	__enable_irq();
 }
 
-//void startCounterTimer(BasicTimer_Handler_t *ptrTimerConfig){
-//
-//	ptrTimerConfig->ptrTIMx->CR1 |= TIM_CR1_CEN;
-//}
-//
-//void StopCounterTimer(BasicTimer_Handler_t *ptrTimerConfig){
-//
-//	ptrTimerConfig->ptrTIMx->CR1 &= ~TIM_CR1_CEN;
-//}
+void startCounterTimer(BasicTimer_Handler_t *ptrTimerConfig){
+
+	ptrTimerConfig->ptrTIMx->CR1 |= TIM_CR1_CEN;
+}
+
+void StopCounterTimer(BasicTimer_Handler_t *ptrTimerConfig){
+
+	ptrTimerConfig->ptrTIMx->CR1 &= ~TIM_CR1_CEN;
+}
 
 __attribute__((weak)) void BasicTimer2_CallBack(void){
 	  /* NOTE : This function should not be modified, when the callback is needed,
