@@ -34,6 +34,7 @@
 #define USART_RX_INTERRUPT_ENABLE	   1
 #define USART_RX_INTERRUPT_DISABLE     0
 
+#define USARm   1
 #define USART_TX_INTERRUP_DISABLE 0
 #define USART_TX_INTERRUP_ENABLE  1
 /* Estructura para la configuración de la comunicacion:
@@ -49,7 +50,8 @@ typedef struct
 	uint8_t USART_datasize;
 	uint8_t USART_parity;
 	uint8_t USART_stopbits;
-	uint8_t USART_IntRx; //Activación de la interrupción
+	uint8_t USART_IntTx;
+	uint8_t USART_IntRx; //Activación de la interrupción Rx
 }USART_Config_t;
 
 /*

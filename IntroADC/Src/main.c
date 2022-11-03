@@ -164,6 +164,7 @@ void initSystem(void){
 	handlerUsart2.USART_Config.USART_stopbits			= USART_STOPBIT_1;
 	handlerUsart2.USART_Config.USART_IntRx			    = USART_RX_INTERRUPT_ENABLE;
 
+
 	/* Se carga la configuración para la conversión ADC */
 	USART_Config(&handlerUsart2);
 
