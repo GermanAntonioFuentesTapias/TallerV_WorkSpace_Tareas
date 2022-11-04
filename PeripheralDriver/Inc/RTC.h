@@ -30,5 +30,6 @@ typedef struct
 	RTC_Config_t	    TIMx_Config;   // Estructura que apunta a los archivos o registros del periferico
 }rtcTimer_Handler_t;
 
+void RTC_Config(RTC_Config_t *ptrRTCHandler);
 
 #endif /* RTC_H_ */

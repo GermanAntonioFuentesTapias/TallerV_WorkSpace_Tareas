@@ -12,19 +12,19 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	/* 1. Activar la señal de reloj del periférico requerido */
 	if(ptrPwmHandler->ptrTIMx == TIM2){
 
-		RCC -> APB1ENR |= RCC_APB1ENR_PWREN ;
+		RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 	}
 	else if(ptrPwmHandler->ptrTIMx == TIM3){
 
-		RCC -> APB1ENR |= RCC_APB1ENR_PWREN ;
+		RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 	}
 	else if(ptrPwmHandler->ptrTIMx == TIM4){
 
-			RCC -> APB1ENR |= RCC_APB1ENR_PWREN ;
+		RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
 		}
 	else if(ptrPwmHandler->ptrTIMx == TIM5){
 
-			RCC -> APB1ENR |= RCC_APB1ENR_PWREN ;
+		RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
 		}
 
 	else{
@@ -44,7 +44,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 //	/* 2B. Configuración del auto reload */
 //
-//	ptrPwmHandler ->ptrTIMx -> ARR = ptrPwmHandler -> config.periodo -1; // Se resta menos 1 porque empieza en zero
+	ptrPwmHandler ->ptrTIMx -> ARR = ptrPwmHandler -> config.periodo -1; // Se resta menos 1 porque empieza en zero
 //
 	/* 3c configuramos el contador */
 
@@ -63,14 +63,11 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	case PWM_CHANNEL_1:{
 		// Seleccionamos como salida el canal
 
-		ptrPwmHandler->ptrTIMx-> CCMR1 &= ~(TIM_CCMR1_CC1S_0);
-		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC1S_1);
+		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(0b11 << TIM_CCMR1_CC1S_Pos);
 
 		// Configuramos el canal como PWM
 
-		ptrPwmHandler->ptrTIMx->CCMR1 |= (TIM_CCMR1_OC1M_0);
-		ptrPwmHandler->ptrTIMx->CCMR1 |= (TIM_CCMR1_OC1M_1);
-		ptrPwmHandler->ptrTIMx->CCMR1 |= (TIM_CCMR1_OC1M_2);
+		ptrPwmHandler->ptrTIMx->CCMR1 |= (0b110 << TIM_CCMR1_OC1M_Pos);
 
 		// Activamos la funcionalidad de pre-load
 
@@ -82,14 +79,11 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	case PWM_CHANNEL_2:{
 		// Seleccionamos como salida el canal
 
-		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC2S_0);
-		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC2S_1);
+		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(0b11 << TIM_CCMR1_CC2S_Pos);
 
 		// Configuramos el canal como PWM
 
-		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2M_0;
-		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2M_1;
-		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2M_2;
+		ptrPwmHandler->ptrTIMx->CCMR1 |= (0b110 << TIM_CCMR1_OC2M_Pos);
 
 		// Activamos la funcionalidad de pre-load
 
@@ -101,14 +95,11 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	case PWM_CHANNEL_3:{
 		// Seleccionamos como salida el canal
 
-		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC3S_0);
-		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC3S_1);
+		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(0b11 << TIM_CCMR2_CC3S_Pos);
 
 		// Configuramos el canal como PWM
 
-		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3M_0;
-		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3M_1;
-		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3M_2;
+		ptrPwmHandler->ptrTIMx->CCMR2 |= (0b110 << TIM_CCMR2_OC3M_Pos);
 
 		// Activamos la funcionalidad de pre-load
 
@@ -120,14 +111,11 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	case PWM_CHANNEL_4:{
 		// Seleccionamos como salida el canal
 
-		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC4S_0);
-		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC4S_1);
+		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(0b11 << TIM_CCMR2_CC4S_Pos);
 
 		// Configuramos el canal como PWM
 
-		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4M_0;
-		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4M_1;
-		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4M_2;
+		ptrPwmHandler->ptrTIMx->CCMR2 |= (0b110 << TIM_CCMR2_OC4M_Pos);
 
 		// Activamos la funcionalidad de pre-load
 

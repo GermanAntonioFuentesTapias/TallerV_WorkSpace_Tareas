@@ -20,6 +20,20 @@
 #include "I2CDriver.h"
 #include "I2CLCD.h"
 #include "PwmDriver.h"
+#include "math.h"
+
+/* Definición de variables para operación matematicas */
+
+#define MAX   16000
+
+int16_t radio = 0;
+int8_t  angulo = 0;
+
+int16_t AccelX = 0;
+int16_t AccelY = 0;
+int16_t AccelZ = 0;
+
+
 
 /* Definición de variables */
 GPIO_Handler_t handlerBlinkyPin     = {0};
@@ -56,10 +70,14 @@ GPIO_Handler_t handlerLCDcSCL   = {0};
 
 /* Variables del PWM */
 
-PWM_Handler_t  handlerPWM       = {0};
+PWM_Handler_t  handlerPWMB       = {0};
+PWM_Handler_t  handlerPWMR       = {0};
+PWM_Handler_t  handlerPWMG       = {0};
 
 BasicTimer_Handler_t  handlerTimer = {0};
-GPIO_Handler_t        handlerPinPWM = {0};
+GPIO_Handler_t        handlerBlue = {0};
+GPIO_Handler_t        handlerGreen = {0};
+GPIO_Handler_t        handlerRed = {0};
 
 
 
@@ -88,6 +106,9 @@ int main(void)
 {
    /* Llamamos a la función initSystem para que se ejecute */
 	initSystem();
+	startPwmSignal(&handlerPWMR);
+	startPwmSignal(&handlerPWMB);
+	startPwmSignal(&handlerPWMG);
 //
 //	LCD_Init(&handlerLCD); // Pasa todo el proceso interno de la LCD
 //
@@ -131,7 +152,7 @@ int main(void)
 			else if(rxData == 'x'){
 				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
 				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
-				int16_t AccelX = AccelX_high << 8 | AccelX_low;
+				AccelX = AccelX_high << 8 | AccelX_low;
 				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
 				writeMsg(&handlerUsart2, bufferData);
 				rxData = '\0';
@@ -140,7 +161,7 @@ int main(void)
 			else if (rxData == 'y'){
 				uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
 				uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
-				int16_t AccelY = AccelY_high << 8 | AccelY_low;
+				AccelY = AccelY_high << 8 | AccelY_low;
 				sprintf(bufferData, "AccelY = %d \n", (int) AccelY);
 				writeMsg(&handlerUsart2, bufferData);
 				rxData = '\0';
@@ -150,7 +171,7 @@ int main(void)
 			else if (rxData == 'z'){
 				uint8_t AccelZ_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_L);
 				uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_H);
-				int16_t AccelZ = AccelZ_high << 8 | AccelZ_low;
+			    AccelZ = AccelZ_high << 8 | AccelZ_low;
 				sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
 				writeMsg(&handlerUsart2, bufferData);
 				rxData = '\0';
@@ -160,7 +181,24 @@ int main(void)
 				rxData = '\0';
 			}
 
-		}
+		  }
+
+
+		/* Para obtener cambios de colores dados por el acelerometro */
+
+
+        uint16_t x = AccelX;
+        uint16_t y = AccelY;
+
+        radio = sqrt((double)((x*x) + (y*y)));
+
+        angulo = (tan(y/x));
+
+
+
+//		if ( radio ){
+
+//		}
 
 	}
 }
@@ -297,40 +335,91 @@ void initSystem (void){
 
    i2c_config(&handlerAcelerometro);
 
-   /* Configuración PWM */
+   /* Configuraciones PWM GENERAL */
 
-   // Iniciamos con el Timer 3 para PWM
+	// Color Azul
 
-    handlerTimer.ptrTIMx                                 = TIM3;
-	handlerTimer.TIMx_Config.TIMx_mode                   = BTIMER_MODE_UP;
-	handlerTimer.TIMx_Config.TIMx_speed                  = BTIMER_SPEED_10us;
-	handlerTimer.TIMx_Config.TIMx_period                 = 100;
-
-	// Se carga la configuración
-	BasicTimer_Config(&handlerTimer);
-
-	// Configuramos el pin con GPIO
-
-	handlerPinPWM.pGPIOx                                = GPIOB;
-	handlerPinPWM.GPIO_PinConfig.GPIO_PinNumber         = PIN_5;
-	handlerPinPWM.GPIO_PinConfig.GPIO_PinAltFunMode     = AF4;
-	handlerPinPWM.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_ALTFN;
-	handlerPinPWM.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
-	handlerPinPWM.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
-	handlerPinPWM.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEED_FAST;
+	handlerBlue.pGPIOx                                = GPIOC;
+	handlerBlue.GPIO_PinConfig.GPIO_PinNumber         = PIN_7;
+	handlerBlue.GPIO_PinConfig.GPIO_PinAltFunMode     = AF2;
+	handlerBlue.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_ALTFN;
+	handlerBlue.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
+	handlerBlue.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
+	handlerBlue.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEED_FAST;
 
 	/* Se carga la configuración */
 
-	GPIO_Config(&handlerPinPWM);
+	GPIO_Config(&handlerBlue);
 
-	handlerPWM.ptrTIMx                                   = TIM3;
-	handlerPWM.config.channel                            = PWM_CHANNEL_1;
-	handlerPWM.config.duttyCicle                         = PWM_DUTTY_100_PERCENT;
-	handlerPWM.config.periodo                            = 1500;
-	handlerPWM.config.prescaler                          = 10;
+	// Color Rojo
+
+	handlerRed.pGPIOx                                = GPIOC;
+	handlerRed.GPIO_PinConfig.GPIO_PinNumber         = PIN_6;
+	handlerRed.GPIO_PinConfig.GPIO_PinAltFunMode     = AF2;
+	handlerRed.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_ALTFN;
+	handlerRed.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
+	handlerRed.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
+	handlerRed.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEED_FAST;
+
+	/* Se carga la configuración */
+
+	GPIO_Config(&handlerRed);
+
+		// Color Verde
+
+	handlerGreen.pGPIOx                                = GPIOC;
+	handlerGreen.GPIO_PinConfig.GPIO_PinNumber         = PIN_8;
+	handlerGreen.GPIO_PinConfig.GPIO_PinAltFunMode     = AF2;
+	handlerGreen.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_ALTFN;
+	handlerGreen.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
+	handlerGreen.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
+	handlerGreen.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEED_FAST;
+
+	/* Se carga la configuración */
+
+	GPIO_Config(&handlerGreen);
+
+
+	/* Funciones para config PWM */
+
+
+	handlerPWMB.ptrTIMx                                   = TIM3;
+	handlerPWMB.config.channel                            = PWM_CHANNEL_2;
+	handlerPWMB.config.duttyCicle                         = 5000;
+	handlerPWMB.config.periodo                            = 10000;
+	handlerPWMB.config.prescaler                          = BTIMER_SPEED_100us;
 
     /* Se carga la configuración */
-	pwm_Config(&handlerPWM);
+	pwm_Config(&handlerPWMB);
+
+     handlerPWMG.ptrTIMx                                   = TIM3;
+     handlerPWMG.config.channel                            = PWM_CHANNEL_3;
+	 handlerPWMG.config.duttyCicle                         = 0;
+	 handlerPWMG.config.periodo                            = 10000;
+	 handlerPWMG.config.prescaler                          = BTIMER_SPEED_100us;
+
+	 pwm_Config(&handlerPWMG);
+
+	 handlerPWMR.ptrTIMx                                   = TIM3;
+	 handlerPWMR.config.channel                            = PWM_CHANNEL_1;
+	 handlerPWMR.config.duttyCicle                         = 5000;
+	 handlerPWMR.config.periodo                            = 10000;
+	 handlerPWMR.config.prescaler                          = BTIMER_SPEED_100us;
+
+	 pwm_Config(&handlerPWMR);
+
+	 /* Despliegue de handler PWM */
+
+	 enableOutput(&handlerPWMR);
+	 enableOutput(&handlerPWMG);
+	 enableOutput(&handlerPWMB);
+
+
+
+
+
+
+	/* Configuración  de RGB */
 
 
 }
@@ -356,5 +445,6 @@ void BasicTimer2_CallBack(void){
 				GPIO_WritePin(&handlerBlinkyPin, RESET); // Desactiva
 
 }
+
 
 }
