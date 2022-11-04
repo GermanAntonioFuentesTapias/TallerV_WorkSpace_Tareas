@@ -63,11 +63,14 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	case PWM_CHANNEL_1:{
 		// Seleccionamos como salida el canal
 
-		ptrPwmHandler->ptrTIMx-> CCMR1 &= ~(TIM_CCMR1_CC1S);
+		ptrPwmHandler->ptrTIMx-> CCMR1 &= ~(TIM_CCMR1_CC1S_0);
+		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC1S_1);
 
 		// Configuramos el canal como PWM
 
-		ptrPwmHandler->ptrTIMx->CCMR1 |= (TIM_CCMR1_OC1M);
+		ptrPwmHandler->ptrTIMx->CCMR1 |= (TIM_CCMR1_OC1M_0);
+		ptrPwmHandler->ptrTIMx->CCMR1 |= (TIM_CCMR1_OC1M_1);
+		ptrPwmHandler->ptrTIMx->CCMR1 |= (TIM_CCMR1_OC1M_2);
 
 		// Activamos la funcionalidad de pre-load
 
@@ -79,11 +82,14 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	case PWM_CHANNEL_2:{
 		// Seleccionamos como salida el canal
 
-		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC2S);
+		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC2S_0);
+		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC2S_1);
 
 		// Configuramos el canal como PWM
 
-		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2M;
+		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2M_0;
+		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2M_1;
+		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2M_2;
 
 		// Activamos la funcionalidad de pre-load
 
@@ -95,11 +101,14 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	case PWM_CHANNEL_3:{
 		// Seleccionamos como salida el canal
 
-		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC3S);
+		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC3S_0);
+		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC3S_1);
 
 		// Configuramos el canal como PWM
 
-		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3M;
+		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3M_0;
+		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3M_1;
+		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3M_2;
 
 		// Activamos la funcionalidad de pre-load
 
@@ -111,11 +120,14 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	case PWM_CHANNEL_4:{
 		// Seleccionamos como salida el canal
 
-		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC4S);
+		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC4S_0);
+		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC4S_1);
 
 		// Configuramos el canal como PWM
 
-		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4M;
+		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4M_0;
+		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4M_1;
+		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4M_2;
 
 		// Activamos la funcionalidad de pre-load
 
@@ -269,41 +281,43 @@ void setDuttyCycle(PWM_Handler_t *ptrPwmHandler){
 void updateDuttyCycle(PWM_Handler_t *ptrPwmHandler, uint16_t newDutty){
 	// Actualizamos el registro que manipula el dutty
 
-	switch(ptrPwmHandler->config.channel){
-		case PWM_CHANNEL_1:{
+//	switch(ptrPwmHandler->config.channel){
+//		case PWM_CHANNEL_1:{
 
-			ptrPwmHandler->ptrTIMx->CCR1 = newDutty;
+//			ptrPwmHandler->ptrTIMx->CCR1 = newDutty;
 
-			break;
-		}
+			ptrPwmHandler->config.duttyCicle = newDutty;
 
-		case PWM_CHANNEL_2:{
-
-			ptrPwmHandler->ptrTIMx->CCR2 = newDutty;
-
-			break;
-		}
-
-		case PWM_CHANNEL_3:{
-
-			ptrPwmHandler->ptrTIMx->CCR3 = newDutty;
-
-			break;
-		}
-
-		case PWM_CHANNEL_4:{
-
-			ptrPwmHandler->ptrTIMx->CCR4 = newDutty;
-
-			break;
-		}
-
-		default:{
-			break;
-		}
-
-		}
-
+//			break;
+//		}
+//
+//		case PWM_CHANNEL_2:{
+//
+//			ptrPwmHandler->ptrTIMx->CCR2 = newDutty;
+//
+//			break;
+//		}
+//
+//		case PWM_CHANNEL_3:{
+//
+//			ptrPwmHandler->ptrTIMx->CCR3 = newDutty;
+//
+//			break;
+//		}
+//
+//		case PWM_CHANNEL_4:{
+//
+//			ptrPwmHandler->ptrTIMx->CCR4 = newDutty;
+//
+//			break;
+//		}
+//
+//		default:{
+//			break;
+//		}
+//
+//		}
+//
 
 	// Llamamos a la fucnión que cambia el dutty y cargamos el nuevo valor
 

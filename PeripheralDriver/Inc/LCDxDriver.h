@@ -34,20 +34,20 @@ typedef struct
 	uint8_t			slaveAddress;
 	uint8_t			modeI2C;
 	uint8_t			dataI2C;
-}I2C_Handler_t;
+}I2CLCD_Handler_t;
 
 /* Prototipos de las funciones públicas a utilizar */
 
 
-void I2C_Config (I2C_Handler_t *ptrHandlerI2C);
-uint8_t I2C_readByte (I2C_Handler_t *ptrHandlerI2C, uint8_t memAddr);
-void I2C_writeByte (I2C_Handler_t *ptrHandlerI2C, uint8_t dataToWrite);
-void LCD_Init(I2C_Handler_t *ptrHandlerI2C);
-void LCD_sendCMD (I2C_Handler_t *ptrHandlerI2C, char cmd);
-void LCD_sendata (I2C_Handler_t *ptrHandlerI2C, char data);
-void LCD_sendSTR(I2C_Handler_t *ptrHandlerI2C, char *str);
-void LCD_Clear (I2C_Handler_t *ptrHandlerI2C);
-void LCD_setCursor (I2C_Handler_t *ptrHandlerI2C, uint8_t x, uint8_t y);
+void i2c_config_LCD (I2CLCD_Handler_t *ptrHandlerI2C);
+uint8_t I2C_readByte (I2CLCD_Handler_t *ptrHandlerI2C, uint8_t memAddr);
+void I2C_writeByte (I2CLCD_Handler_t *ptrHandlerI2C, uint8_t dataToWrite);
+void LCD_Init(I2CLCD_Handler_t *ptrHandlerI2C);
+void LCD_sendCMD (I2CLCD_Handler_t *ptrHandlerI2C, char cmd);
+void LCD_sendata (I2CLCD_Handler_t *ptrHandlerI2C, char data);
+void LCD_sendSTR(I2CLCD_Handler_t *ptrHandlerI2C, char *str);
+void LCD_Clear (I2CLCD_Handler_t *ptrHandlerI2C);
+void LCD_setCursor (I2CLCD_Handler_t *ptrHandlerI2C, uint8_t x, uint8_t y);
 void delay_50 (void);
 void delay_5 (void);
 void delay_1 (void);
