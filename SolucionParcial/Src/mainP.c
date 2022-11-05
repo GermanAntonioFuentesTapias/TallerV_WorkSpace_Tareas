@@ -121,6 +121,7 @@ int main(void)
 //	LCD_sendSTR(&handlerLCD, "Bienvenido");
 
 	/* Ciclo principal del programa */
+
 	while(1){
 
 		/* Se escribe el valor de la variable estadoBlinky en el handlerBlinkyPin */
@@ -154,51 +155,12 @@ int main(void)
 
 			else if(rxData == 'x'){
 
-
-
-				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
-				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
-				AccelX = AccelX_high << 8 | AccelX_low;
-
-//				angulo = (atan(AccelY/AccelX));
-
-				angulo = 2 * AccelX ;
-
-				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
-				sprintf(welcomer, "Angulo = %d \n", (int) angulo);
-				writeMsg(&handlerUsart2, bufferData);
-				writeMsg(&handlerUsart2, welcomer);
-				rxData = '\0';
-
-//				radio = sqrt((double)((AccelX*AccelX) + (AccelY*AccelY)));
-//
-//				if(AccelX != 0){
-
-//					 stopPwmSignal(&handlerPWMR);
-//					 stopPwmSignal(&handlerPWMG);
-//					 stopPwmSignal(&handlerPWMB);
-
-
-
-//					 if ( (angulo > 0 && AccelX > 0)){
-//
-//					startPwmSignal(&handlerPWMR);
-//
-//					sprintf(welcomer, "Angulo = %d \n", (int) angulo);
-//					writeMsg(&handlerUsart2, welcomer);
-//					rxData = '\0';
-//
-//			     }
-//
-//					 else {
-//					 				startPwmSignal(&handlerPWMR);
-//					 				startPwmSignal(&handlerPWMB);
-//					 				startPwmSignal(&handlerPWMG);
-//
-//					 			 }
-//
-//				}
-
+//				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+//				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+//				AccelX = AccelX_high << 8 | AccelX_low;
+//				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
+//				writeMsg(&handlerUsart2, bufferData);
+//				rxData = '\0';
 			}
 
 			else if (rxData == 'y'){
@@ -222,6 +184,45 @@ int main(void)
 			else{
 				rxData = '\0';
 			}
+
+               if(AccelX != 0){
+                  if(AccelY > 0 && AccelX > 0){
+				  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
+				  updateDuttyCycle(&handlerPWMB, 10000);
+				  updateDuttyCycle(&handlerPWMR, 10000);
+				  updateDuttyCycle(&handlerPWMG, 0);
+
+                  }else if( AccelX < 0 && AccelY > 0){
+                	  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
+                	  angulo = 180 - angulo;
+                	  updateDuttyCycle(&handlerPWMB, 10000);
+                	  updateDuttyCycle(&handlerPWMR, 0);
+                	  updateDuttyCycle(&handlerPWMG, 0);
+
+                  } else if( AccelX <0 && AccelY < 0){
+                	  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
+                	  angulo = 180 + angulo;
+                	  updateDuttyCycle(&handlerPWMG, 10000);
+                	  updateDuttyCycle(&handlerPWMB, 0);
+					  updateDuttyCycle(&handlerPWMG, 0);
+
+
+                  } else if ( AccelX > 0 && AccelY <= 0){
+                	  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
+                	  angulo = 360 - angulo;
+                	  updateDuttyCycle(&handlerPWMR, 10000);
+                	  updateDuttyCycle(&handlerPWMB, 0);
+					  updateDuttyCycle(&handlerPWMG, 0);
+
+
+                  } else if (AccelX == 0 || AccelY == 0){
+                	  angulo = 0;
+                  }
+
+			sprintf(welcomer, "Angulo = %d \n", (int) angulo);
+			writeMsg(&handlerUsart2, welcomer);
+			rxData = '\0';
+               }
 
 		  }
 	}
@@ -409,8 +410,8 @@ void initSystem (void){
 
 	handlerPWMB.ptrTIMx                                   = TIM3;
 	handlerPWMB.config.channel                            = PWM_CHANNEL_2;
-	handlerPWMB.config.duttyCicle                         = 5000;
-	handlerPWMB.config.periodo                            = 10000;
+	handlerPWMB.config.duttyCicle                         = 10000;
+	handlerPWMB.config.periodo                            = 12000;
 	handlerPWMB.config.prescaler                          = BTIMER_SPEED_100us;
 
     /* Se carga la configuración */
@@ -418,16 +419,16 @@ void initSystem (void){
 
      handlerPWMG.ptrTIMx                                   = TIM3;
      handlerPWMG.config.channel                            = PWM_CHANNEL_3;
-	 handlerPWMG.config.duttyCicle                         = 0;
-	 handlerPWMG.config.periodo                            = 10000;
+	 handlerPWMG.config.duttyCicle                         = 10000;
+	 handlerPWMG.config.periodo                            = 12000;
 	 handlerPWMG.config.prescaler                          = BTIMER_SPEED_100us;
 
 	 pwm_Config(&handlerPWMG);
 
 	 handlerPWMR.ptrTIMx                                   = TIM3;
 	 handlerPWMR.config.channel                            = PWM_CHANNEL_1;
-	 handlerPWMR.config.duttyCicle                         = 5000;
-	 handlerPWMR.config.periodo                            = 10000;
+	 handlerPWMR.config.duttyCicle                         = 1000;
+	 handlerPWMR.config.periodo                            = 12000;
 	 handlerPWMR.config.prescaler                          = BTIMER_SPEED_100us;
 
 	 pwm_Config(&handlerPWMR);
