@@ -13,13 +13,13 @@
 #define time_formato_24	0
 #define time_formato_12	1
 
-#define LUNES		0x1
-#define MARTES		0x2
-#define MIERCOLES	0x3
-#define JUEVES		0x4
-#define VIERNES		0x5
-#define SABADO		0x6
-#define DOMINGO		0x7
+#define Mon		1
+#define Tues    2
+#define Wedn	3
+#define Thus    4
+#define Frid	5
+#define Satur   6
+#define Sund	7
 
 
 
@@ -33,6 +33,7 @@ typedef struct
   uint8_t RTC_Minutes;  /* Especifica los minutos */
 
   uint8_t RTC_Seconds;  /* Especifica los segundos */
+
   uint8_t RTC_H12;      /* Especifica AM/PM */
 
 }RTC_TimeTyp;
@@ -50,13 +51,13 @@ typedef struct
 
 typedef struct
 {
-	RTC_DateTyp		DateTypeDef;
+	RTC_DateTyp		    DateTypeDef;
 	RTC_TimeTyp		    TimeTypeDef;
 
 }RTC_handler_t;
 
 
 void RTC_Config(RTC_handler_t *ptrRTCHandler);
-uint8_t* read_date(void);
+uint8_t* leer_datos(void);
 
 #endif /* RTCDRIVER_H_ */

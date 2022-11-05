@@ -21,6 +21,7 @@
 #include "I2CLCD.h"
 #include "PwmDriver.h"
 #include "math.h"
+#include "RTCxDriver.h"
 
 /* Definición de variables para operación matematicas */
 
@@ -35,8 +36,6 @@ int16_t  angulo = 0;
 int16_t AccelX = 0;
 int16_t AccelY = 0;
 int16_t AccelZ = 0;
-
-
 
 /* Definición de variables */
 GPIO_Handler_t handlerBlinkyPin     = {0};
@@ -60,9 +59,23 @@ uint8_t rxData      =  0;
 
 uint8_t i2cBuffer = 0;
 
-//char bufferData[64] =  {0};
-//char greetingMsg[] = "Dale Medellin\n\r";
+/* Definición para RTC */
 
+uint8_t  *ptrData;
+
+RTC_handler_t handlerRTC = {0};
+
+uint8_t  Seg ;
+uint8_t  Min ;
+uint8_t  Hor;
+uint8_t  Sem ;
+uint8_t  Day;
+uint8_t  Mes;
+uint8_t  Ano;
+
+/* Para mensajes */
+char DataRTC[64] = "Wipi";
+char DataRTCDate[64] = "Wipi";
 char bufferData[64] = "esto es una pequeña prueba";
 char welcomer[64]   = "Bienvenido";
 
@@ -112,6 +125,7 @@ int main(void)
 	startPwmSignal(&handlerPWMR);
 	startPwmSignal(&handlerPWMB);
 	startPwmSignal(&handlerPWMG);
+
 //
 //	LCD_Init(&handlerLCD); // Pasa todo el proceso interno de la LCD
 //
@@ -135,6 +149,29 @@ int main(void)
 				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
 				sprintf(bufferData, "dataRead = 0x%2x  \n", (unsigned int) i2cBuffer);
 				writeMsg(&handlerUsart1, bufferData);
+				rxData = '\0';
+
+			}
+			else if (rxData == 'm'){
+
+				  ptrData =leer_datos();
+
+				   Seg = ptrData[0];
+				   Min = ptrData[1];
+				   Hor = ptrData[2];
+				   Sem = ptrData[3];
+				   Day = ptrData[4];
+				   Mes = ptrData[5];
+				   Ano = ptrData[6];
+
+				sprintf(DataRTC, " La hora es = %uh: %um: %us \n", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
+				writeMsg(&handlerUsart1, DataRTC);
+				rxData = '\0';
+			}
+
+			else if (rxData == 'f'){
+				sprintf(DataRTCDate, " La fecha es = %u/ %u/ %u  \n", (unsigned int) Day , (unsigned int) Mes, (unsigned int) Ano);
+				writeMsg(&handlerUsart1, DataRTCDate);
 				rxData = '\0';
 
 			}
@@ -515,6 +552,19 @@ void initSystem (void){
 	 enableOutput(&handlerPWMG);
 	 enableOutput(&handlerPWMB);
 
+
+	 /* Configuración RTC */
+
+	 handlerRTC.DateTypeDef.RTC_Date     = 5;
+	 handlerRTC.DateTypeDef.RTC_Month    = 11;
+	 handlerRTC.DateTypeDef.RTC_WeekDay  = Satur;
+	 handlerRTC.DateTypeDef.RTC_Year     = 22;
+	 handlerRTC.TimeTypeDef.RTC_H12      = 12;
+	 handlerRTC.TimeTypeDef.RTC_Hours    = 17;
+	 handlerRTC.TimeTypeDef.RTC_Minutes  = 43;
+	 handlerRTC.TimeTypeDef.RTC_Seconds  = 04;
+
+	 RTC_Config(&handlerRTC);
 
 
 

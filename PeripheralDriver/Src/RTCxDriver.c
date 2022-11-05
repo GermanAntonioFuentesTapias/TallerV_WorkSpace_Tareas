@@ -50,8 +50,8 @@ void RTC_Config(RTC_handler_t *ptrRtcHandler) {
 	//6 . Se requieren los siguientes pasos para desbloquear la protección contra escritura en todos los registros RTC
 	// excepto para RTC_ISR[13:8]
 
-	RTC->WPR = (0xCA /*<< RTC_WPR_KEY_Pos*/); // Clave 1
-	RTC->WPR = (0x53 /*<< RTC_WPR_KEY_Pos*/); // Clave 2
+	RTC->WPR = (0xCA ); // Clave 1 RTC_WPR_KEY_Pos
+	RTC->WPR = (0x53 ); // Clave 2 RTC_WPR_KEY_Pos
 
 
     /* 7  En la configuración se activa el ISR estableciendo el bit INIT*/
@@ -139,18 +139,17 @@ void RTC_Config(RTC_handler_t *ptrRtcHandler) {
     /* 18. Se  da el pasar por alto la sombra
      registros a cero y se protege WPR */
 	    RTC->CR &= ~RTC_CR_BYPSHAD;
-		RTC->WPR = (0xFF); // Key Lock write protection
+		RTC->WPR = (0xFF); // Llave prottección lectura
 }
-
 
 uint8_t calendario [7] = {0};
 
 uint8_t RTC_BcdToByte(uint16_t ByteAleer){
 
-	uint16_t valor_bcd = ByteAleer;     			    // bcd_value = 55, o 0x37
-	uint16_t Decenas = valor_bcd >> 4;                  // Decenas = 3 (Se shiftea 4 posiciones )
-	uint16_t Unidades = valor_bcd & 0x0F;               // Unidades = 7 el 0x0F filtra el dígito alto)
-	uint16_t valor_final = (Decenas * 10) + Unidades ;       // final_value = 37
+	uint16_t valor_bcd = ByteAleer;     			     // bcd_value = 55, o 0x37
+	uint16_t Decenas = valor_bcd >> 4;                   // Decenas = 3 (Se shiftea 4 posiciones )
+	uint16_t Unidades = valor_bcd & 0x0F;                // Unidades = 7 el 0x0F filtra el dígito alto)
+	uint16_t valor_final = (Decenas * 10) + Unidades ;   // final_value = 37
 
 	return valor_final;
 }
@@ -175,14 +174,14 @@ uint8_t* leer_datos(void){
 		 uint32_t RTC_Date = 0;
 		 RTC_Date = RTC->DR;
 
-		  RTC_Hours   = RTC_BcdToByte(((RTC_Time & 0x3F0000) >> 16));
-		  RTC_Minutes = RTC_BcdToByte(((RTC_Time & 0x007F00) >> 8));
+		  RTC_Hours   = RTC_BcdToByte(((RTC_Time & 0x3F0000) >> RTC_TR_HU_Pos));
+		  RTC_Minutes = RTC_BcdToByte(((RTC_Time & 0x007F00) >> RTC_TR_MNU_Pos));
 		  RTC_Seconds = RTC_BcdToByte((RTC_Time  & 0x0000FF));
 
-		  RTC_weekday   = RTC_BcdToByte(((RTC_Date & 0xE000)   >> 13));
-		  RTC_year   = RTC_BcdToByte(((RTC_Date & 0xFF0000) >> 16));
-		  RTC_Month  = RTC_BcdToByte(((RTC_Date & 0x1F00)   >> 8));
-		  RTC_Day 	 = RTC_BcdToByte((RTC_Date  & 0x3F));
+		  RTC_weekday  = RTC_BcdToByte(((RTC_Date & 0xE000)   >> 13));
+		  RTC_year     = RTC_BcdToByte(((RTC_Date & 0xFF0000) >> 16));
+		  RTC_Month    = RTC_BcdToByte(((RTC_Date & 0x1F00)   >> 8));
+		  RTC_Day 	   = RTC_BcdToByte((RTC_Date  & 0x3F));
 
 
 		    calendario[0] = RTC_Seconds;
@@ -209,11 +208,3 @@ uint8_t* leer_datos(void){
 
 
 
-/* Wait for RTC APB registers synch
-	while(!(RTC->ISR & RTC_ISR_RSF)){
-		__NOP() ;
-	} */
-
-//while((RTC->ISR & RTC_ISR_RSF)){
-
-//	}
