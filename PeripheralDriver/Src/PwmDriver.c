@@ -1,7 +1,7 @@
 /*
  * PwmDriver.c
  *
- *  Created on: XXXX , 2022
+ *  Created on: 1 , 2022
  *      Author: German Antonio Fuentes
  */
 #include "PwmDriver.h"

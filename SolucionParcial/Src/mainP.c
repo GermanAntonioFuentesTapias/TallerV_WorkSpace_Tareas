@@ -50,7 +50,7 @@ GPIO_Handler_t handlerI2cSCL		= {0};
 I2C_Handler_t handlerAcelerometro   = {0};
 I2C_HandlerLCD_t handlerLCD         = {0};
 
-USART_Handler_t handlerUsart2    = {0};
+USART_Handler_t handlerUsart1    = {0};
 
 BasicTimer_Handler_t handlerBlinkyTimer = {0};
 
@@ -100,7 +100,7 @@ GPIO_Handler_t        handlerRed = {0};
 
 #define LCD_ADDRESS     0b0100111
 
-
+//ddd
 /* Definición de las cabezeras de las funciones */
 void initSystem (void);
 
@@ -129,12 +129,12 @@ int main(void)
 
 
 		if(rxData != '\0'){
-			writeChar(&handlerUsart2, rxData);
+			writeChar(&handlerUsart1, rxData);
 
 			if(rxData == 'd'){
 				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
 				sprintf(bufferData, "dataRead = 0x%2x  \n", (unsigned int) i2cBuffer);
-				writeMsg(&handlerUsart2, bufferData);
+				writeMsg(&handlerUsart1, bufferData);
 				rxData = '\0';
 
 			}
@@ -142,7 +142,7 @@ int main(void)
 			else if (rxData == 'p'){
 				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
 				sprintf(bufferData, "dataRead = 0x%2x \n", (unsigned int) i2cBuffer);
-				writeMsg(&handlerUsart2, bufferData);
+				writeMsg(&handlerUsart1, bufferData);
 				rxData = '\0';
 			}
 
@@ -155,12 +155,12 @@ int main(void)
 
 			else if(rxData == 'x'){
 
-//				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
-//				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
-//				AccelX = AccelX_high << 8 | AccelX_low;
-//				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
-//				writeMsg(&handlerUsart2, bufferData);
-//				rxData = '\0';
+				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+				AccelX = AccelX_high << 8 | AccelX_low;
+				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
+				writeMsg(&handlerUsart1, bufferData);
+				rxData = '\0';
 			}
 
 			else if (rxData == 'y'){
@@ -168,7 +168,7 @@ int main(void)
 				uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
 				AccelY = AccelY_high << 8 | AccelY_low;
 				sprintf(bufferData, "AccelY = %d \n", (int) AccelY);
-				writeMsg(&handlerUsart2, bufferData);
+				writeMsg(&handlerUsart1, bufferData);
 				rxData = '\0';
 
 			}
@@ -178,7 +178,7 @@ int main(void)
 				uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_H);
 			    AccelZ = AccelZ_high << 8 | AccelZ_low;
 				sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
-				writeMsg(&handlerUsart2, bufferData);
+				writeMsg(&handlerUsart1, bufferData);
 				rxData = '\0';
 			}
 			else{
@@ -188,39 +188,114 @@ int main(void)
                if(AccelX != 0){
                   if(AccelY > 0 && AccelX > 0){
 				  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
+
+				  if( angulo < 30){
 				  updateDuttyCycle(&handlerPWMB, 10000);
-				  updateDuttyCycle(&handlerPWMR, 10000);
+				  updateDuttyCycle(&handlerPWMR, 5000);
 				  updateDuttyCycle(&handlerPWMG, 0);
+
+				  } else if (angulo >= 30 && angulo < 60){
+					  updateDuttyCycle(&handlerPWMB, 5000);
+					  updateDuttyCycle(&handlerPWMR, 5000);
+					  updateDuttyCycle(&handlerPWMG, 0);
+
+
+				  } else if ( angulo >= 60 && angulo < 90) {
+					  updateDuttyCycle(&handlerPWMB, 3000);
+					  updateDuttyCycle(&handlerPWMR, 3000);
+					  updateDuttyCycle(&handlerPWMG, 0 );
+
+
+				  } else{
+					  __NOP();
+				  }
 
                   }else if( AccelX < 0 && AccelY > 0){
                 	  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
                 	  angulo = 180 - angulo;
-                	  updateDuttyCycle(&handlerPWMB, 10000);
-                	  updateDuttyCycle(&handlerPWMR, 0);
-                	  updateDuttyCycle(&handlerPWMG, 0);
+
+                	  if (angulo >= 90 && angulo < 120){
+
+                		  updateDuttyCycle(&handlerPWMB, 5000);
+						  updateDuttyCycle(&handlerPWMR, 5000);
+						  updateDuttyCycle(&handlerPWMG, 0);
+
+						  } else if (angulo >= 120 && angulo < 150){
+							  updateDuttyCycle(&handlerPWMB, 0);
+							  updateDuttyCycle(&handlerPWMR, 0);
+							  updateDuttyCycle(&handlerPWMG, 10000);
+
+
+						  } else if ( angulo >= 150 && angulo < 180) {
+							  updateDuttyCycle(&handlerPWMB, 5000);
+							  updateDuttyCycle(&handlerPWMR, 0);
+							  updateDuttyCycle(&handlerPWMG, 10000 );
+
+
+                		  				  } else{
+                		  					  __NOP();
+                		  				  }
 
                   } else if( AccelX <0 && AccelY < 0){
                 	  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
                 	  angulo = 180 + angulo;
-                	  updateDuttyCycle(&handlerPWMG, 10000);
-                	  updateDuttyCycle(&handlerPWMB, 0);
-					  updateDuttyCycle(&handlerPWMG, 0);
+
+                	  if(angulo >= 180 && angulo <210){
+
+				  updateDuttyCycle(&handlerPWMB, 10000);
+					  updateDuttyCycle(&handlerPWMR, 0);
+					  updateDuttyCycle(&handlerPWMG, 5000);
+
+					  } else if (angulo >= 210 && angulo < 240){
+						  updateDuttyCycle(&handlerPWMB, 10000);
+						  updateDuttyCycle(&handlerPWMR, 0);
+						  updateDuttyCycle(&handlerPWMG, 1000);
+
+
+					  } else if ( angulo >= 240 && angulo < 270) {
+						  updateDuttyCycle(&handlerPWMB, 10000);
+						  updateDuttyCycle(&handlerPWMR, 3000);
+						  updateDuttyCycle(&handlerPWMG, 0 );
+
+
+					  } else{
+                	  					  __NOP();
+                	  				  }
+
 
 
                   } else if ( AccelX > 0 && AccelY <= 0){
                 	  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
                 	  angulo = 360 - angulo;
-                	  updateDuttyCycle(&handlerPWMR, 10000);
-                	  updateDuttyCycle(&handlerPWMB, 0);
+
+                	  if( angulo >= 270 && angulo < 300){
+
+					  updateDuttyCycle(&handlerPWMB, 10000);
+					  updateDuttyCycle(&handlerPWMR, 0);
 					  updateDuttyCycle(&handlerPWMG, 0);
 
+					  } else if (angulo >= 300 && angulo < 330){
+						  updateDuttyCycle(&handlerPWMB, 10000);
+						  updateDuttyCycle(&handlerPWMR, 10000);
+						  updateDuttyCycle(&handlerPWMG, 0);
+
+
+					  } else if ( angulo >= 330 && angulo <= 360) {
+						  updateDuttyCycle(&handlerPWMB, 0);
+						  updateDuttyCycle(&handlerPWMR, 10000);
+						  updateDuttyCycle(&handlerPWMG, 0 );
+
+					  }
 
                   } else if (AccelX == 0 || AccelY == 0){
                 	  angulo = 0;
+                	  updateDuttyCycle(&handlerPWMR, 10000);
+					  updateDuttyCycle(&handlerPWMB, 10000);
+					  updateDuttyCycle(&handlerPWMG, 10000);
                   }
 
 			sprintf(welcomer, "Angulo = %d \n", (int) angulo);
-			writeMsg(&handlerUsart2, welcomer);
+			writeMsg(&handlerUsart1, welcomer);
 			rxData = '\0';
                }
 
@@ -242,9 +317,9 @@ void initSystem (void){
 	/* Se carga la configuración */
 	GPIO_Config(&handlerBlinkyPin);
 
-	/* Handler para el PIN A2 */
-	handlerTx.pGPIOx                       			= GPIOA;
-	handlerTx.GPIO_PinConfig.GPIO_PinNumber			= PIN_2;				// Pin TX USART2  ES USAR 1 NO OLVIDAR
+	/* Handler para el PIN B6 */
+	handlerTx.pGPIOx                       			= GPIOB;
+	handlerTx.GPIO_PinConfig.GPIO_PinNumber			= PIN_6;				// Pin TX USART1 NO
 	handlerTx.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
 	handlerTx.GPIO_PinConfig.GPIO_PinOPType		    = GPIO_OTYPE_PUSHPULL;
 	handlerTx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
@@ -254,9 +329,9 @@ void initSystem (void){
 	/* Se carga la configuración */
 	GPIO_Config(&handlerTx);
 
-	/* Handler para el PIN A3 */
-	handlerRx.pGPIOx                       			= GPIOA;
-	handlerRx.GPIO_PinConfig.GPIO_PinNumber			= PIN_3;				// Pin TX USART2
+	/* Handler para el PIN B7 */
+	handlerRx.pGPIOx                       			= GPIOB;
+	handlerRx.GPIO_PinConfig.GPIO_PinNumber			= PIN_7;				// Pin RX USART1
 	handlerRx.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
 	handlerRx.GPIO_PinConfig.GPIO_PinOPType		    = GPIO_OTYPE_PUSHPULL;
 	handlerRx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
@@ -267,17 +342,18 @@ void initSystem (void){
 	GPIO_Config(&handlerRx);
 
 	/* Handler para el USART1 */
-	handlerUsart2.ptrUSARTx								= USART2;
-	handlerUsart2.USART_Config.USART_baudrate			= USART_BAUDRATE_19200;
-	handlerUsart2.USART_Config.USART_datasize			= USART_DATASIZE_9BIT;
-	handlerUsart2.USART_Config.USART_mode				= USART_MODE_RXTX;
-	handlerUsart2.USART_Config.USART_parity				= USART_PARITY_EVEN;
-	handlerUsart2.USART_Config.USART_stopbits			= USART_STOPBIT_1;
-	handlerUsart2.USART_Config.USART_IntRx				= USART_RX_INTERRUPT_ENABLE;
+	handlerUsart1.ptrUSARTx								= USART1;
+	handlerUsart1.USART_Config.USART_baudrate			= USART_BAUDRATE_19200;
+	handlerUsart1.USART_Config.USART_datasize			= USART_DATASIZE_9BIT;
+	handlerUsart1.USART_Config.USART_mode				= USART_MODE_RXTX;
+	handlerUsart1.USART_Config.USART_parity				= USART_PARITY_EVEN;
+	handlerUsart1.USART_Config.USART_stopbits			= USART_STOPBIT_1;
+	handlerUsart1.USART_Config.USART_IntRx				= USART_RX_INTERRUPT_ENABLE;
+	handlerUsart1.USART_Config.USART_IntTx              = USART_TX_INTERRUP_DISABLE;
 
 
 	/* Se carga la configuración */
-	USART_Config(&handlerUsart2);
+	USART_Config(&handlerUsart1);
 
 	/* Handler para el Timer2 */
 	handlerBlinkyTimer.ptrTIMx 								= TIM2;
@@ -410,7 +486,7 @@ void initSystem (void){
 
 	handlerPWMB.ptrTIMx                                   = TIM3;
 	handlerPWMB.config.channel                            = PWM_CHANNEL_2;
-	handlerPWMB.config.duttyCicle                         = 10000;
+	handlerPWMB.config.duttyCicle                         = 0;
 	handlerPWMB.config.periodo                            = 12000;
 	handlerPWMB.config.prescaler                          = BTIMER_SPEED_100us;
 
@@ -427,7 +503,7 @@ void initSystem (void){
 
 	 handlerPWMR.ptrTIMx                                   = TIM3;
 	 handlerPWMR.config.channel                            = PWM_CHANNEL_1;
-	 handlerPWMR.config.duttyCicle                         = 1000;
+	 handlerPWMR.config.duttyCicle                         = 0;
 	 handlerPWMR.config.periodo                            = 12000;
 	 handlerPWMR.config.prescaler                          = BTIMER_SPEED_100us;
 
@@ -449,7 +525,7 @@ void initSystem (void){
 
 }
 
-void USART2Rx_CallBack(void){
+void USART1Rx_CallBack(void){
 
 rxData = getRxData();
 

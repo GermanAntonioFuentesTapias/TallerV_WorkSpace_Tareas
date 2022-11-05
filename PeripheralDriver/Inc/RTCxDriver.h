@@ -10,8 +10,8 @@
 
 #include "stm32f4xx.h"
 
-#define time_format_24	0
-#define time_format_12	1
+#define time_formato_24	0
+#define time_formato_12	1
 
 #define LUNES		0x1
 #define MARTES		0x2
@@ -30,33 +30,28 @@ typedef struct
                         se tendra en 0-23 con militar, cambiando
                         RTC_HourFormat_12 a  RTC_HourFormat_24 is. */
 
-  uint8_t RTC_Minutes;  /*!< Specifies the RTC Time Minutes.
-                        This parameter must be set to a value in the 0-59 range. */
+  uint8_t RTC_Minutes;  /* Especifica los minutos */
 
-  uint8_t RTC_Seconds;  /*!< Specifies the RTC Time Seconds.
-                        This parameter must be set to a value in the 0-59 range. */
+  uint8_t RTC_Seconds;  /* Especifica los segundos */
+  uint8_t RTC_H12;      /* Especifica AM/PM */
 
-  uint8_t RTC_H12;      /*!< Specifies the RTC AM/PM Time. */
-
-}RTC_TimeTypeDef;
+}RTC_TimeTyp;
 
 typedef struct
 {
-  uint8_t RTC_WeekDay; /*!< Specifies the RTC Date WeekDay.*/
+  uint8_t RTC_WeekDay; /* Dia de semana.*/
 
-  uint8_t RTC_Month;   /*!< Specifies the RTC Date Month (in BCD format) */
+  uint8_t RTC_Month;   /* Dia del mes*/
 
-  uint8_t RTC_Date;     /*!< Specifies the RTC Date.
-                        This parameter must be set to a value in the 1-31 range. */
+  uint8_t RTC_Date;     /*!< Fecha del mes 1-31 */
 
-  uint8_t RTC_Year;     /*!< Specifies the RTC Date Year.
-                        This parameter must be set to a value in the 0-99 range. */
-}RTC_DateTypeDef;
+  uint8_t RTC_Year;     /* Rango del año */
+}RTC_DateTyp;
 
 typedef struct
 {
-	RTC_DateTypeDef		DateTypeDef;
-	RTC_TimeTypeDef		TimeTypeDef;
+	RTC_DateTyp		DateTypeDef;
+	RTC_TimeTyp		    TimeTypeDef;
 
 }RTC_handler_t;
 
