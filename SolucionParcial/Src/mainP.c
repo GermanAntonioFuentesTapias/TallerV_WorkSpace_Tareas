@@ -24,10 +24,13 @@
 
 /* Definición de variables para operación matematicas */
 
-#define MAX   16000
+#define MAX_X    16000
+#define MIN_Y   -16000
+#define MIN_X   -16000
+#define MIN_Z   -16000
 
 int16_t radio = 0;
-int8_t  angulo = 0;
+int16_t  angulo = 0;
 
 int16_t AccelX = 0;
 int16_t AccelY = 0;
@@ -150,12 +153,52 @@ int main(void)
 			}
 
 			else if(rxData == 'x'){
+
+
+
 				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
 				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
 				AccelX = AccelX_high << 8 | AccelX_low;
+
+//				angulo = (atan(AccelY/AccelX));
+
+				angulo = 2 * AccelX ;
+
 				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
+				sprintf(welcomer, "Angulo = %d \n", (int) angulo);
 				writeMsg(&handlerUsart2, bufferData);
+				writeMsg(&handlerUsart2, welcomer);
 				rxData = '\0';
+
+//				radio = sqrt((double)((AccelX*AccelX) + (AccelY*AccelY)));
+//
+//				if(AccelX != 0){
+
+//					 stopPwmSignal(&handlerPWMR);
+//					 stopPwmSignal(&handlerPWMG);
+//					 stopPwmSignal(&handlerPWMB);
+
+
+
+//					 if ( (angulo > 0 && AccelX > 0)){
+//
+//					startPwmSignal(&handlerPWMR);
+//
+//					sprintf(welcomer, "Angulo = %d \n", (int) angulo);
+//					writeMsg(&handlerUsart2, welcomer);
+//					rxData = '\0';
+//
+//			     }
+//
+//					 else {
+//					 				startPwmSignal(&handlerPWMR);
+//					 				startPwmSignal(&handlerPWMB);
+//					 				startPwmSignal(&handlerPWMG);
+//
+//					 			 }
+//
+//				}
+
 			}
 
 			else if (rxData == 'y'){
@@ -176,30 +219,11 @@ int main(void)
 				writeMsg(&handlerUsart2, bufferData);
 				rxData = '\0';
 			}
-
 			else{
 				rxData = '\0';
 			}
 
 		  }
-
-
-		/* Para obtener cambios de colores dados por el acelerometro */
-
-
-        uint16_t x = AccelX;
-        uint16_t y = AccelY;
-
-        radio = sqrt((double)((x*x) + (y*y)));
-
-        angulo = (tan(y/x));
-
-
-
-//		if ( radio ){
-
-//		}
-
 	}
 }
 
