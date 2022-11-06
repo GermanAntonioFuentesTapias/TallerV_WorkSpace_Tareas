@@ -146,8 +146,6 @@ int main(void)
 	startPwmSignal(&handlerPWMB);
 	startPwmSignal(&handlerPWMG);
 
-	void DefAccel();
-
 //
 //	LCD_Init(&handlerLCD); // Pasa todo el proceso interno de la LCD
 //
@@ -625,14 +623,14 @@ void initSystem (void){
 
 	 /* Configuración RTC */
 
-	 handlerRTC.DateTypeDef.RTC_Date     = 5;
+	 handlerRTC.DateTypeDef.RTC_Date     = 05;
 	 handlerRTC.DateTypeDef.RTC_Month    = 11;
 	 handlerRTC.DateTypeDef.RTC_WeekDay  = Satur;
 	 handlerRTC.DateTypeDef.RTC_Year     = 22;
 	 handlerRTC.TimeTypeDef.RTC_H12      = 12;
-	 handlerRTC.TimeTypeDef.RTC_Hours    = 17;
-	 handlerRTC.TimeTypeDef.RTC_Minutes  = 43;
-	 handlerRTC.TimeTypeDef.RTC_Seconds  = 04;
+	 handlerRTC.TimeTypeDef.RTC_Hours    = 23;
+	 handlerRTC.TimeTypeDef.RTC_Minutes  = 55;
+	 handlerRTC.TimeTypeDef.RTC_Seconds  = 44;
 
 	 RTC_Config(&handlerRTC);
 
@@ -684,8 +682,8 @@ void parseCommands(char *ptrBufferReception){
 		writeMsg(&handlerUsart1, "3) Hora = en Hora - Minuto - Segundos \n");
 		writeMsg(&handlerUsart1, "4) Fecha=  en Dia / Mes / Año \n" );
 		writeMsg(&handlerUsart1, "5) Accel = Se inicializa el acelerometro \n ");
-		writeMsg(&handlerUsart1, "6) Se detiene el acelerometro \n");
-		writeMsg(&handlerUsart1, "7) Se activa RGB de manera tranquila \n)");
+		writeMsg(&handlerUsart1, "6) StopA = Se detiene el acelerometro \n");
+		writeMsg(&handlerUsart1, "7) RBG = Se activa RGB de manera tranquila \n)");
 		writeMsg(&handlerUsart1, "8) Se detiene RGB tranquilo \n");
 		writeMsg(&handlerUsart1, "9) Se activa RGB cambiando con Acelerometro \n");
 		writeMsg(&handlerUsart1, "10) Se detiene RGB Variante \n ");
@@ -723,6 +721,8 @@ void parseCommands(char *ptrBufferReception){
 	else if(strcmp(cmd, "Accel") == 0) {
 
 
+
+        while(rxDataCMD != 'q') {
 		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
 		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
 		i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
@@ -739,14 +739,160 @@ void parseCommands(char *ptrBufferReception){
 		writeMsg(&handlerUsart1, bufferDataY);
 		rxDataCMD = '\0';
 
+		if(rxDataCMD != 'z'){
+			__NOP();
+		}
+
 	}
+	}
+
+	else if(strcmp(cmd , "StopA") == 0) {
+
+//		i2c_stopTransaction(&handlerAcelerometro);
+//		i2c_sendNoAck(&handlerAcelerometro);
+//		i2c_config(&handlerAcelerometro);
+
+
+	}
+
+	else if(strcmp(cmd ,"RBG") == 0){
+
+
+		        while( rxDataCMD != 'q'){
+
+				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
+				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
+				i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
+				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+				AccelX = AccelX_high << 8 | AccelX_low;
+				uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
+				uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
+				AccelY = AccelY_high << 8 | AccelY_low;
+
+				 if(AccelY > 0 && AccelX > 0){
+
+				  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
+
+				  if( angulo < 30){
+				  updateDuttyCycle(&handlerPWMB, 10000);
+				  updateDuttyCycle(&handlerPWMR, 5000);
+				  updateDuttyCycle(&handlerPWMG, 0);
+
+				  } else if (angulo >= 30 && angulo < 60){
+					  updateDuttyCycle(&handlerPWMB, 5000);
+					  updateDuttyCycle(&handlerPWMR, 5000);
+					  updateDuttyCycle(&handlerPWMG, 0);
+
+
+				  } else if ( angulo >= 60 && angulo < 90) {
+					  updateDuttyCycle(&handlerPWMB, 3000);
+					  updateDuttyCycle(&handlerPWMR, 3000);
+					  updateDuttyCycle(&handlerPWMG, 0 );
+
+
+				  } else{
+					  __NOP();
+				  }
+
+				  }else if( AccelX < 0 && AccelY > 0){
+					  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
+					  angulo = 180 - angulo;
+
+					  if (angulo >= 90 && angulo < 120){
+
+						  updateDuttyCycle(&handlerPWMB, 5000);
+						  updateDuttyCycle(&handlerPWMR, 5000);
+						  updateDuttyCycle(&handlerPWMG, 0);
+
+						  } else if (angulo >= 120 && angulo < 150){
+							  updateDuttyCycle(&handlerPWMB, 0);
+							  updateDuttyCycle(&handlerPWMR, 0);
+							  updateDuttyCycle(&handlerPWMG, 10000);
+
+
+						  } else if ( angulo >= 150 && angulo < 180) {
+							  updateDuttyCycle(&handlerPWMB, 5000);
+							  updateDuttyCycle(&handlerPWMR, 0);
+							  updateDuttyCycle(&handlerPWMG, 10000 );
+
+
+										  } else{
+											  __NOP();
+										  }
+
+				  } else if( AccelX <0 && AccelY < 0){
+					  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
+					  angulo = 180 + angulo;
+
+					  if(angulo >= 180 && angulo <210){
+
+				  updateDuttyCycle(&handlerPWMB, 10000);
+					  updateDuttyCycle(&handlerPWMR, 0);
+					  updateDuttyCycle(&handlerPWMG, 5000);
+
+					  } else if (angulo >= 210 && angulo < 240){
+						  updateDuttyCycle(&handlerPWMB, 10000);
+						  updateDuttyCycle(&handlerPWMR, 0);
+						  updateDuttyCycle(&handlerPWMG, 1000);
+
+
+					  } else if ( angulo >= 240 && angulo < 270) {
+						  updateDuttyCycle(&handlerPWMB, 10000);
+						  updateDuttyCycle(&handlerPWMR, 3000);
+						  updateDuttyCycle(&handlerPWMG, 0 );
+
+
+					  } else{
+										  __NOP();
+									  }
+
+
+
+				  } else if ( AccelX > 0 && AccelY <= 0){
+					  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
+					  angulo = 360 - angulo;
+
+					  if( angulo >= 270 && angulo < 300){
+
+					  updateDuttyCycle(&handlerPWMB, 10000);
+					  updateDuttyCycle(&handlerPWMR, 0);
+					  updateDuttyCycle(&handlerPWMG, 0);
+
+					  } else if (angulo >= 300 && angulo < 330){
+						  updateDuttyCycle(&handlerPWMB, 10000);
+						  updateDuttyCycle(&handlerPWMR, 10000);
+						  updateDuttyCycle(&handlerPWMG, 0);
+
+
+					  } else if ( angulo >= 330 && angulo <= 360) {
+						  updateDuttyCycle(&handlerPWMB, 0);
+						  updateDuttyCycle(&handlerPWMR, 10000);
+						  updateDuttyCycle(&handlerPWMG, 0 );
+
+					  }
+
+				  } else if (AccelX == 0 || AccelY == 0){
+					  angulo = 0;
+					  updateDuttyCycle(&handlerPWMR, 10000);
+					  updateDuttyCycle(&handlerPWMB, 10000);
+					  updateDuttyCycle(&handlerPWMG, 10000);
+				  }
+
+			sprintf(welcomer, "Angulo = %d \n", (int) angulo);
+			writeMsg(&handlerUsart1, welcomer);
+			rxDataCMD = '\0';
+			   }
+
+		        rxDataCMD = getRxDataCMD();
+
+	}
+
 
 	else{
 
 		writeMsg(&handlerUsart1, " Wrong CMD");
 	}
-
-
 
 
 }
@@ -783,7 +929,7 @@ void parseCommands(char *ptrBufferReception){
 //				sprintf(DataRTCDate, " La fecha es = %u/ %u/ %u/  \n", (unsigned int) Day , (unsigned int) Mes, (unsigned int) Ano);
 //				writeMsg(&handlerUsart1, DataRTCDate);
 //				rxData = '\0';
-
+//
 //			}
 //
 //			else if (rxData == 'p'){
@@ -832,116 +978,3 @@ void parseCommands(char *ptrBufferReception){
 //				rxData = '\0';
 //			}
 //
-//               if(AccelX != 0){
-//                  if(AccelY > 0 && AccelX > 0){
-//				  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
-//
-//				  if( angulo < 30){
-//				  updateDuttyCycle(&handlerPWMB, 10000);
-//				  updateDuttyCycle(&handlerPWMR, 5000);
-//				  updateDuttyCycle(&handlerPWMG, 0);
-//
-//				  } else if (angulo >= 30 && angulo < 60){
-//					  updateDuttyCycle(&handlerPWMB, 5000);
-//					  updateDuttyCycle(&handlerPWMR, 5000);
-//					  updateDuttyCycle(&handlerPWMG, 0);
-//
-//
-//				  } else if ( angulo >= 60 && angulo < 90) {
-//					  updateDuttyCycle(&handlerPWMB, 3000);
-//					  updateDuttyCycle(&handlerPWMR, 3000);
-//					  updateDuttyCycle(&handlerPWMG, 0 );
-//
-//
-//				  } else{
-//					  __NOP();
-//				  }
-//
-//                  }else if( AccelX < 0 && AccelY > 0){
-//                	  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
-//                	  angulo = 180 - angulo;
-//
-//                	  if (angulo >= 90 && angulo < 120){
-//
-//                		  updateDuttyCycle(&handlerPWMB, 5000);
-//						  updateDuttyCycle(&handlerPWMR, 5000);
-//						  updateDuttyCycle(&handlerPWMG, 0);
-//
-//						  } else if (angulo >= 120 && angulo < 150){
-//							  updateDuttyCycle(&handlerPWMB, 0);
-//							  updateDuttyCycle(&handlerPWMR, 0);
-//							  updateDuttyCycle(&handlerPWMG, 10000);
-//
-//
-//						  } else if ( angulo >= 150 && angulo < 180) {
-//							  updateDuttyCycle(&handlerPWMB, 5000);
-//							  updateDuttyCycle(&handlerPWMR, 0);
-//							  updateDuttyCycle(&handlerPWMG, 10000 );
-//
-//
-//                		  				  } else{
-//                		  					  __NOP();
-//                		  				  }
-//
-//                  } else if( AccelX <0 && AccelY < 0){
-//                	  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
-//                	  angulo = 180 + angulo;
-//
-//                	  if(angulo >= 180 && angulo <210){
-//
-//				  updateDuttyCycle(&handlerPWMB, 10000);
-//					  updateDuttyCycle(&handlerPWMR, 0);
-//					  updateDuttyCycle(&handlerPWMG, 5000);
-//
-//					  } else if (angulo >= 210 && angulo < 240){
-//						  updateDuttyCycle(&handlerPWMB, 10000);
-//						  updateDuttyCycle(&handlerPWMR, 0);
-//						  updateDuttyCycle(&handlerPWMG, 1000);
-//
-//
-//					  } else if ( angulo >= 240 && angulo < 270) {
-//						  updateDuttyCycle(&handlerPWMB, 10000);
-//						  updateDuttyCycle(&handlerPWMR, 3000);
-//						  updateDuttyCycle(&handlerPWMG, 0 );
-//
-//
-//					  } else{
-//                	  					  __NOP();
-//                	  				  }
-//
-//
-//
-//                  } else if ( AccelX > 0 && AccelY <= 0){
-//                	  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
-//                	  angulo = 360 - angulo;
-//
-//                	  if( angulo >= 270 && angulo < 300){
-//
-//					  updateDuttyCycle(&handlerPWMB, 10000);
-//					  updateDuttyCycle(&handlerPWMR, 0);
-//					  updateDuttyCycle(&handlerPWMG, 0);
-//
-//					  } else if (angulo >= 300 && angulo < 330){
-//						  updateDuttyCycle(&handlerPWMB, 10000);
-//						  updateDuttyCycle(&handlerPWMR, 10000);
-//						  updateDuttyCycle(&handlerPWMG, 0);
-//
-//
-//					  } else if ( angulo >= 330 && angulo <= 360) {
-//						  updateDuttyCycle(&handlerPWMB, 0);
-//						  updateDuttyCycle(&handlerPWMR, 10000);
-//						  updateDuttyCycle(&handlerPWMG, 0 );
-//
-//					  }
-//
-//                  } else if (AccelX == 0 || AccelY == 0){
-//                	  angulo = 0;
-//                	  updateDuttyCycle(&handlerPWMR, 10000);
-//					  updateDuttyCycle(&handlerPWMB, 10000);
-//					  updateDuttyCycle(&handlerPWMG, 10000);
-//                  }
-//
-//			sprintf(welcomer, "Angulo = %d \n", (int) angulo);
-//			writeMsg(&handlerUsart1, welcomer);
-//			rxData = '\0';
-//               }
