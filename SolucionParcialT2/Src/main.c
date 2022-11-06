@@ -56,6 +56,7 @@ BasicTimer_Handler_t handlerBlinkyTimer = {0};
 /* Definición de variables del proyecto */
 uint8_t handlerLed  = 0;
 uint8_t rxData      =  0;
+uint8_t rxDataCMD   = 0;
 
 uint8_t i2cBuffer = 0;
 
@@ -77,6 +78,7 @@ uint8_t  Ano;
 char DataRTC[64] = "Wipi";
 char DataRTCDate[64] = "Wipi";
 char bufferData[64] = "esto es una pequeña prueba";
+char bufferDataY[64] = " Valor Y";
 char welcomer[64]   = "Bienvenido";
 
 /* Variables del I2C LCD */
@@ -113,18 +115,38 @@ GPIO_Handler_t        handlerRed = {0};
 
 #define LCD_ADDRESS     0b0100111
 
-//ddd
+/* Funciones para comandos */
+
+
+uint8_t counterReception = 0;
+char bufferReception[64] = {0};
+char cmd[64];
+char userMsg[64];
+bool stringComplete = false;
+bool makeUpdateLCD  = false;
+unsigned int firstParameter;
+unsigned int secondParameter;
+
+
+/****************************************************************/
+
+
+
+
 /* Definición de las cabezeras de las funciones */
 void initSystem (void);
-
+void parseCommands (char *ptrBufferReception);
 
 int main(void)
 {
    /* Llamamos a la función initSystem para que se ejecute */
+
 	initSystem();
 	startPwmSignal(&handlerPWMR);
 	startPwmSignal(&handlerPWMB);
 	startPwmSignal(&handlerPWMG);
+
+	void DefAccel();
 
 //
 //	LCD_Init(&handlerLCD); // Pasa todo el proceso interno de la LCD
@@ -141,202 +163,248 @@ int main(void)
 		/* Se escribe el valor de la variable estadoBlinky en el handlerBlinkyPin */
 		GPIO_WritePin(&handlerBlinkyPin,handlerLed );
 
+		ptrData =leer_datos();
 
-		if(rxData != '\0'){
-			writeChar(&handlerUsart1, rxData);
-
-			if(rxData == 'd'){
-				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
-				sprintf(bufferData, "dataRead = 0x%2x  \n", (unsigned int) i2cBuffer);
-				writeMsg(&handlerUsart1, bufferData);
-				rxData = '\0';
-
-			}
-			else if (rxData == 'm'){
-
-				  ptrData =leer_datos();
-
-				   Seg = ptrData[0];
-				   Min = ptrData[1];
-				   Hor = ptrData[2];
-				   Sem = ptrData[3];
-				   Day = ptrData[4];
-				   Mes = ptrData[5];
-				   Ano = ptrData[6];
-
-				sprintf(DataRTC, " La hora es = %uh: %um: %us: \n", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
-				writeMsg(&handlerUsart1, DataRTC);
-				rxData = '\0';
-			}
-
-			else if (rxData == 'f'){
-				sprintf(DataRTCDate, " La fecha es = %u/ %u/ %u/  \n", (unsigned int) Day , (unsigned int) Mes, (unsigned int) Ano);
-				writeMsg(&handlerUsart1, DataRTCDate);
-				rxData = '\0';
-
-			}
-
-			else if (rxData == 'p'){
-				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
-				sprintf(bufferData, "dataRead = 0x%2x \n", (unsigned int) i2cBuffer);
-				writeMsg(&handlerUsart1, bufferData);
-				rxData = '\0';
-			}
-
-			else if(rxData == 'r'){
-
-				i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
-				rxData = '\0';
-
-			}
-
-			else if(rxData == 'x'){
-
-				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
-				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
-				AccelX = AccelX_high << 8 | AccelX_low;
-				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
-				writeMsg(&handlerUsart1, bufferData);
-				rxData = '\0';
-			}
-
-			else if (rxData == 'y'){
-				uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
-				uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
-				AccelY = AccelY_high << 8 | AccelY_low;
-				sprintf(bufferData, "AccelY = %d \n", (int) AccelY);
-				writeMsg(&handlerUsart1, bufferData);
-				rxData = '\0';
-
-			}
-
-			else if (rxData == 'z'){
-				uint8_t AccelZ_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_L);
-				uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_H);
-			    AccelZ = AccelZ_high << 8 | AccelZ_low;
-				sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
-				writeMsg(&handlerUsart1, bufferData);
-				rxData = '\0';
-			}
-			else{
-				rxData = '\0';
-			}
-
-               if(AccelX != 0){
-                  if(AccelY > 0 && AccelX > 0){
-				  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
-
-				  if( angulo < 30){
-				  updateDuttyCycle(&handlerPWMB, 10000);
-				  updateDuttyCycle(&handlerPWMR, 5000);
-				  updateDuttyCycle(&handlerPWMG, 0);
-
-				  } else if (angulo >= 30 && angulo < 60){
-					  updateDuttyCycle(&handlerPWMB, 5000);
-					  updateDuttyCycle(&handlerPWMR, 5000);
-					  updateDuttyCycle(&handlerPWMG, 0);
+		   Seg = ptrData[0];
+		   Min = ptrData[1];
+		   Hor = ptrData[2];
+		   Sem = ptrData[3];
+		   Day = ptrData[4];
+		   Mes = ptrData[5];
+		   Ano = ptrData[6];
 
 
-				  } else if ( angulo >= 60 && angulo < 90) {
-					  updateDuttyCycle(&handlerPWMB, 3000);
-					  updateDuttyCycle(&handlerPWMR, 3000);
-					  updateDuttyCycle(&handlerPWMG, 0 );
+//		if(rxData != '\0'){
+//		writeChar(&handlerUsart1, rxData);
+//		bufferReception[counterReception] = rxData;
+//
+//			if(rxData == 'd'){
+//				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
+//				sprintf(bufferData, "dataRead = 0x%2x  \n", (unsigned int) i2cBuffer);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//
+//			}
+//			else if (rxData == 'm'){
+//
+//				  ptrData =leer_datos();
+//
+//				   Seg = ptrData[0];
+//				   Min = ptrData[1];
+//				   Hor = ptrData[2];
+//				   Sem = ptrData[3];
+//				   Day = ptrData[4];
+//				   Mes = ptrData[5];
+//				   Ano = ptrData[6];
+//
+//				sprintf(DataRTC, " La hora es = %uh: %um: %us: \n", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
+//				writeMsg(&handlerUsart1, DataRTC);
+//				rxData = '\0';
+//			}
+//
+//			else if (rxData == 'f'){
+//				sprintf(DataRTCDate, " La fecha es = %u/ %u/ %u/  \n", (unsigned int) Day , (unsigned int) Mes, (unsigned int) Ano);
+//				writeMsg(&handlerUsart1, DataRTCDate);
+//				rxData = '\0';
+//
+//			}
+//
+//			else if (rxData == 'p'){
+//				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
+//				sprintf(bufferData, "dataRead = 0x%2x \n", (unsigned int) i2cBuffer);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//			}
+//
+//			else if(rxData == 'r'){
+//
+//				i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
+//				rxData = '\0';
+//
+//			}
+//
+//			else if(rxData == 'x'){
+//
+//				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+//				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+//				AccelX = AccelX_high << 8 | AccelX_low;
+//				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//			}
+//
+//			else if (rxData == 'y'){
+//				uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
+//				uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
+//				AccelY = AccelY_high << 8 | AccelY_low;
+//				sprintf(bufferData, "AccelY = %d \n", (int) AccelY);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//
+//			}
+//
+//			else if (rxData == 'z'){
+//				uint8_t AccelZ_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_L);
+//				uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_H);
+//			    AccelZ = AccelZ_high << 8 | AccelZ_low;
+//				sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//			}
+//			else{
+//				rxData = '\0';
+//			}
+//
+//               if(AccelX != 0){
+//                  if(AccelY > 0 && AccelX > 0){
+//				  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
+//
+//				  if( angulo < 30){
+//				  updateDuttyCycle(&handlerPWMB, 10000);
+//				  updateDuttyCycle(&handlerPWMR, 5000);
+//				  updateDuttyCycle(&handlerPWMG, 0);
+//
+//				  } else if (angulo >= 30 && angulo < 60){
+//					  updateDuttyCycle(&handlerPWMB, 5000);
+//					  updateDuttyCycle(&handlerPWMR, 5000);
+//					  updateDuttyCycle(&handlerPWMG, 0);
+//
+//
+//				  } else if ( angulo >= 60 && angulo < 90) {
+//					  updateDuttyCycle(&handlerPWMB, 3000);
+//					  updateDuttyCycle(&handlerPWMR, 3000);
+//					  updateDuttyCycle(&handlerPWMG, 0 );
+//
+//
+//				  } else{
+//					  __NOP();
+//				  }
+//
+//                  }else if( AccelX < 0 && AccelY > 0){
+//                	  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
+//                	  angulo = 180 - angulo;
+//
+//                	  if (angulo >= 90 && angulo < 120){
+//
+//                		  updateDuttyCycle(&handlerPWMB, 5000);
+//						  updateDuttyCycle(&handlerPWMR, 5000);
+//						  updateDuttyCycle(&handlerPWMG, 0);
+//
+//						  } else if (angulo >= 120 && angulo < 150){
+//							  updateDuttyCycle(&handlerPWMB, 0);
+//							  updateDuttyCycle(&handlerPWMR, 0);
+//							  updateDuttyCycle(&handlerPWMG, 10000);
+//
+//
+//						  } else if ( angulo >= 150 && angulo < 180) {
+//							  updateDuttyCycle(&handlerPWMB, 5000);
+//							  updateDuttyCycle(&handlerPWMR, 0);
+//							  updateDuttyCycle(&handlerPWMG, 10000 );
+//
+//
+//                		  				  } else{
+//                		  					  __NOP();
+//                		  				  }
+//
+//                  } else if( AccelX <0 && AccelY < 0){
+//                	  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
+//                	  angulo = 180 + angulo;
+//
+//                	  if(angulo >= 180 && angulo <210){
+//
+//				  updateDuttyCycle(&handlerPWMB, 10000);
+//					  updateDuttyCycle(&handlerPWMR, 0);
+//					  updateDuttyCycle(&handlerPWMG, 5000);
+//
+//					  } else if (angulo >= 210 && angulo < 240){
+//						  updateDuttyCycle(&handlerPWMB, 10000);
+//						  updateDuttyCycle(&handlerPWMR, 0);
+//						  updateDuttyCycle(&handlerPWMG, 1000);
+//
+//
+//					  } else if ( angulo >= 240 && angulo < 270) {
+//						  updateDuttyCycle(&handlerPWMB, 10000);
+//						  updateDuttyCycle(&handlerPWMR, 3000);
+//						  updateDuttyCycle(&handlerPWMG, 0 );
+//
+//
+//					  } else{
+//                	  					  __NOP();
+//                	  				  }
+//
+//
+//
+//                  } else if ( AccelX > 0 && AccelY <= 0){
+//                	  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
+//                	  angulo = 360 - angulo;
+//
+//                	  if( angulo >= 270 && angulo < 300){
+//
+//					  updateDuttyCycle(&handlerPWMB, 10000);
+//					  updateDuttyCycle(&handlerPWMR, 0);
+//					  updateDuttyCycle(&handlerPWMG, 0);
+//
+//					  } else if (angulo >= 300 && angulo < 330){
+//						  updateDuttyCycle(&handlerPWMB, 10000);
+//						  updateDuttyCycle(&handlerPWMR, 10000);
+//						  updateDuttyCycle(&handlerPWMG, 0);
+//
+//
+//					  } else if ( angulo >= 330 && angulo <= 360) {
+//						  updateDuttyCycle(&handlerPWMB, 0);
+//						  updateDuttyCycle(&handlerPWMR, 10000);
+//						  updateDuttyCycle(&handlerPWMG, 0 );
+//
+//					  }
+//
+//                  } else if (AccelX == 0 || AccelY == 0){
+//                	  angulo = 0;
+//                	  updateDuttyCycle(&handlerPWMR, 10000);
+//					  updateDuttyCycle(&handlerPWMB, 10000);
+//					  updateDuttyCycle(&handlerPWMG, 10000);
+//                  }
+//
+//			sprintf(welcomer, "Angulo = %d \n", (int) angulo);
+//			writeMsg(&handlerUsart1, welcomer);
+//			rxData = '\0';
+//               }
+//
+//		  }
+
+		if(rxDataCMD != '\0'){
 
 
-				  } else{
-					  __NOP();
-				  }
+		bufferReception[counterReception] = rxDataCMD;
+				counterReception++;
+				     if (rxDataCMD == '@'){
+				    	 stringComplete = true;
 
-                  }else if( AccelX < 0 && AccelY > 0){
-                	  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
-                	  angulo = 180 - angulo;
+				    	 // Agrego linea
 
-                	  if (angulo >= 90 && angulo < 120){
+				    	 bufferReception[counterReception] = '\0';
 
-                		  updateDuttyCycle(&handlerPWMB, 5000);
-						  updateDuttyCycle(&handlerPWMR, 5000);
-						  updateDuttyCycle(&handlerPWMG, 0);
+				    	 counterReception = 0;
+				     }
 
-						  } else if (angulo >= 120 && angulo < 150){
-							  updateDuttyCycle(&handlerPWMB, 0);
-							  updateDuttyCycle(&handlerPWMR, 0);
-							  updateDuttyCycle(&handlerPWMG, 10000);
+				     rxDataCMD = '\0';
 
+	}
 
-						  } else if ( angulo >= 150 && angulo < 180) {
-							  updateDuttyCycle(&handlerPWMB, 5000);
-							  updateDuttyCycle(&handlerPWMR, 0);
-							  updateDuttyCycle(&handlerPWMG, 10000 );
+		// Hacemos un análisis de la cadena de datos obtenida
 
+		if ( stringComplete){
 
-                		  				  } else{
-                		  					  __NOP();
-                		  				  }
+			parseCommands(bufferReception);
 
-                  } else if( AccelX <0 && AccelY < 0){
-                	  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
-                	  angulo = 180 + angulo;
+			stringComplete = false;
+		}
 
-                	  if(angulo >= 180 && angulo <210){
-
-				  updateDuttyCycle(&handlerPWMB, 10000);
-					  updateDuttyCycle(&handlerPWMR, 0);
-					  updateDuttyCycle(&handlerPWMG, 5000);
-
-					  } else if (angulo >= 210 && angulo < 240){
-						  updateDuttyCycle(&handlerPWMB, 10000);
-						  updateDuttyCycle(&handlerPWMR, 0);
-						  updateDuttyCycle(&handlerPWMG, 1000);
-
-
-					  } else if ( angulo >= 240 && angulo < 270) {
-						  updateDuttyCycle(&handlerPWMB, 10000);
-						  updateDuttyCycle(&handlerPWMR, 3000);
-						  updateDuttyCycle(&handlerPWMG, 0 );
-
-
-					  } else{
-                	  					  __NOP();
-                	  				  }
-
-
-
-                  } else if ( AccelX > 0 && AccelY <= 0){
-                	  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
-                	  angulo = 360 - angulo;
-
-                	  if( angulo >= 270 && angulo < 300){
-
-					  updateDuttyCycle(&handlerPWMB, 10000);
-					  updateDuttyCycle(&handlerPWMR, 0);
-					  updateDuttyCycle(&handlerPWMG, 0);
-
-					  } else if (angulo >= 300 && angulo < 330){
-						  updateDuttyCycle(&handlerPWMB, 10000);
-						  updateDuttyCycle(&handlerPWMR, 10000);
-						  updateDuttyCycle(&handlerPWMG, 0);
-
-
-					  } else if ( angulo >= 330 && angulo <= 360) {
-						  updateDuttyCycle(&handlerPWMB, 0);
-						  updateDuttyCycle(&handlerPWMR, 10000);
-						  updateDuttyCycle(&handlerPWMG, 0 );
-
-					  }
-
-                  } else if (AccelX == 0 || AccelY == 0){
-                	  angulo = 0;
-                	  updateDuttyCycle(&handlerPWMR, 10000);
-					  updateDuttyCycle(&handlerPWMB, 10000);
-					  updateDuttyCycle(&handlerPWMG, 10000);
-                  }
-
-			sprintf(welcomer, "Angulo = %d \n", (int) angulo);
-			writeMsg(&handlerUsart1, welcomer);
-			rxData = '\0';
-               }
-
-		  }
+//		if(makeUpdateLCD){
+//
+//			updateLCD();
+//			makeUpdateLCD = false;
+//		}
+//
 	}
 }
 
@@ -400,6 +468,8 @@ void initSystem (void){
 
 	/* Se carga la configuración */
 		BasicTimer_Config(&handlerBlinkyTimer);
+
+
 	/* Handler para el Timer3 */
 
 	/* Aqui se encargara de lo de la LDC */
@@ -579,6 +649,7 @@ void USART1Rx_CallBack(void){
 
 rxData = getRxData();
 
+rxDataCMD = getRxDataCMD();
 }
 
 
@@ -598,5 +669,279 @@ void BasicTimer2_CallBack(void){
 }
 
 
+
 }
 
+void parseCommands(char *ptrBufferReception){
+
+	sscanf(ptrBufferReception, " %s %u %u %s" , cmd , &firstParameter , &secondParameter ,userMsg);
+
+	if(strcmp(cmd , "help") == 0){
+
+		writeMsg(&handlerUsart1, "Help Menu CMDs: \n");
+		writeMsg(&handlerUsart1, "1) help = ----------- Impreme el  menu\n");
+		writeMsg(&handlerUsart1, "2) Dutty = #A #B --- dummy cmd, #A and B son uint32_t \n");
+		writeMsg(&handlerUsart1, "3) Hora = en Hora - Minuto - Segundos \n");
+		writeMsg(&handlerUsart1, "4) Fecha=  en Dia / Mes / Año \n" );
+		writeMsg(&handlerUsart1, "5) Accel = Se inicializa el acelerometro \n ");
+		writeMsg(&handlerUsart1, "6) Se detiene el acelerometro \n");
+		writeMsg(&handlerUsart1, "7) Se activa RGB de manera tranquila \n)");
+		writeMsg(&handlerUsart1, "8) Se detiene RGB tranquilo \n");
+		writeMsg(&handlerUsart1, "9) Se activa RGB cambiando con Acelerometro \n");
+		writeMsg(&handlerUsart1, "10) Se detiene RGB Variante \n ");
+
+
+
+	} else if (strcmp(cmd , "dummy" ) == 0) {
+
+		sprintf(bufferData, "number A = %u \n", firstParameter);
+		writeMsg(&handlerUsart1, bufferData);
+
+		// Cambiando el formato
+
+		sprintf(bufferData, "number B = %u \n", secondParameter);
+		writeMsg(&handlerUsart1, bufferData);
+	}
+
+	else if(strcmp(cmd ,"Hora") == 0) {
+
+	sprintf(DataRTC, " La hora es = %uh: %um: %us: \n", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
+	writeMsg(&handlerUsart1, DataRTC);
+	rxDataCMD = '\0';
+
+	}
+
+	else if(strcmp(cmd , "Fecha") == 0) {
+
+	sprintf(DataRTCDate, " La fecha es = %u/ %u/ %u \n", (unsigned int) Day , (unsigned int) Mes, (unsigned int) Ano);
+	writeMsg(&handlerUsart1, DataRTCDate);
+	rxDataCMD = '\0';
+
+
+	}
+
+	else if(strcmp(cmd, "Accel") == 0) {
+
+
+		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
+		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
+		i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
+		uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+		uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+		AccelX = AccelX_high << 8 | AccelX_low;
+
+		uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
+		uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
+		AccelY = AccelY_high << 8 | AccelY_low;
+		sprintf(bufferDataY, "AccelY = %d \n", (int) AccelY);
+		sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
+		writeMsg(&handlerUsart1, bufferData);
+		writeMsg(&handlerUsart1, bufferDataY);
+		rxDataCMD = '\0';
+
+	}
+
+	else{
+
+		writeMsg(&handlerUsart1, " Wrong CMD");
+	}
+
+
+
+
+}
+
+//		if(rxData != '\0'){
+//		writeChar(&handlerUsart1, rxData);
+//		bufferReception[counterReception] = rxData;
+//
+//			if(rxData == 'd'){
+//				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
+//				sprintf(bufferData, "dataRead = 0x%2x  \n", (unsigned int) i2cBuffer);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//
+//			}
+//			else if (rxData == 'm'){
+//
+//				  ptrData =leer_datos();
+//
+//				   Seg = ptrData[0];
+//				   Min = ptrData[1];
+//				   Hor = ptrData[2];
+//				   Sem = ptrData[3];
+//				   Day = ptrData[4];
+//				   Mes = ptrData[5];
+//				   Ano = ptrData[6];
+//
+//				sprintf(DataRTC, " La hora es = %uh: %um: %us: \n", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
+//				writeMsg(&handlerUsart1, DataRTC);
+//				rxData = '\0';
+//			}
+//
+//			else if (rxData == 'f'){
+//				sprintf(DataRTCDate, " La fecha es = %u/ %u/ %u/  \n", (unsigned int) Day , (unsigned int) Mes, (unsigned int) Ano);
+//				writeMsg(&handlerUsart1, DataRTCDate);
+//				rxData = '\0';
+
+//			}
+//
+//			else if (rxData == 'p'){
+//				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
+//				sprintf(bufferData, "dataRead = 0x%2x \n", (unsigned int) i2cBuffer);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//			}
+//
+//			else if(rxData == 'r'){
+//
+//				i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
+//				rxData = '\0';
+//
+//			}
+//
+//			else if(rxData == 'x'){
+//
+//				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+//				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+//				AccelX = AccelX_high << 8 | AccelX_low;
+//				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//			}
+//
+//			else if (rxData == 'y'){
+//				uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
+//				uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
+//				AccelY = AccelY_high << 8 | AccelY_low;
+//				sprintf(bufferData, "AccelY = %d \n", (int) AccelY);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//
+//			}
+//
+//			else if (rxData == 'z'){
+//				uint8_t AccelZ_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_L);
+//				uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_H);
+//			    AccelZ = AccelZ_high << 8 | AccelZ_low;
+//				sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
+//				writeMsg(&handlerUsart1, bufferData);
+//				rxData = '\0';
+//			}
+//			else{
+//				rxData = '\0';
+//			}
+//
+//               if(AccelX != 0){
+//                  if(AccelY > 0 && AccelX > 0){
+//				  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
+//
+//				  if( angulo < 30){
+//				  updateDuttyCycle(&handlerPWMB, 10000);
+//				  updateDuttyCycle(&handlerPWMR, 5000);
+//				  updateDuttyCycle(&handlerPWMG, 0);
+//
+//				  } else if (angulo >= 30 && angulo < 60){
+//					  updateDuttyCycle(&handlerPWMB, 5000);
+//					  updateDuttyCycle(&handlerPWMR, 5000);
+//					  updateDuttyCycle(&handlerPWMG, 0);
+//
+//
+//				  } else if ( angulo >= 60 && angulo < 90) {
+//					  updateDuttyCycle(&handlerPWMB, 3000);
+//					  updateDuttyCycle(&handlerPWMR, 3000);
+//					  updateDuttyCycle(&handlerPWMG, 0 );
+//
+//
+//				  } else{
+//					  __NOP();
+//				  }
+//
+//                  }else if( AccelX < 0 && AccelY > 0){
+//                	  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
+//                	  angulo = 180 - angulo;
+//
+//                	  if (angulo >= 90 && angulo < 120){
+//
+//                		  updateDuttyCycle(&handlerPWMB, 5000);
+//						  updateDuttyCycle(&handlerPWMR, 5000);
+//						  updateDuttyCycle(&handlerPWMG, 0);
+//
+//						  } else if (angulo >= 120 && angulo < 150){
+//							  updateDuttyCycle(&handlerPWMB, 0);
+//							  updateDuttyCycle(&handlerPWMR, 0);
+//							  updateDuttyCycle(&handlerPWMG, 10000);
+//
+//
+//						  } else if ( angulo >= 150 && angulo < 180) {
+//							  updateDuttyCycle(&handlerPWMB, 5000);
+//							  updateDuttyCycle(&handlerPWMR, 0);
+//							  updateDuttyCycle(&handlerPWMG, 10000 );
+//
+//
+//                		  				  } else{
+//                		  					  __NOP();
+//                		  				  }
+//
+//                  } else if( AccelX <0 && AccelY < 0){
+//                	  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
+//                	  angulo = 180 + angulo;
+//
+//                	  if(angulo >= 180 && angulo <210){
+//
+//				  updateDuttyCycle(&handlerPWMB, 10000);
+//					  updateDuttyCycle(&handlerPWMR, 0);
+//					  updateDuttyCycle(&handlerPWMG, 5000);
+//
+//					  } else if (angulo >= 210 && angulo < 240){
+//						  updateDuttyCycle(&handlerPWMB, 10000);
+//						  updateDuttyCycle(&handlerPWMR, 0);
+//						  updateDuttyCycle(&handlerPWMG, 1000);
+//
+//
+//					  } else if ( angulo >= 240 && angulo < 270) {
+//						  updateDuttyCycle(&handlerPWMB, 10000);
+//						  updateDuttyCycle(&handlerPWMR, 3000);
+//						  updateDuttyCycle(&handlerPWMG, 0 );
+//
+//
+//					  } else{
+//                	  					  __NOP();
+//                	  				  }
+//
+//
+//
+//                  } else if ( AccelX > 0 && AccelY <= 0){
+//                	  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
+//                	  angulo = 360 - angulo;
+//
+//                	  if( angulo >= 270 && angulo < 300){
+//
+//					  updateDuttyCycle(&handlerPWMB, 10000);
+//					  updateDuttyCycle(&handlerPWMR, 0);
+//					  updateDuttyCycle(&handlerPWMG, 0);
+//
+//					  } else if (angulo >= 300 && angulo < 330){
+//						  updateDuttyCycle(&handlerPWMB, 10000);
+//						  updateDuttyCycle(&handlerPWMR, 10000);
+//						  updateDuttyCycle(&handlerPWMG, 0);
+//
+//
+//					  } else if ( angulo >= 330 && angulo <= 360) {
+//						  updateDuttyCycle(&handlerPWMB, 0);
+//						  updateDuttyCycle(&handlerPWMR, 10000);
+//						  updateDuttyCycle(&handlerPWMG, 0 );
+//
+//					  }
+//
+//                  } else if (AccelX == 0 || AccelY == 0){
+//                	  angulo = 0;
+//                	  updateDuttyCycle(&handlerPWMR, 10000);
+//					  updateDuttyCycle(&handlerPWMB, 10000);
+//					  updateDuttyCycle(&handlerPWMG, 10000);
+//                  }
+//
+//			sprintf(welcomer, "Angulo = %d \n", (int) angulo);
+//			writeMsg(&handlerUsart1, welcomer);
+//			rxData = '\0';
+//               }

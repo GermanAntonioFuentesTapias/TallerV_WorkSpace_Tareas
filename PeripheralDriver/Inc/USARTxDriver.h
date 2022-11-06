@@ -80,6 +80,7 @@ void USART_Config(USART_Handler_t *ptrUsartHandler);
 int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend);
 void writeMsg(USART_Handler_t *ptrUsartHandler, char *msgToSend);
 uint8_t getRxData(void);
+uint8_t getRxDataCMD(void);
 void USART2Rx_CallBack(void);
 void USART1Rx_CallBack(void);
 void USART6Rx_CallBack(void);

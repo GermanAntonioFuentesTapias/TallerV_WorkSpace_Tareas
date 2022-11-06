@@ -16,6 +16,7 @@
  * del periferico que se está utilizando.
  */
 uint8_t auxRxData = 0;
+uint8_t auxRxDataC = 0;
 
 void USART_Config(USART_Handler_t *ptrUsartHandler){
 
@@ -256,6 +257,10 @@ uint8_t getRxData(void){
 	return auxRxData;
 }
 
+uint8_t getRxDataCMD(void){
+	return  auxRxDataC ;
+}
+
 
 __attribute__((weak)) void USART2Rx_CallBack(void){
 	  /* NOTE : This function should not be modified, when the callback is needed,
@@ -282,6 +287,7 @@ void USART1_IRQHandler(void){
 	/* Evaluamos la interrupción que se dio es por RX */
 	if(USART1 -> SR & USART_SR_RXNE){
 		auxRxData = (uint8_t) USART1 -> DR;
+		auxRxDataC =(uint8_t) USART1 -> DR;
 		USART1Rx_CallBack();
 	}
 }
