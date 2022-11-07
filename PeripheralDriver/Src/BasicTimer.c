@@ -98,8 +98,8 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 		ptrBTimerHandler->ptrTIMx->CNT = ptrBTimerHandler->TIMx_Config.TIMx_period - 1; //desde el numero que da la configuración que entra el usuario
 	}
 
-	/* 4. Activamos el Timer (el CNT debe comenzar a contar*/
-	ptrBTimerHandler->ptrTIMx->CR1 |= TIM_CR1_CEN; // estamos escribiendo en la pos 0 en CR1
+//	/* 4. Activamos el Timer (el CNT debe comenzar a contar*/
+//	ptrBTimerHandler->ptrTIMx->CR1 |= TIM_CR1_CEN; // estamos escribiendo en la pos 0 en CR1
 
 	//Esto podria ser una limitación cuando configuramos los timers
 

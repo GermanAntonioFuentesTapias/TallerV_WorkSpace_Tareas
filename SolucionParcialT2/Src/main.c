@@ -47,7 +47,8 @@ GPIO_Handler_t handlerI2cSDA 		= {0};
 GPIO_Handler_t handlerI2cSCL		= {0};
 
 I2C_Handler_t handlerAcelerometro   = {0};
-I2C_HandlerLCD_t handlerLCD         = {0};
+LCD_Handler_t handlerLCD         = {0};
+
 
 USART_Handler_t handlerUsart1    = {0};
 
@@ -57,6 +58,12 @@ BasicTimer_Handler_t handlerBlinkyTimer = {0};
 uint8_t handlerLed  = 0;
 uint8_t rxData      =  0;
 uint8_t rxDataCMD   = 0;
+uint8_t Bandera     = 0;
+uint8_t BanderaRGB  = 0;
+uint8_t BanderaRGB2 = 0;
+
+BasicTimer_Handler_t handlerCommands = {0};
+BasicTimer_Handler_t handlerRGB      = {0};
 
 uint8_t i2cBuffer = 0;
 
@@ -113,8 +120,8 @@ GPIO_Handler_t        handlerRed = {0};
 
 /* Deficiniones para la LCD */
 
-#define LCD_ADDRESS     0b0100111
-
+#define LCD_ADDRESS     0b100111
+//#define LCD_ADDRESS     0b0100111
 /* Funciones para comandos */
 
 
@@ -137,6 +144,8 @@ unsigned int secondParameter;
 void initSystem (void);
 void parseCommands (char *ptrBufferReception);
 
+void Welcome(void);
+
 int main(void)
 {
    /* Llamamos a la función initSystem para que se ejecute */
@@ -146,7 +155,11 @@ int main(void)
 	startPwmSignal(&handlerPWMB);
 	startPwmSignal(&handlerPWMG);
 
-//
+
+	LCD_Clear(&handlerLCD, LCD_ADDRESS);
+	LCD_Init(&handlerLCD, LCD_ADDRESS);
+
+	Welcome();
 //	LCD_Init(&handlerLCD); // Pasa todo el proceso interno de la LCD
 //
 //
@@ -161,6 +174,9 @@ int main(void)
 		/* Se escribe el valor de la variable estadoBlinky en el handlerBlinkyPin */
 		GPIO_WritePin(&handlerBlinkyPin,handlerLed );
 
+		startCounterTimer(&handlerBlinkyTimer);
+
+
 		ptrData =leer_datos();
 
 		   Seg = ptrData[0];
@@ -171,7 +187,164 @@ int main(void)
 		   Mes = ptrData[5];
 		   Ano = ptrData[6];
 
+       if (Bandera){
+    	   i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
+    	   		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
+    	   		i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
+    	   		uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+    	   		uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+    	   		AccelX = AccelX_high << 8 | AccelX_low;
 
+    	   		uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
+    	   		uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
+    	   		AccelY = AccelY_high << 8 | AccelY_low;
+    	   		sprintf(bufferDataY, "AccelY = %d \n \r", (int) AccelY);
+    	   		sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
+    	   		writeMsg(&handlerUsart1, bufferData);
+    	   		writeMsg(&handlerUsart1, bufferDataY);
+    	   		rxDataCMD = '\0';
+
+    	   		Bandera = 0;
+
+       }
+
+//       if (BanderaRGB2) {
+//
+//
+//    		sprintf(DataRTC, " La hora es = %uh: %um: %us: \n", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
+//    		writeMsg(&handlerUsart1, DataRTC);
+//    		rxDataCMD = '\0';
+//
+//    		BanderaRGB2 = 0;
+//       }
+
+       if (BanderaRGB){
+
+    	   i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
+			i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
+			i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
+			uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+			uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+			AccelX = AccelX_high << 8 | AccelX_low;
+			uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
+			uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
+			AccelY = AccelY_high << 8 | AccelY_low;
+
+			 if(AccelY > 0 && AccelX > 0){
+
+			  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
+
+			  if( angulo < 30){
+			  updateDuttyCycle(&handlerPWMB, 100);
+			  updateDuttyCycle(&handlerPWMR, 50);
+			  updateDuttyCycle(&handlerPWMG, 0);
+
+			  } else if (angulo >= 30 && angulo < 60){
+				  updateDuttyCycle(&handlerPWMB, 50);
+				  updateDuttyCycle(&handlerPWMR, 50);
+				  updateDuttyCycle(&handlerPWMG, 0);
+
+
+			  } else if ( angulo >= 60 && angulo < 90) {
+				  updateDuttyCycle(&handlerPWMB, 100);
+				  updateDuttyCycle(&handlerPWMR, 100);
+				  updateDuttyCycle(&handlerPWMG, 0 );
+
+
+			  } else{
+				  __NOP();
+			  }
+
+			  }else if( AccelX < 0 && AccelY > 0){
+				  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
+				  angulo = 180 - angulo;
+
+				  if (angulo >= 90 && angulo < 120){
+
+					  updateDuttyCycle(&handlerPWMB, 100);
+					  updateDuttyCycle(&handlerPWMR,100);
+					  updateDuttyCycle(&handlerPWMG, 0);
+
+					  } else if (angulo >= 120 && angulo < 150){
+						  updateDuttyCycle(&handlerPWMB, 0);
+						  updateDuttyCycle(&handlerPWMR, 0);
+						  updateDuttyCycle(&handlerPWMG, 100);
+
+
+					  } else if ( angulo >= 150 && angulo < 180) {
+						  updateDuttyCycle(&handlerPWMB, 100);
+						  updateDuttyCycle(&handlerPWMR, 0);
+						  updateDuttyCycle(&handlerPWMG, 100 );
+
+
+									  } else{
+										  __NOP();
+									  }
+
+			  } else if( AccelX <0 && AccelY < 0){
+				  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
+				  angulo = 180 + angulo;
+
+				  if(angulo >= 180 && angulo <210){
+
+			  updateDuttyCycle(&handlerPWMB, 100);
+				  updateDuttyCycle(&handlerPWMR, 0);
+				  updateDuttyCycle(&handlerPWMG, 100);
+
+				  } else if (angulo >= 210 && angulo < 240){
+					  updateDuttyCycle(&handlerPWMB, 100);
+					  updateDuttyCycle(&handlerPWMR, 0);
+					  updateDuttyCycle(&handlerPWMG, 100);
+
+
+				  } else if ( angulo >= 240 && angulo < 270) {
+					  updateDuttyCycle(&handlerPWMB, 100);
+					  updateDuttyCycle(&handlerPWMR, 300);
+					  updateDuttyCycle(&handlerPWMG, 0 );
+
+
+				  } else{
+									  __NOP();
+								  }
+
+
+
+			  } else if ( AccelX > 0 && AccelY <= 0){
+				  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
+				  angulo = 360 - angulo;
+
+				  if( angulo >= 270 && angulo < 300){
+
+				  updateDuttyCycle(&handlerPWMB, 10000);
+				  updateDuttyCycle(&handlerPWMR, 0);
+				  updateDuttyCycle(&handlerPWMG, 0);
+
+				  } else if (angulo >= 300 && angulo < 330){
+					  updateDuttyCycle(&handlerPWMB, 10000);
+					  updateDuttyCycle(&handlerPWMR, 10000);
+					  updateDuttyCycle(&handlerPWMG, 0);
+
+
+				  } else if ( angulo >= 330 && angulo <= 360) {
+					  updateDuttyCycle(&handlerPWMB, 0);
+					  updateDuttyCycle(&handlerPWMR, 10000);
+					  updateDuttyCycle(&handlerPWMG, 0 );
+
+				  }
+
+			  } else if (AccelX == 0 || AccelY == 0){
+				  angulo = 0;
+				  updateDuttyCycle(&handlerPWMR, 10000);
+				  updateDuttyCycle(&handlerPWMB, 10000);
+				  updateDuttyCycle(&handlerPWMG, 10000);
+			  }
+
+    	   			sprintf(welcomer, "Angulo = %d \n", (int) angulo);
+    	   			writeMsg(&handlerUsart1, welcomer);
+    	   			rxDataCMD = '\0';
+
+    	   BanderaRGB = 0;
+       }
 //		if(rxData != '\0'){
 //		writeChar(&handlerUsart1, rxData);
 //		bufferReception[counterReception] = rxData;
@@ -468,6 +641,23 @@ void initSystem (void){
 		BasicTimer_Config(&handlerBlinkyTimer);
 
 
+
+		handlerCommands.ptrTIMx                                = TIM4;
+		handlerCommands.TIMx_Config.TIMx_mode                  = BTIMER_MODE_UP;
+		handlerCommands.TIMx_Config.TIMx_speed                 = BTIMER_SPEED_1ms;
+		handlerCommands.TIMx_Config.TIMx_period                = 1000;
+
+
+	    BasicTimer_Config(&handlerCommands);
+
+	    handlerRGB.ptrTIMx                                    = TIM5;
+	    handlerRGB.TIMx_Config.TIMx_mode                      = BTIMER_MODE_UP;
+	    handlerRGB.TIMx_Config.TIMx_speed                     = BTIMER_SPEED_100us;
+	    handlerRGB.TIMx_Config.TIMx_period                    = 10000;
+
+	    BasicTimer_Config(&handlerRGB);
+
+
 	/* Handler para el Timer3 */
 
 	/* Aqui se encargara de lo de la LDC */
@@ -500,14 +690,14 @@ void initSystem (void){
 	/* Se carga la configuración I2C */
 
 	/* Handler para el acelerometro */
-	handlerLCD.ptrI2Cx				= I2C2;
-	handlerLCD.modeI2C				= I2C_MODE_FM;
-	handlerLCD.slaveAddress		    = LCD_ADDRESS  ;
+	handlerLCD.ptrLCDx              = I2C2;
+	handlerLCD.modeI2CLCD           = I2C_MODE_FM;
+	handlerLCD.slaveAddressLCD      = LCD_ADDRESS;
 
 	/* Cargo la configuración de LCD */
 
 
-	I2C_ConfigLCD(&handlerLCD);
+	LCD_Config(&handlerLCD);
 
 
 	/* Handler para el I2CSCL */
@@ -592,7 +782,7 @@ void initSystem (void){
 	handlerPWMB.ptrTIMx                                   = TIM3;
 	handlerPWMB.config.channel                            = PWM_CHANNEL_2;
 	handlerPWMB.config.duttyCicle                         = 0;
-	handlerPWMB.config.periodo                            = 12000;
+	handlerPWMB.config.periodo                            = 120;
 	handlerPWMB.config.prescaler                          = BTIMER_SPEED_100us;
 
     /* Se carga la configuración */
@@ -600,8 +790,8 @@ void initSystem (void){
 
      handlerPWMG.ptrTIMx                                   = TIM3;
      handlerPWMG.config.channel                            = PWM_CHANNEL_3;
-	 handlerPWMG.config.duttyCicle                         = 10000;
-	 handlerPWMG.config.periodo                            = 12000;
+	 handlerPWMG.config.duttyCicle                         = 1000;
+	 handlerPWMG.config.periodo                            = 120;
 	 handlerPWMG.config.prescaler                          = BTIMER_SPEED_100us;
 
 	 pwm_Config(&handlerPWMG);
@@ -609,7 +799,7 @@ void initSystem (void){
 	 handlerPWMR.ptrTIMx                                   = TIM3;
 	 handlerPWMR.config.channel                            = PWM_CHANNEL_1;
 	 handlerPWMR.config.duttyCicle                         = 0;
-	 handlerPWMR.config.periodo                            = 12000;
+	 handlerPWMR.config.periodo                            = 120;
 	 handlerPWMR.config.prescaler                          = BTIMER_SPEED_100us;
 
 	 pwm_Config(&handlerPWMR);
@@ -667,8 +857,29 @@ void BasicTimer2_CallBack(void){
 }
 
 
+}
+
+
+void BasicTimer4_CallBack(void){
+
+	Bandera = 1;
+
+	BanderaRGB = 1;
+
+
+
+
 
 }
+
+void BasicTimer5_CallBack(void){
+
+	BanderaRGB2 = 1;
+
+}
+
+
+
 
 void parseCommands(char *ptrBufferReception){
 
@@ -677,35 +888,38 @@ void parseCommands(char *ptrBufferReception){
 	if(strcmp(cmd , "help") == 0){
 
 		writeMsg(&handlerUsart1, "Help Menu CMDs: \n");
-		writeMsg(&handlerUsart1, "1) help = ----------- Impreme el  menu\n");
+		writeMsg(&handlerUsart1, "1) Millos = Colores del grande ");
 		writeMsg(&handlerUsart1, "2) Dutty = #A #B --- dummy cmd, #A and B son uint32_t \n");
 		writeMsg(&handlerUsart1, "3) Hora = en Hora - Minuto - Segundos \n");
 		writeMsg(&handlerUsart1, "4) Fecha=  en Dia / Mes / Año \n" );
 		writeMsg(&handlerUsart1, "5) Accel = Se inicializa el acelerometro \n ");
 		writeMsg(&handlerUsart1, "6) StopA = Se detiene el acelerometro \n");
-		writeMsg(&handlerUsart1, "7) RBG = Se activa RGB de manera tranquila \n)");
-		writeMsg(&handlerUsart1, "8) Se detiene RGB tranquilo \n");
-		writeMsg(&handlerUsart1, "9) Se activa RGB cambiando con Acelerometro \n");
+		writeMsg(&handlerUsart1, "7) RBG = Se activa RGB  y cambia con acelerometro de manera tranquila \n)");
+		writeMsg(&handlerUsart1, "8) StopR= Se detiene RGB  \n");
+		writeMsg(&handlerUsart1, "9) GO = Se activa RGB con colores programdos \n");
 		writeMsg(&handlerUsart1, "10) Se detiene RGB Variante \n ");
 
 
 
-	} else if (strcmp(cmd , "dummy" ) == 0) {
+	} else if (strcmp(cmd , "Millos" ) == 0) {
 
-		sprintf(bufferData, "number A = %u \n", firstParameter);
-		writeMsg(&handlerUsart1, bufferData);
+//		startCounterTimer(&handlerRGB);
+		updateDuttyCycle(&handlerPWMB, 10000);
+//		pwm_Config(&handlerPWMB);
 
-		// Cambiando el formato
 
-		sprintf(bufferData, "number B = %u \n", secondParameter);
-		writeMsg(&handlerUsart1, bufferData);
+
 	}
 
 	else if(strcmp(cmd ,"Hora") == 0) {
 
+
 	sprintf(DataRTC, " La hora es = %uh: %um: %us: \n", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
 	writeMsg(&handlerUsart1, DataRTC);
 	rxDataCMD = '\0';
+
+
+
 
 	}
 
@@ -721,171 +935,27 @@ void parseCommands(char *ptrBufferReception){
 	else if(strcmp(cmd, "Accel") == 0) {
 
 
+        startCounterTimer(&handlerCommands);
 
-        while(rxDataCMD != 'q') {
-		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
-		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
-		i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
-		uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
-		uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
-		AccelX = AccelX_high << 8 | AccelX_low;
 
-		uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
-		uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
-		AccelY = AccelY_high << 8 | AccelY_low;
-		sprintf(bufferDataY, "AccelY = %d \n", (int) AccelY);
-		sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
-		writeMsg(&handlerUsart1, bufferData);
-		writeMsg(&handlerUsart1, bufferDataY);
-		rxDataCMD = '\0';
-
-		if(rxDataCMD != 'z'){
-			__NOP();
-		}
-
-	}
 	}
 
 	else if(strcmp(cmd , "StopA") == 0) {
 
-//		i2c_stopTransaction(&handlerAcelerometro);
-//		i2c_sendNoAck(&handlerAcelerometro);
-//		i2c_config(&handlerAcelerometro);
+       StopCounterTimer(&handlerCommands);
 
 
 	}
 
 	else if(strcmp(cmd ,"RBG") == 0){
 
+		startCounterTimer(&handlerRGB);
 
-		        while( rxDataCMD != 'q'){
+	}
 
-				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
-				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
-				i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
-				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
-				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
-				AccelX = AccelX_high << 8 | AccelX_low;
-				uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
-				uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
-				AccelY = AccelY_high << 8 | AccelY_low;
+	else if(strcmp(cmd, "StopR") == 0){
 
-				 if(AccelY > 0 && AccelX > 0){
-
-				  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
-
-				  if( angulo < 30){
-				  updateDuttyCycle(&handlerPWMB, 10000);
-				  updateDuttyCycle(&handlerPWMR, 5000);
-				  updateDuttyCycle(&handlerPWMG, 0);
-
-				  } else if (angulo >= 30 && angulo < 60){
-					  updateDuttyCycle(&handlerPWMB, 5000);
-					  updateDuttyCycle(&handlerPWMR, 5000);
-					  updateDuttyCycle(&handlerPWMG, 0);
-
-
-				  } else if ( angulo >= 60 && angulo < 90) {
-					  updateDuttyCycle(&handlerPWMB, 3000);
-					  updateDuttyCycle(&handlerPWMR, 3000);
-					  updateDuttyCycle(&handlerPWMG, 0 );
-
-
-				  } else{
-					  __NOP();
-				  }
-
-				  }else if( AccelX < 0 && AccelY > 0){
-					  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
-					  angulo = 180 - angulo;
-
-					  if (angulo >= 90 && angulo < 120){
-
-						  updateDuttyCycle(&handlerPWMB, 5000);
-						  updateDuttyCycle(&handlerPWMR, 5000);
-						  updateDuttyCycle(&handlerPWMG, 0);
-
-						  } else if (angulo >= 120 && angulo < 150){
-							  updateDuttyCycle(&handlerPWMB, 0);
-							  updateDuttyCycle(&handlerPWMR, 0);
-							  updateDuttyCycle(&handlerPWMG, 10000);
-
-
-						  } else if ( angulo >= 150 && angulo < 180) {
-							  updateDuttyCycle(&handlerPWMB, 5000);
-							  updateDuttyCycle(&handlerPWMR, 0);
-							  updateDuttyCycle(&handlerPWMG, 10000 );
-
-
-										  } else{
-											  __NOP();
-										  }
-
-				  } else if( AccelX <0 && AccelY < 0){
-					  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
-					  angulo = 180 + angulo;
-
-					  if(angulo >= 180 && angulo <210){
-
-				  updateDuttyCycle(&handlerPWMB, 10000);
-					  updateDuttyCycle(&handlerPWMR, 0);
-					  updateDuttyCycle(&handlerPWMG, 5000);
-
-					  } else if (angulo >= 210 && angulo < 240){
-						  updateDuttyCycle(&handlerPWMB, 10000);
-						  updateDuttyCycle(&handlerPWMR, 0);
-						  updateDuttyCycle(&handlerPWMG, 1000);
-
-
-					  } else if ( angulo >= 240 && angulo < 270) {
-						  updateDuttyCycle(&handlerPWMB, 10000);
-						  updateDuttyCycle(&handlerPWMR, 3000);
-						  updateDuttyCycle(&handlerPWMG, 0 );
-
-
-					  } else{
-										  __NOP();
-									  }
-
-
-
-				  } else if ( AccelX > 0 && AccelY <= 0){
-					  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
-					  angulo = 360 - angulo;
-
-					  if( angulo >= 270 && angulo < 300){
-
-					  updateDuttyCycle(&handlerPWMB, 10000);
-					  updateDuttyCycle(&handlerPWMR, 0);
-					  updateDuttyCycle(&handlerPWMG, 0);
-
-					  } else if (angulo >= 300 && angulo < 330){
-						  updateDuttyCycle(&handlerPWMB, 10000);
-						  updateDuttyCycle(&handlerPWMR, 10000);
-						  updateDuttyCycle(&handlerPWMG, 0);
-
-
-					  } else if ( angulo >= 330 && angulo <= 360) {
-						  updateDuttyCycle(&handlerPWMB, 0);
-						  updateDuttyCycle(&handlerPWMR, 10000);
-						  updateDuttyCycle(&handlerPWMG, 0 );
-
-					  }
-
-				  } else if (AccelX == 0 || AccelY == 0){
-					  angulo = 0;
-					  updateDuttyCycle(&handlerPWMR, 10000);
-					  updateDuttyCycle(&handlerPWMB, 10000);
-					  updateDuttyCycle(&handlerPWMG, 10000);
-				  }
-
-			sprintf(welcomer, "Angulo = %d \n", (int) angulo);
-			writeMsg(&handlerUsart1, welcomer);
-			rxDataCMD = '\0';
-			   }
-
-		        rxDataCMD = getRxDataCMD();
-
+		StopCounterTimer(&handlerRGB);
 	}
 
 
@@ -978,3 +1048,14 @@ void parseCommands(char *ptrBufferReception){
 //				rxData = '\0';
 //			}
 //
+
+void Welcome(void){
+
+	LCD_setCursor(&handlerLCD, 0, 0, LCD_ADDRESS);
+	LCD_sendSTR(&handlerLCD, "Welcome", LCD_ADDRESS);
+
+	LCD_setCursor(&handlerLCD, 2, 0, LCD_ADDRESS);
+	LCD_sendSTR(&handlerLCD, "Escriba menu..", LCD_ADDRESS);
+
+	        for ( int i = 0; i<10000; i++);
+}
