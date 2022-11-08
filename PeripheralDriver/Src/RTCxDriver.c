@@ -92,22 +92,22 @@ void RTC_Config(RTC_handler_t *ptrRtcHandler) {
 	RTC->DR = 0; // Para la fecha en cero
 
 	/* 9 Declaración fecha --> Año */
-	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Year) / 10) << RTC_DR_YT_Pos;  // Seran las decenas en Decimal codificado en binario
-	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Year) % 10) << RTC_DR_YU_Pos;  // Seran las unidades  en Decimal codificado en binario
+	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Ano) / 10) << RTC_DR_YT_Pos;  // Seran las decenas en Decimal codificado en binario
+	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Ano) % 10) << RTC_DR_YU_Pos;  // Seran las unidades  en Decimal codificado en binario
 
 	/* 10 Declaración dia de la semana */
 
-	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_WeekDay)) << RTC_DR_WDU_Pos;  // Los dias de la semana en Decimal codificado en binario
+	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Semana)) << RTC_DR_WDU_Pos;  // Los dias de la semana en Decimal codificado en binario
 
 	/* 11. Declaración dias del mes */
 
-	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Month) / 10) << RTC_DR_MT_Pos;  // Mes decenas en Decimal codificado en binario
-	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Month) % 10) << RTC_DR_MU_Pos;  // Mes unidades en Decimal codificado en binario
+	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Mes) / 10) << RTC_DR_MT_Pos;  // Mes decenas en Decimal codificado en binario
+	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Mes) % 10) << RTC_DR_MU_Pos;  // Mes unidades en Decimal codificado en binario
 
 	/* 12 . Declaración fecha */
 
-	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Date) / 10) << RTC_DR_DT_Pos;   // fecha decenas en Decimal codificado en binario
-	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Date) % 10) << RTC_DR_DU_Pos;   // fecha unidades en Decimal codificado en binario
+	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Fecha) / 10) << RTC_DR_DT_Pos;   // fecha decenas en Decimal codificado en binario
+	RTC->DR |= ((ptrRtcHandler->DateTypeDef.RTC_Fecha) % 10) << RTC_DR_DU_Pos;   // fecha unidades en Decimal codificado en binario
 
 	/* 13. Formato de hora */
 
@@ -115,18 +115,18 @@ void RTC_Config(RTC_handler_t *ptrRtcHandler) {
 
 	/* 14. Declaración para horas */
 
-	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Hours) / 10) << RTC_TR_HT_Pos;  // Horas  decenas en Decimal codificado en binario
-	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Hours) % 10) << RTC_TR_HU_Pos;  // Horas  decenas  en Decimal codificado en binario
+	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Hora) / 10) << RTC_TR_HT_Pos;  // Horas  decenas en Decimal codificado en binario
+	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Hora) % 10) << RTC_TR_HU_Pos;  // Horas  decenas  en Decimal codificado en binario
 
 	/* 15 Declaración para minutos */
 
-	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Minutes) / 10) << RTC_TR_MNT_Pos;  // Minutos  decena en Decimal codificado en binario
-	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Minutes) % 10) << RTC_TR_MNU_Pos;  // Minutos  unidades en Decimal codificado en binario
+	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Minutos) / 10) << RTC_TR_MNT_Pos;  // Minutos  decena en Decimal codificado en binario
+	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Minutos) % 10) << RTC_TR_MNU_Pos;  // Minutos  unidades en Decimal codificado en binario
 
 	/* 16 . Declaración para segundos */
 
-	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Seconds) / 10) << RTC_TR_ST_Pos;   // Segundos decenas en Decimal codificado en binario
-	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Seconds) % 10) << RTC_TR_SU_Pos;   // Segundos unidades en Decimal codificado en binario
+	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Segundos) / 10) << RTC_TR_ST_Pos;   // Segundos decenas en Decimal codificado en binario
+	RTC->TR |= ((ptrRtcHandler->TimeTypeDef.RTC_Segundos) % 10) << RTC_TR_SU_Pos;   // Segundos unidades en Decimal codificado en binario
 
 	/* 17. Salir del modo de inicialización borrando el bit de inicio*/
 
@@ -158,39 +158,40 @@ uint8_t* leer_datos(void){
 
 
 
-		 uint8_t RTC_Hours	 = 0;
-		 uint8_t RTC_Minutes = 0;
-		 uint8_t RTC_Seconds = 0;
+		 uint8_t RTC_Hora	 = 0;
+		 uint8_t RTC_Minutos = 0;
+		 uint8_t RTC_Segundos = 0;
 
-		 uint8_t RTC_weekday= 0;
+		 uint8_t RTC_Semana= 0;
 
-		 uint8_t RTC_year = 0;
-		 uint8_t RTC_Month = 0;
+		 uint8_t RTC_Ano = 0;
+		 uint8_t RTC_Mes = 0;
 		 uint8_t RTC_Day = 0;
 
 		 uint32_t RTC_Time = 0;
 		 RTC_Time = RTC->TR;
 
-		 uint32_t RTC_Date = 0;
-		 RTC_Date = RTC->DR;
+		 uint32_t RTC_Fecha = 0;
+		 RTC_Fecha = RTC->DR;
 
-		  RTC_Hours   = RTC_BcdToByte(((RTC_Time & 0x3F0000) >> RTC_TR_HU_Pos));
-		  RTC_Minutes = RTC_BcdToByte(((RTC_Time & 0x007F00) >> RTC_TR_MNU_Pos));
-		  RTC_Seconds = RTC_BcdToByte((RTC_Time  & 0x0000FF));
+		 // Mascaras necesarias para asegurar que se desplaze a esa posición
+		  RTC_Hora   = RTC_BcdToByte(((RTC_Time & 0x3F0000) >> RTC_TR_HU_Pos));
+		  RTC_Minutos = RTC_BcdToByte(((RTC_Time & 0x007F00) >> RTC_TR_MNU_Pos));
+		  RTC_Segundos = RTC_BcdToByte((RTC_Time  & 0x0000FF));
 
-		  RTC_weekday  = RTC_BcdToByte(((RTC_Date & 0xE000)   >> 13));
-		  RTC_year     = RTC_BcdToByte(((RTC_Date & 0xFF0000) >> 16));
-		  RTC_Month    = RTC_BcdToByte(((RTC_Date & 0x1F00)   >> 8));
-		  RTC_Day 	   = RTC_BcdToByte((RTC_Date  & 0x3F));
+		  RTC_Semana  = RTC_BcdToByte(((RTC_Fecha & 0xE000)   >> 13));
+		  RTC_Ano     = RTC_BcdToByte(((RTC_Fecha & 0xFF0000) >> 16));
+		  RTC_Mes    = RTC_BcdToByte(((RTC_Fecha & 0x1F00)   >> 8));
+		  RTC_Day 	   = RTC_BcdToByte((RTC_Fecha  & 0x3F));
 
 
-		    calendario[0] = RTC_Seconds;
-			calendario[1] = RTC_Minutes;
-			calendario[2] = RTC_Hours;
-		    calendario[3] = RTC_weekday;
+		    calendario[0] = RTC_Segundos;
+			calendario[1] = RTC_Minutos;
+			calendario[2] = RTC_Hora;
+		    calendario[3] = RTC_Semana;
 		    calendario[4] = RTC_Day;
-			calendario[5] = RTC_Month;
-			calendario[6] = RTC_year;
+			calendario[5] = RTC_Mes;
+			calendario[6] = RTC_Ano;
 
 
 	return calendario;

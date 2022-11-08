@@ -13,6 +13,20 @@
  *      Velocidad 19200
  *
  *
+ *      Led de estado, haciendo blinky a 250 ms. (0 puntos)
+        Display LCD o Display OLED funcionando. (15 puntos)
+        Comunicación USART trabajando con comandos, con por lo menos 10 comandos verificables. (25 puntos)
+        RTC interno del STM32 funcionando con los CMDs del punto 2, utilizando el cristal de 32KHz de la board (LSE). (15 puntos)
+        Sensor funcionando (10 puntos):
+        accel con lectura en dos ejes
+        o Joystick con lectura en X e Y.
+        Actuador funcionando (10 puntos)
+        Motor servo (PWM), respondiendo a los datos del sensor: Los del Joystick o del acelerómetro deben controlar el movimiento del motor (si es de giro continuo controlar dirección y velocidad de giro y si es de 180° controlar la posición).
+
+        LEDs RGB (PWM), respondiendo a los datos del sensor, espacio de color HSV.
+ *
+ *
+ *
  *
  */
 #include <stm32f4xx.h>
@@ -142,8 +156,9 @@ unsigned int secondParameter;
 
 
 /* Definición de las cabezeras de las funciones */
+
 void initSystem (void);
-void parseCommands (char *ptrBufferReception);
+void parseCommands (char *ptrBufferReception); // Llama los comandos
 
 int main(void)
 {
@@ -174,8 +189,13 @@ int main(void)
 		/* Se escribe el valor de la variable estadoBlinky en el handlerBlinkyPin */
 		GPIO_WritePin(&handlerBlinkyPin,handlerLed );
 
+		/* Se llama el timer del Blinky */
+
 		startCounterTimer(&handlerBlinkyTimer);
 
+
+		/* Función del RTC que carga los datos */
+		// Cargandolos de forma acedente
 
 		ptrData =leer_datos();
 
@@ -187,37 +207,37 @@ int main(void)
 		   Mes = ptrData[5];
 		   Ano = ptrData[6];
 
+       /* Para el punto  6 del actuador */
 
        if (Bandera){
+    	   /* Carga la lectura del i2c */
     	   i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
-    	   		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
-    	   		i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
-    	   		uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
-    	   		uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
-    	   		AccelX = AccelX_high << 8 | AccelX_low;
+			i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
+			i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
 
-    	   		uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
-    	   		uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
-    	   		AccelY = AccelY_high << 8 | AccelY_low;
-    	   		sprintf(bufferDataY, "AccelY = %d \n ", (int) AccelY);
-    	   		sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
-    	   		writeMsg(&handlerUsart1, bufferData);
-    	   		writeMsg(&handlerUsart1, bufferDataY);
-    	   		rxDataCMD = '\0';
+			/* Tomas las posiciones leidas y las almacena */
 
-    	   		Bandera = 0;
+			uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+			uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+			AccelX = AccelX_high << 8 | AccelX_low;
+
+			uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
+			uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
+			AccelY = AccelY_high << 8 | AccelY_low;
+
+			/* Imprime las posiciones */
+			sprintf(bufferDataY, "AccelY = %d \n ", (int) AccelY);
+			sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
+			writeMsg(&handlerUsart1, bufferData);
+			writeMsg(&handlerUsart1, bufferDataY);
+			rxDataCMD = '\0';
+
+			Bandera = 0;
 
        }
 
-//       if (BanderaRGB2) {
-//
-//
-//    		sprintf(DataRTC, " La hora es = %uh: %um: %us: \n", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
-//    		writeMsg(&handlerUsart1, DataRTC);
-//    		rxDataCMD = '\0';
-//
-//    		BanderaRGB2 = 0;
-//       }
+
+          /* Para el punto 6 */
 
        if (BanderaRGB){
 
@@ -230,6 +250,12 @@ int main(void)
 			uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
 			uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
 			AccelY = AccelY_high << 8 | AccelY_low;
+
+			 /* Se toman las posiciones y se organiza en un ciruculo HSV, los condicionales generan valores
+			  * segun donde se encuentren acercandose a su referencia del circulo HSV
+			  */
+
+			/* Primer cuadrante */
 
 			 if(AccelY > 0 && AccelX > 0){
 
@@ -256,31 +282,36 @@ int main(void)
 				  __NOP();
 			  }
 
+			  /* Segundo cuadrante */
+
 			  }else if( AccelX < 0 && AccelY > 0){
 				  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
 				  angulo = 180 - angulo;
 
 				  if (angulo >= 90 && angulo < 120){
 
+				  updateDuttyCycle(&handlerPWMB, 50);
+				  updateDuttyCycle(&handlerPWMR, 50);
+				  updateDuttyCycle(&handlerPWMG, 0);
+
+				  } else if (angulo >= 120 && angulo < 150){
+					  updateDuttyCycle(&handlerPWMB, 0);
+					  updateDuttyCycle(&handlerPWMR, 0);
+					  updateDuttyCycle(&handlerPWMG, 100);
+
+
+				  } else if ( angulo >= 150 && angulo < 180) {
 					  updateDuttyCycle(&handlerPWMB, 50);
-					  updateDuttyCycle(&handlerPWMR, 50);
-					  updateDuttyCycle(&handlerPWMG, 0);
-
-					  } else if (angulo >= 120 && angulo < 150){
-						  updateDuttyCycle(&handlerPWMB, 0);
-						  updateDuttyCycle(&handlerPWMR, 0);
-						  updateDuttyCycle(&handlerPWMG, 100);
+					  updateDuttyCycle(&handlerPWMR, 0);
+					  updateDuttyCycle(&handlerPWMG, 100 );
 
 
-					  } else if ( angulo >= 150 && angulo < 180) {
-						  updateDuttyCycle(&handlerPWMB, 50);
-						  updateDuttyCycle(&handlerPWMR, 0);
-						  updateDuttyCycle(&handlerPWMG, 100 );
+				  } else{
+					  __NOP();
+				  }
 
 
-									  } else{
-										  __NOP();
-									  }
+			 /* Tercer cuadrante */
 
 			  } else if( AccelX <0 && AccelY < 0){
 				  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
@@ -292,44 +323,44 @@ int main(void)
 				  updateDuttyCycle(&handlerPWMR, 0);
 				  updateDuttyCycle(&handlerPWMG, 50);
 
-				  } else if (angulo >= 210 && angulo < 240){
-					  updateDuttyCycle(&handlerPWMB, 100);
-					  updateDuttyCycle(&handlerPWMR, 0);
-					  updateDuttyCycle(&handlerPWMG, 10);
-
-
-				  } else if ( angulo >= 240 && angulo < 270) {
-					  updateDuttyCycle(&handlerPWMB, 100);
-					  updateDuttyCycle(&handlerPWMR, 30);
-					  updateDuttyCycle(&handlerPWMG, 0 );
-
-
-				  } else{
-									  __NOP();
-								  }
-
-
-
-			  } else if ( AccelX > 0 && AccelY <= 0){
-				  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
-				  angulo = 360 - angulo;
-
-				  if( angulo >= 270 && angulo < 300){
-
+			  } else if (angulo >= 210 && angulo < 240){
 				  updateDuttyCycle(&handlerPWMB, 100);
 				  updateDuttyCycle(&handlerPWMR, 0);
+				  updateDuttyCycle(&handlerPWMG, 10);
+
+
+			  } else if ( angulo >= 240 && angulo < 270) {
+				  updateDuttyCycle(&handlerPWMB, 100);
+				  updateDuttyCycle(&handlerPWMR, 30);
+				  updateDuttyCycle(&handlerPWMG, 0 );
+
+
+			  } else{
+								  __NOP();
+							  }
+
+              /* Cuarto cuadrante */
+
+			 } else if ( AccelX > 0 && AccelY <= 0){
+			  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
+			  angulo = 360 - angulo;
+
+			  if( angulo >= 270 && angulo < 300){
+
+			  updateDuttyCycle(&handlerPWMB, 100);
+			  updateDuttyCycle(&handlerPWMR, 0);
+			  updateDuttyCycle(&handlerPWMG, 0);
+
+			  } else if (angulo >= 300 && angulo < 330){
+				  updateDuttyCycle(&handlerPWMB, 100);
+				  updateDuttyCycle(&handlerPWMR, 100);
 				  updateDuttyCycle(&handlerPWMG, 0);
 
-				  } else if (angulo >= 300 && angulo < 330){
-					  updateDuttyCycle(&handlerPWMB, 100);
-					  updateDuttyCycle(&handlerPWMR, 100);
-					  updateDuttyCycle(&handlerPWMG, 0);
 
-
-				  } else if ( angulo >= 330 && angulo <= 360) {
-					  updateDuttyCycle(&handlerPWMB, 0);
-					  updateDuttyCycle(&handlerPWMR, 100);
-					  updateDuttyCycle(&handlerPWMG, 0 );
+			  } else if ( angulo >= 330 && angulo <= 360) {
+				  updateDuttyCycle(&handlerPWMB, 0);
+				  updateDuttyCycle(&handlerPWMR, 100);
+				  updateDuttyCycle(&handlerPWMG, 0 );
 
 				  }
 
@@ -340,94 +371,16 @@ int main(void)
 				  updateDuttyCycle(&handlerPWMG, 100);
 			  }
 
-    	   			sprintf(welcomer, "Angulo = %d \n \r", (int) angulo);
-    	   			writeMsg(&handlerUsart1, welcomer);
-    	   			rxDataCMD = '\0';
+				sprintf(welcomer, "Angulo = %d \n \r", (int) angulo);
+				writeMsg(&handlerUsart1, welcomer);
+				rxDataCMD = '\0';
 
     	   BanderaRGB = 0;
        }
-//		if(rxData != '\0'){
-//		writeChar(&handlerUsart1, rxData);
-//		bufferReception[counterReception] = rxData;
-//
-//			if(rxData == 'd'){
-//				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
-//				sprintf(bufferData, "dataRead = 0x%2x  \n", (unsigned int) i2cBuffer);
-//				writeMsg(&handlerUsart1, bufferData);
-//				rxData = '\0';
-//
-//			}
-//			else if (rxData == 'm'){
-//
-//				  ptrData =leer_datos();
-//
-//				   Seg = ptrData[0];
-//				   Min = ptrData[1];
-//				   Hor = ptrData[2];
-//				   Sem = ptrData[3];
-//				   Day = ptrData[4];
-//				   Mes = ptrData[5];
-//				   Ano = ptrData[6];
-//
-//				sprintf(DataRTC, " La hora es = %uh: %um: %us: \n", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
-//				writeMsg(&handlerUsart1, DataRTC);
-//				rxData = '\0';
-//			}
-//
-//			else if (rxData == 'f'){
-//				sprintf(DataRTCDate, " La fecha es = %u/ %u/ %u/  \n", (unsigned int) Day , (unsigned int) Mes, (unsigned int) Ano);
-//				writeMsg(&handlerUsart1, DataRTCDate);
-//				rxData = '\0';
-//
-//			}
-//
-//			else if (rxData == 'p'){
-//				i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
-//				sprintf(bufferData, "dataRead = 0x%2x \n", (unsigned int) i2cBuffer);
-//				writeMsg(&handlerUsart1, bufferData);
-//				rxData = '\0';
-//			}
-//
-//			else if(rxData == 'r'){
-//
-//				i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
-//				rxData = '\0';
-//
-//			}
-//
-//			else if(rxData == 'x'){
-//
-//				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
-//				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
-//				AccelX = AccelX_high << 8 | AccelX_low;
-//				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
-//				writeMsg(&handlerUsart1, bufferData);
-//				rxData = '\0';
-//			}
-//
-//			else if (rxData == 'y'){
-//				uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
-//				uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
-//				AccelY = AccelY_high << 8 | AccelY_low;
-//				sprintf(bufferData, "AccelY = %d \n", (int) AccelY);
-//				writeMsg(&handlerUsart1, bufferData);
-//				rxData = '\0';
-//
-//			}
-//
-//			else if (rxData == 'z'){
-//				uint8_t AccelZ_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_L);
-//				uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_H);
-//			    AccelZ = AccelZ_high << 8 | AccelZ_low;
-//				sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
-//				writeMsg(&handlerUsart1, bufferData);
-//				rxData = '\0';
-//			}
-//			else{
-//				rxData = '\0';
-//			}
-//
 
+
+
+        /* Para el punto 3 se necesita una recepció que me cierre el comando por lo que se usa @ */
 
 		if(rxDataCMD != '\0'){
 
@@ -700,14 +653,14 @@ void initSystem (void){
 
 	 /* Configuración RTC */
 
-	 handlerRTC.DateTypeDef.RTC_Date     = 05;
-	 handlerRTC.DateTypeDef.RTC_Month    = 11;
-	 handlerRTC.DateTypeDef.RTC_WeekDay  = Satur;
-	 handlerRTC.DateTypeDef.RTC_Year     = 22;
-	 handlerRTC.TimeTypeDef.RTC_H12      = 12;
-	 handlerRTC.TimeTypeDef.RTC_Hours    = 23;
-	 handlerRTC.TimeTypeDef.RTC_Minutes  = 55;
-	 handlerRTC.TimeTypeDef.RTC_Seconds  = 44;
+	 handlerRTC.DateTypeDef.RTC_Fecha     = 17;
+	 handlerRTC.DateTypeDef.RTC_Mes       = 11;
+	 handlerRTC.DateTypeDef.RTC_Semana    = Thus;
+	 handlerRTC.DateTypeDef.RTC_Ano       = 98;
+	 handlerRTC.TimeTypeDef.RTC_H12       = 12;
+	 handlerRTC.TimeTypeDef.RTC_Hora      = 20;
+	 handlerRTC.TimeTypeDef.RTC_Minutos   = 30;
+	 handlerRTC.TimeTypeDef.RTC_Segundos  = 44;
 
 	 RTC_Config(&handlerRTC);
 
@@ -780,7 +733,7 @@ void parseCommands(char *ptrBufferReception){
 		writeMsg(&handlerUsart1, "6) StopA = Se detiene el acelerometro \n");
 		writeMsg(&handlerUsart1, "7) Purpura = Se activa un estrober de videos \n)");
 		writeMsg(&handlerUsart1, "8) Angulo = Se desea ver el angulo actual=  \n");
-		writeMsg(&handlerUsart1, "9)  \n");
+		writeMsg(&handlerUsart1, "9) z --> observación de tercer eje del acelerometro \n");
 		writeMsg(&handlerUsart1, "10) \n ");
 
 
@@ -976,6 +929,15 @@ void parseCommands(char *ptrBufferReception){
 		    	   			rxDataCMD = '\0';
 
 
+	} else if(strcmp(cmd, "z") == 0){
+
+
+						uint8_t AccelZ_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_L);
+						uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_H);
+					    AccelZ = AccelZ_high << 8 | AccelZ_low;
+						sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
+						writeMsg(&handlerUsart1, bufferData);
+						rxData = '\0';
 	}
 
 

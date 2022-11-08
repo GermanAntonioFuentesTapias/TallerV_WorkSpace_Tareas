@@ -55,3 +55,5 @@ dkms.conf
 Debug/
 .metadata/
 .directory
+PeripheralDriver/Inc/I2CLCD.h
+PeripheralDriver/Inc/RTCxDriver.h

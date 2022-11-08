@@ -1,5 +1,5 @@
 /*
- * LCDDriver.h
+ * I2CLCD.h
  *
  *  Created on: 4/06/2022
  *      Author: Ger
