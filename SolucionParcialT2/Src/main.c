@@ -4,6 +4,8 @@
  *  Created on: 1/11/2022
  *      Author: German Antonio Fuentes Tapias
  *
+ *      @ gafuentest@unal.edu.co
+ *
  *      Solución del Parcial Taller V
  *
  *      Tema 2.
@@ -143,7 +145,7 @@ uint8_t counterReception = 0;
 char bufferReception[64] = {0};
 char cmd[64];
 char userMsg[64];
-char data[64];
+char data[64] = {0} ;
 bool stringComplete = false;
 bool makeUpdateLCD  = false;
 unsigned int firstParameter;
@@ -173,13 +175,21 @@ int main(void)
 	startPwmSignal(&handlerPWMG);
 
 
-  /* Configuración iniciación LCD */
+  /* Configuración iniciación LCD del punto 2 */
+//
 //	LCD_Init(&handlerLCD);
+//
 //		delay_10();
+//
 //		LCD_Clear(&handlerLCD);
+//
 //		delay_10();
+//
 //		sprintf(data, "Hola ");
+//
 //		LCD_setCursor(&handlerLCD,1,0);
+//
+//
 //		LCD_sendSTR(&handlerLCD,data);
 
 	/* Ciclo principal del programa */
@@ -758,6 +768,7 @@ void parseCommands(char *ptrBufferReception){
 		writeMsg(&handlerUsart1, "9) z --> observación de tercer eje del acelerometro \n");
 		writeMsg(&handlerUsart1, "10)Semaforo = Se hace una representacion de un semaforo por cada comando \n ");
 		writeMsg(&handlerUsart1, "11) User = enviar 'User # # Mensaje @ para visualizar mensaje por ti \n ");
+        writeMsg(&handlerUsart1, "12) Reset = Volver el RGB a color inicial \n");
 
 
 
@@ -1003,6 +1014,16 @@ void parseCommands(char *ptrBufferReception){
 		updateDuttyCycle(&handlerPWMB, 0);
 	    }
 
+
+	}
+
+	else if ( strcmp(cmd , "Reset") == 0) {
+
+		writeMsg(&handlerUsart1,  "CMD: Reset \n");
+
+		updateDuttyCycle(&handlerPWMR, 120);
+		updateDuttyCycle(&handlerPWMG, 120);
+		updateDuttyCycle(&handlerPWMB, 120);
 
 	}
 

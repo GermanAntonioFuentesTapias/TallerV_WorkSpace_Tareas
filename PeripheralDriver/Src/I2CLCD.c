@@ -10,10 +10,11 @@
 #include "I2CLCD.h"
 
 /*
- * Se debe configurar los pines para el I2C (SDA y SCL),
+ * Se tien que hace la configuración a los pines para el I2C (SDA y SCL),
  * para lo cual se necesita el modulo GPIO y los pines configurados
- * en el modo Alternate Function.
- * Además, estos pines deben ser configurados como salidas open-drain
+ * en el modo Alternate Function, recomendado usar la AF4 para I2C1 y I2C3 .
+ * Además, estos pines deben ser configurados como salidas open-drain por la resistencia
+ * por tal motivo se alimenta esa entrada del sensor con una superior para la comparación
  * y con las resistencias en modo pull-up
  */
 
@@ -89,7 +90,7 @@ void LCD_Init (I2C_Handler_t *ptrHandlerI2C) {
 	/*
 	 * Configuraciones para la escritura
 	 */
-	// Data lenght 4, lines 2, character font 5X8
+	// 4 de datos , lines 2, caracteres de  5X8
 	LCD_sendCMD (ptrHandlerI2C, 0x20);
 	delay_50();
 	LCD_sendCMD (ptrHandlerI2C, 0x28);
@@ -111,6 +112,9 @@ void LCD_Init (I2C_Handler_t *ptrHandlerI2C) {
 void LCD_sendSTR(I2C_Handler_t *ptrHandlerI2C, char *str) {
 	while (*str) LCD_sendata (ptrHandlerI2C, *str++);
 }
+
+// Barrido para cada cursor de LCD y ubicación de caracter
+
 void LCD_setCursor(I2C_Handler_t *ptrHandlerI2C, uint8_t x, uint8_t y) {
 	uint8_t cursor;
 	switch (x) {
@@ -210,8 +214,11 @@ void LCD_setCursor(I2C_Handler_t *ptrHandlerI2C, uint8_t x, uint8_t y) {
 		case 19 : cursor = 0x67; break;
 		} break;
 	}
+	// A donde se escribe
 	LCD_sendCMD(ptrHandlerI2C, 0x80|cursor);
 }
+
+/* Dada la configuración se requiere un tiempo en especifico para que cargue el registro , por eso el delay */
 void delay_50 (void){
 	for (int i=0;i<62500;i++){
 		__NOP();
