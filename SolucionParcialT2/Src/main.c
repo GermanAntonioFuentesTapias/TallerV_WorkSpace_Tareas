@@ -1,10 +1,19 @@
 /*
- * mainP.c
+ * main.c
  *
  *  Created on: 1/11/2022
- *      Author: German
+ *      Author: German Antonio Fuentes Tapias
  *
  *      Solución del Parcial Taller V
+ *
+ *      Tema 2.
+ *
+ *      Paridad Even
+ *      Usart1 para comunicación serial
+ *      Velocidad 19200
+ *
+ *
+ *
  */
 #include <stm32f4xx.h>
 
@@ -25,35 +34,25 @@
 
 /* Definición de variables para operación matematicas */
 
-#define MAX_X    16000
-#define MIN_Y   -16000
-#define MIN_X   -16000
-#define MIN_Z   -16000
-
-int16_t radio = 0;
 int16_t  angulo = 0;
 
+/* Ejes utilizados en el acelerometro */
 int16_t AccelX = 0;
 int16_t AccelY = 0;
 int16_t AccelZ = 0;
 
-/* Definición de variables */
-GPIO_Handler_t handlerBlinkyPin     = {0};
-
-GPIO_Handler_t handlerTx     		= {0};
-GPIO_Handler_t handlerRx	 		= {0};
-
-GPIO_Handler_t handlerI2cSDA 		= {0};
-GPIO_Handler_t handlerI2cSCL		= {0};
-
-I2C_Handler_t handlerAcelerometro   = {0};
-I2C_HandlerLCD_t handlerLCD         = {0};
-
-USART_Handler_t handlerUsart1    = {0};
-
+/* Definición de variables Handler */
+GPIO_Handler_t handlerBlinkyPin         = {0};
+GPIO_Handler_t handlerTx     	    	= {0};
+GPIO_Handler_t handlerRx	 	     	= {0};
+GPIO_Handler_t handlerI2cSDA 		    = {0};
+GPIO_Handler_t handlerI2cSCL		    = {0};
+I2C_Handler_t handlerAcelerometro       = {0};
+I2C_Handler_t handlerLCD                = {0};
+USART_Handler_t handlerUsart1           = {0};
 BasicTimer_Handler_t handlerBlinkyTimer = {0};
 
-/* Definición de variables del proyecto */
+/* Definición de variables banderas*/
 uint8_t handlerLed  = 0;
 uint8_t rxData      =  0;
 uint8_t rxDataCMD   = 0;
@@ -61,9 +60,11 @@ uint8_t Bandera     = 0;
 uint8_t BanderaRGB  = 0;
 uint8_t BanderaRGB2 = 0;
 
+/* Handler de banderas de comandos */
 BasicTimer_Handler_t handlerCommands = {0};
 BasicTimer_Handler_t handlerRGB      = {0};
 
+/* Cargar datos */
 uint8_t i2cBuffer = 0;
 
 /* Definición para RTC */
@@ -128,6 +129,7 @@ uint8_t counterReception = 0;
 char bufferReception[64] = {0};
 char cmd[64];
 char userMsg[64];
+char data[64];
 bool stringComplete = false;
 bool makeUpdateLCD  = false;
 unsigned int firstParameter;
@@ -148,17 +150,22 @@ int main(void)
    /* Llamamos a la función initSystem para que se ejecute */
 
 	initSystem();
+
+	/* Comienza de PWM */
+
 	startPwmSignal(&handlerPWMR);
 	startPwmSignal(&handlerPWMB);
 	startPwmSignal(&handlerPWMG);
 
-//
-//	LCD_Init(&handlerLCD); // Pasa todo el proceso interno de la LCD
-//
-//
-//    LCD_setCursor(&handlerLCD, 0, 0);
-//
-//	LCD_sendSTR(&handlerLCD, "Bienvenido");
+
+  /* Configuración iniciación LCD */
+//	LCD_Init(&handlerLCD);
+//		delay_10();
+//		LCD_Clear(&handlerLCD);
+//		delay_10();
+//		sprintf(data, "Hola ");
+//		LCD_setCursor(&handlerLCD,1,0);
+//		LCD_sendSTR(&handlerLCD,data);
 
 	/* Ciclo principal del programa */
 
@@ -544,19 +551,19 @@ void initSystem (void){
 
 	//Definimos puertos
 
-	handlerLCDcSCL.pGPIOx                               = GPIOB;
-	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinNumber        = PIN_10;
+	handlerLCDcSCL.pGPIOx                               = GPIOA;
+	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinNumber        = PIN_8;
 	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_ALTFN;
 	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_OPENDRAIN;
-	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_NOTHING;
+	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_PULLUP;
 	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_FAST;
 	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinAltFunMode    = AF4;
 
 	/* Se carga a la configuración */
 	GPIO_Config(&handlerLCDcSCL);
 
-	handlerLCDcSDA.pGPIOx                               = GPIOB;
-	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinNumber        = PIN_11;
+	handlerLCDcSDA.pGPIOx                               = GPIOC;
+	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinNumber        = PIN_9;
 	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_ALTFN;
 	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_OPENDRAIN;
 	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_PULLUP;
@@ -570,14 +577,14 @@ void initSystem (void){
 	/* Se carga la configuración I2C */
 
 	/* Handler para el acelerometro */
-	handlerLCD.ptrI2Cx				= I2C2;
-	handlerLCD.modeI2C				= I2C_MODE_FM;
+	handlerLCD.ptrI2Cx				= I2C3;
+	handlerLCD.modeI2C				= I2C_MODE_SM;
 	handlerLCD.slaveAddress		    = LCD_ADDRESS  ;
 
 	/* Cargo la configuración de LCD */
 
 
-	I2C_ConfigLCD(&handlerLCD);
+	i2c_config(&handlerLCD);
 
 
 	/* Handler para el I2CSCL */
