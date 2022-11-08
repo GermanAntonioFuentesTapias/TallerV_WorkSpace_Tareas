@@ -28,17 +28,6 @@
 #define I2C_MAX_RISE_TIME_FM				6
 
 
-//typedef struct
-//{
-//	I2C_TypeDef		*ptrI2Cx;
-//	uint8_t			slaveAddress;
-//	uint8_t			modeI2C;
-//	uint8_t			dataI2C;
-//}I2C_Handler_t;
-//
-///* Prototipos de las funciones públicas */
-//uint8_t I2C_readByte (I2C_Handler_t *ptrHandlerI2C, uint8_t memAddr);
-//void I2C_writeByte (I2C_Handler_t *ptrHandlerI2C, uint8_t dataToWrite);
 void LCD_Init(I2C_Handler_t *ptrHandlerI2C);
 void LCD_sendCMD (I2C_Handler_t *ptrHandlerI2C, char cmd);
 void LCD_sendata (I2C_Handler_t *ptrHandlerI2C, char data);

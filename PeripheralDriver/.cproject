@@ -76,7 +76,6 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.2100070290" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.lib.debug.473581757.2016718551" name="LCDxDriver.h" rcbsApplicability="disable" resourcePath="Inc/LCDxDriver.h" toolsToInvoke=""/>
 					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.lib.debug.473581757.632395940" name="USARTxDriver.h" rcbsApplicability="disable" resourcePath="Inc/USARTxDriver.h" toolsToInvoke=""/>
 					<sourceEntries>
 						<entry excluding="LCDxDriver.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Inc"/>

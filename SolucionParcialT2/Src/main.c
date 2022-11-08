@@ -380,28 +380,30 @@ int main(void)
 
 
 
-        /* Para el punto 3 se necesita una recepció que me cierre el comando por lo que se usa @ */
+        /* Para el punto 3 se necesita una recepción que me cierre el comando por lo que se usa @ */
 
 		if(rxDataCMD != '\0'){
 
 
 		bufferReception[counterReception] = rxDataCMD;
-				counterReception++;
-				     if (rxDataCMD == '@'){
-				    	 stringComplete = true;
+		counterReception++;
+			 if (rxDataCMD == '@'){
+				 stringComplete = true;
 
-				    	 // Agrego linea
+				 // Agrego linea
 
-				    	 bufferReception[counterReception] = '\0';
+				 bufferReception[counterReception] = '\0';
 
-				    	 counterReception = 0;
-				     }
+				 counterReception = 0;
+			 }
 
-				     rxDataCMD = '\0';
+			 rxDataCMD = '\0';
 
-	}
+	   }
 
 		// Hacemos un análisis de la cadena de datos obtenida
+		// asi que verifica el comando si es true entra, se carga y se
+		// reinicia el valor a false
 
 		if ( stringComplete){
 
@@ -421,6 +423,8 @@ int main(void)
 
 void initSystem (void){
 
+	/* Punto 1 */
+
 	/* Handler para el PIN A5 = Led de estado */
 	handlerBlinkyPin.pGPIOx									= GPIOA;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinNumber 			= PIN_5;
@@ -433,19 +437,21 @@ void initSystem (void){
 	/* Se carga la configuración */
 	GPIO_Config(&handlerBlinkyPin);
 
-	/* Handler para el PIN B6 */
+	/* Configuración USART Transmisión */
+
+	/* Handler para el PIN B6 para transmisión */
 	handlerTx.pGPIOx                       			= GPIOB;
-	handlerTx.GPIO_PinConfig.GPIO_PinNumber			= PIN_6;				// Pin TX USART1 NO
+	handlerTx.GPIO_PinConfig.GPIO_PinNumber			= PIN_6;				// Pin TX USART1
 	handlerTx.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
 	handlerTx.GPIO_PinConfig.GPIO_PinOPType		    = GPIO_OTYPE_PUSHPULL;
 	handlerTx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
 	handlerTx.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_MEDIUM;
-	handlerTx.GPIO_PinConfig.GPIO_PinAltFunMode		= AF7;					// Función alternativa USART1
+	handlerTx.GPIO_PinConfig.GPIO_PinAltFunMode		= AF7;
 
 	/* Se carga la configuración */
 	GPIO_Config(&handlerTx);
 
-	/* Handler para el PIN B7 */
+	/* Handler para el PIN B7  para recepción */
 	handlerRx.pGPIOx                       			= GPIOB;
 	handlerRx.GPIO_PinConfig.GPIO_PinNumber			= PIN_7;				// Pin RX USART1
 	handlerRx.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
@@ -471,6 +477,11 @@ void initSystem (void){
 	/* Se carga la configuración */
 	USART_Config(&handlerUsart1);
 
+
+/***************************************************************************************************/
+
+	/* Para el blinky de estado */
+
 	/* Handler para el Timer2 */
 	handlerBlinkyTimer.ptrTIMx 								= TIM2;
 	handlerBlinkyTimer.TIMx_Config.TIMx_mode 				= BTIMER_MODE_UP;
@@ -480,29 +491,34 @@ void initSystem (void){
 	/* Se carga la configuración */
 		BasicTimer_Config(&handlerBlinkyTimer);
 
-
+        /* Para bandera de commands */
 
 		handlerCommands.ptrTIMx                                = TIM4;
 		handlerCommands.TIMx_Config.TIMx_mode                  = BTIMER_MODE_UP;
 		handlerCommands.TIMx_Config.TIMx_speed                 = BTIMER_SPEED_1ms;
 		handlerCommands.TIMx_Config.TIMx_period                = 1000;
 
-
+        /* Cargando configuración */
 	    BasicTimer_Config(&handlerCommands);
+
+	    /* Para I2C */
 
 	    handlerRGB.ptrTIMx                                    = TIM3;
 	    handlerRGB.TIMx_Config.TIMx_mode                      = BTIMER_MODE_UP;
 	    handlerRGB.TIMx_Config.TIMx_speed                     = BTIMER_SPEED_100us;
 	    handlerRGB.TIMx_Config.TIMx_period                    = 10000;
 
+	    /* Cargo de configuración */
 	    BasicTimer_Config(&handlerRGB);
 
 
-	/* Handler para el Timer3 */
+	/* Punto 2 configuración */
 
 	/* Aqui se encargara de lo de la LDC */
 
 	//Definimos puertos
+
+	/* Para el SCL */
 
 	handlerLCDcSCL.pGPIOx                               = GPIOA;
 	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinNumber        = PIN_8;
@@ -515,6 +531,7 @@ void initSystem (void){
 	/* Se carga a la configuración */
 	GPIO_Config(&handlerLCDcSCL);
 
+	/* Para el SDA */
 	handlerLCDcSDA.pGPIOx                               = GPIOC;
 	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinNumber        = PIN_9;
 	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_ALTFN;
@@ -527,7 +544,7 @@ void initSystem (void){
 
 	GPIO_Config(&handlerLCDcSDA);
 
-	/* Se carga la configuración I2C */
+	/* Se carga la configuración I2C  de la LCD*/
 
 	/* Handler para el acelerometro */
 	handlerLCD.ptrI2Cx				= I2C3;
@@ -536,9 +553,11 @@ void initSystem (void){
 
 	/* Cargo la configuración de LCD */
 
-
 	i2c_config(&handlerLCD);
 
+	/***********************************************************************/
+
+	/* Acelerometro o actuador punto 5. */
 
 	/* Handler para el I2CSCL */
 	handlerI2cSCL.pGPIOx								= GPIOB;
@@ -564,12 +583,17 @@ void initSystem (void){
 	/* Se carga la configuración */
 	GPIO_Config(&handlerI2cSDA);
 
+
 	/* Handler para el acelerometro */
 	handlerAcelerometro.ptrI2Cx				= I2C1;
 	handlerAcelerometro.modeI2C				= I2C_MODE_FM;
 	handlerAcelerometro.slaveAddress		= ACCEL_ADDRESS;
 
+
+   /* Se carga la configuración */
    i2c_config(&handlerAcelerometro);
+
+   /***************************************************************************/
 
    /* Configuraciones PWM GENERAL */
 
@@ -601,7 +625,7 @@ void initSystem (void){
 
 	GPIO_Config(&handlerRed);
 
-		// Color Verde
+	// Color Verde
 
 	handlerGreen.pGPIOx                                = GPIOC;
 	handlerGreen.GPIO_PinConfig.GPIO_PinNumber         = PIN_8;
@@ -634,6 +658,7 @@ void initSystem (void){
 	 handlerPWMG.config.periodo                            = 120;
 	 handlerPWMG.config.prescaler                          = BTIMER_SPEED_100us;
 
+	 /* Se carga la configuración */
 	 pwm_Config(&handlerPWMG);
 
 	 handlerPWMR.ptrTIMx                                   = TIM3;
@@ -642,16 +667,18 @@ void initSystem (void){
 	 handlerPWMR.config.periodo                            = 120;
 	 handlerPWMR.config.prescaler                          = BTIMER_SPEED_100us;
 
+	 /* Se carga la configuración */
 	 pwm_Config(&handlerPWMR);
 
-	 /* Despliegue de handler PWM */
+	 /* Despliegue de handler PWM super necesario */
 
 	 enableOutput(&handlerPWMR);
 	 enableOutput(&handlerPWMG);
 	 enableOutput(&handlerPWMB);
 
+     /* Punto 4 */
 
-	 /* Configuración RTC */
+	 /* Configuración RTC inicial que se actualizara si el sistema no se apaga o reinicia*/
 
 	 handlerRTC.DateTypeDef.RTC_Fecha     = 17;
 	 handlerRTC.DateTypeDef.RTC_Mes       = 11;
@@ -662,16 +689,15 @@ void initSystem (void){
 	 handlerRTC.TimeTypeDef.RTC_Minutos   = 30;
 	 handlerRTC.TimeTypeDef.RTC_Segundos  = 44;
 
+
+     /*Se carga la configuración */
+
 	 RTC_Config(&handlerRTC);
 
 
-
-
-
-	/* Configuración  de RGB */
-
-
 }
+
+/* Para la comunicación */
 
 void USART1Rx_CallBack(void){
 
@@ -702,6 +728,7 @@ void BasicTimer2_CallBack(void){
 
 void BasicTimer4_CallBack(void){
 
+	// Para actuador en el timer se mantenga activo cierto tiempo
 	Bandera = 1;
 
 	BanderaRGB = 1;
@@ -709,13 +736,8 @@ void BasicTimer4_CallBack(void){
 
 }
 
-void BasicTimer5_CallBack(void){
 
-	BanderaRGB2 = 1;
-
-}
-
-
+/*********** Punto   3 Comandos *******************/
 
 
 void parseCommands(char *ptrBufferReception){
@@ -728,18 +750,20 @@ void parseCommands(char *ptrBufferReception){
 		writeMsg(&handlerUsart1, "1) Millos = Colores del grande \n ");
 		writeMsg(&handlerUsart1, "2) Nacional= Color verde \n");
 		writeMsg(&handlerUsart1, "3) Hora = en Hora - Minuto - Segundos \n");
-		writeMsg(&handlerUsart1, "4) Fecha=  en Dia / Mes / Año \n" );
+		writeMsg(&handlerUsart1, "4) Fecha=  en Dia / Mes / Year \n" );
 		writeMsg(&handlerUsart1, "5) Accel = Se inicializa el acelerometro \n ");
 		writeMsg(&handlerUsart1, "6) StopA = Se detiene el acelerometro \n");
-		writeMsg(&handlerUsart1, "7) Purpura = Se activa un estrober de videos \n)");
+		writeMsg(&handlerUsart1, "7) Purpura = Se activa un bello color  \n)");
 		writeMsg(&handlerUsart1, "8) Angulo = Se desea ver el angulo actual=  \n");
 		writeMsg(&handlerUsart1, "9) z --> observación de tercer eje del acelerometro \n");
-		writeMsg(&handlerUsart1, "10) \n ");
+		writeMsg(&handlerUsart1, "10)Semaforo = Se hace una representacion de un semaforo por cada comando \n ");
+		writeMsg(&handlerUsart1, "11) User = enviar 'User # # Mensaje @ para visualizar mensaje por ti \n ");
 
 
 
 	} else if (strcmp(cmd , "Millos" ) == 0) {
 
+		writeMsg(&handlerUsart1,  "CMD : Millos \n");
         updateDuttyCycle(&handlerPWMR, 0);
         updateDuttyCycle(&handlerPWMG, 0);
 		updateDuttyCycle(&handlerPWMB, 100);
@@ -750,10 +774,11 @@ void parseCommands(char *ptrBufferReception){
 
     else if (strcmp(cmd , "Nacional" ) == 0) {
 
+    writeMsg(&handlerUsart1,  "CMD : Nacional \n");
     updateDuttyCycle(&handlerPWMR, 0);
     updateDuttyCycle(&handlerPWMG, 100);
 	updateDuttyCycle(&handlerPWMB, 0);
-	writeMsg(&handlerUsart1, "Nacional \n \r");
+	writeMsg(&handlerUsart1, "Nacional F.C \n \r");
 
 }
 
@@ -805,139 +830,180 @@ void parseCommands(char *ptrBufferReception){
 
 	else if(strcmp(cmd, "Angulo") == 0){
 
+		writeMsg(&handlerUsart1,  "CMD : Angulo \n");
+
 		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, WHO_AM_I);
-					i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
-					i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
-					uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
-					uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
-					AccelX = AccelX_high << 8 | AccelX_low;
-					uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
-					uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
-					AccelY = AccelY_high << 8 | AccelY_low;
+		i2cBuffer = i2c_readSingleRegister(&handlerAcelerometro, PWR_MGMT_l);
+		i2c_writeSingleRegister(&handlerAcelerometro, PWR_MGMT_l, 0x00);
+		uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_L);
+		uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_XOUT_H);
+		AccelX = AccelX_high << 8 | AccelX_low;
+		uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_L);
+		uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_YOUT_H);
+		AccelY = AccelY_high << 8 | AccelY_low;
 
-					 if(AccelY > 0 && AccelX > 0){
+		 if(AccelY > 0 && AccelX > 0){
 
-					  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
+		  angulo = atan(AccelY/AccelX)*(180/(acos(-1)));
 
-					  if( angulo < 30){
-					  updateDuttyCycle(&handlerPWMB, 100);
-					  updateDuttyCycle(&handlerPWMR, 50);
-					  updateDuttyCycle(&handlerPWMG, 0);
+		  if( angulo < 30){
+		  updateDuttyCycle(&handlerPWMB, 100);
+		  updateDuttyCycle(&handlerPWMR, 50);
+		  updateDuttyCycle(&handlerPWMG, 0);
 
-					  } else if (angulo >= 30 && angulo < 60){
-						  updateDuttyCycle(&handlerPWMB, 50);
-						  updateDuttyCycle(&handlerPWMR, 50);
-						  updateDuttyCycle(&handlerPWMG, 0);
-
-
-					  } else if ( angulo >= 60 && angulo < 90) {
-						  updateDuttyCycle(&handlerPWMB, 30);
-						  updateDuttyCycle(&handlerPWMR, 30);
-						  updateDuttyCycle(&handlerPWMG, 0 );
+		  } else if (angulo >= 30 && angulo < 60){
+			  updateDuttyCycle(&handlerPWMB, 50);
+			  updateDuttyCycle(&handlerPWMR, 50);
+			  updateDuttyCycle(&handlerPWMG, 0);
 
 
-					  } else{
-						  __NOP();
-					  }
-
-					  }else if( AccelX < 0 && AccelY > 0){
-						  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
-						  angulo = 180 - angulo;
-
-						  if (angulo >= 90 && angulo < 120){
-
-							  updateDuttyCycle(&handlerPWMB, 50);
-							  updateDuttyCycle(&handlerPWMR, 50);
-							  updateDuttyCycle(&handlerPWMG, 0);
-
-							  } else if (angulo >= 120 && angulo < 150){
-								  updateDuttyCycle(&handlerPWMB, 0);
-								  updateDuttyCycle(&handlerPWMR, 0);
-								  updateDuttyCycle(&handlerPWMG, 100);
+		  } else if ( angulo >= 60 && angulo < 90) {
+			  updateDuttyCycle(&handlerPWMB, 30);
+			  updateDuttyCycle(&handlerPWMR, 30);
+			  updateDuttyCycle(&handlerPWMG, 0 );
 
 
-							  } else if ( angulo >= 150 && angulo < 180) {
-								  updateDuttyCycle(&handlerPWMB, 50);
-								  updateDuttyCycle(&handlerPWMR, 0);
-								  updateDuttyCycle(&handlerPWMG, 100 );
+		  } else{
+			  __NOP();
+		  }
+
+		  }else if( AccelX < 0 && AccelY > 0){
+			  angulo = atan(AccelY/(-AccelX))*(180/(acos(-1)));
+			  angulo = 180 - angulo;
+
+			  if (angulo >= 90 && angulo < 120){
+
+				  updateDuttyCycle(&handlerPWMB, 50);
+				  updateDuttyCycle(&handlerPWMR, 50);
+				  updateDuttyCycle(&handlerPWMG, 0);
+
+				  } else if (angulo >= 120 && angulo < 150){
+					  updateDuttyCycle(&handlerPWMB, 0);
+					  updateDuttyCycle(&handlerPWMR, 0);
+					  updateDuttyCycle(&handlerPWMG, 100);
 
 
-											  } else{
-												  __NOP();
-											  }
-
-					  } else if( AccelX <0 && AccelY < 0){
-						  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
-						  angulo = 180 + angulo;
-
-						  if(angulo >= 180 && angulo <210){
-
-					  updateDuttyCycle(&handlerPWMB, 100);
-						  updateDuttyCycle(&handlerPWMR, 0);
-						  updateDuttyCycle(&handlerPWMG, 50);
-
-						  } else if (angulo >= 210 && angulo < 240){
-							  updateDuttyCycle(&handlerPWMB, 100);
-							  updateDuttyCycle(&handlerPWMR, 0);
-							  updateDuttyCycle(&handlerPWMG, 10);
+				  } else if ( angulo >= 150 && angulo < 180) {
+					  updateDuttyCycle(&handlerPWMB, 50);
+					  updateDuttyCycle(&handlerPWMR, 0);
+					  updateDuttyCycle(&handlerPWMG, 100 );
 
 
-						  } else if ( angulo >= 240 && angulo < 270) {
-							  updateDuttyCycle(&handlerPWMB, 100);
-							  updateDuttyCycle(&handlerPWMR, 30);
-							  updateDuttyCycle(&handlerPWMG, 0 );
+								  } else{
+									  __NOP();
+								  }
+
+		  } else if( AccelX <0 && AccelY < 0){
+			  angulo = atan(-AccelY/(-AccelX))*(180/(acos(-1)));
+			  angulo = 180 + angulo;
+
+			  if(angulo >= 180 && angulo <210){
+
+		  updateDuttyCycle(&handlerPWMB, 100);
+			  updateDuttyCycle(&handlerPWMR, 0);
+			  updateDuttyCycle(&handlerPWMG, 50);
+
+			  } else if (angulo >= 210 && angulo < 240){
+				  updateDuttyCycle(&handlerPWMB, 100);
+				  updateDuttyCycle(&handlerPWMR, 0);
+				  updateDuttyCycle(&handlerPWMG, 10);
 
 
-						  } else{
-											  __NOP();
-										  }
+			  } else if ( angulo >= 240 && angulo < 270) {
+				  updateDuttyCycle(&handlerPWMB, 100);
+				  updateDuttyCycle(&handlerPWMR, 30);
+				  updateDuttyCycle(&handlerPWMG, 0 );
+
+
+			  } else{
+								  __NOP();
+							  }
 
 
 
-					  } else if ( AccelX > 0 && AccelY <= 0){
-						  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
-						  angulo = 360 - angulo;
+		  } else if ( AccelX > 0 && AccelY <= 0){
+			  angulo = atan(-AccelY/(AccelX))*(180/(acos(-1)));
+			  angulo = 360 - angulo;
 
-						  if( angulo >= 270 && angulo < 300){
+			  if( angulo >= 270 && angulo < 300){
 
-						  updateDuttyCycle(&handlerPWMB, 100);
-						  updateDuttyCycle(&handlerPWMR, 0);
-						  updateDuttyCycle(&handlerPWMG, 0);
+			  updateDuttyCycle(&handlerPWMB, 100);
+			  updateDuttyCycle(&handlerPWMR, 0);
+			  updateDuttyCycle(&handlerPWMG, 0);
 
-						  } else if (angulo >= 300 && angulo < 330){
-							  updateDuttyCycle(&handlerPWMB, 100);
-							  updateDuttyCycle(&handlerPWMR, 100);
-							  updateDuttyCycle(&handlerPWMG, 0);
+			  } else if (angulo >= 300 && angulo < 330){
+				  updateDuttyCycle(&handlerPWMB, 100);
+				  updateDuttyCycle(&handlerPWMR, 100);
+				  updateDuttyCycle(&handlerPWMG, 0);
 
 
-						  } else if ( angulo >= 330 && angulo <= 360) {
-							  updateDuttyCycle(&handlerPWMB, 0);
-							  updateDuttyCycle(&handlerPWMR, 100);
-							  updateDuttyCycle(&handlerPWMG, 0 );
+			  } else if ( angulo >= 330 && angulo <= 360) {
+				  updateDuttyCycle(&handlerPWMB, 0);
+				  updateDuttyCycle(&handlerPWMR, 100);
+				  updateDuttyCycle(&handlerPWMG, 0 );
 
-						  }
+			  }
 
-					  } else if (AccelX == 0 || AccelY == 0){
-						  angulo = 0;
-						  updateDuttyCycle(&handlerPWMR, 100);
-						  updateDuttyCycle(&handlerPWMB, 100);
-						  updateDuttyCycle(&handlerPWMG, 100);
-					  }
+		  } else if (AccelX == 0 || AccelY == 0){
+			  angulo = 0;
+			  updateDuttyCycle(&handlerPWMR, 100);
+			  updateDuttyCycle(&handlerPWMB, 100);
+			  updateDuttyCycle(&handlerPWMG, 100);
+		  }
 
-		    	   			sprintf(welcomer, "Angulo = %d \n \r", (int) angulo);
-		    	   			writeMsg(&handlerUsart1, welcomer);
-		    	   			rxDataCMD = '\0';
+				sprintf(welcomer, "Angulo = %d \n \r", (int) angulo);
+				writeMsg(&handlerUsart1, welcomer);
+				rxDataCMD = '\0';
 
 
 	} else if(strcmp(cmd, "z") == 0){
 
 
-						uint8_t AccelZ_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_L);
-						uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_H);
-					    AccelZ = AccelZ_high << 8 | AccelZ_low;
-						sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
-						writeMsg(&handlerUsart1, bufferData);
-						rxData = '\0';
+	uint8_t AccelZ_low = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_L);
+	uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcelerometro, ACCEL_ZOUT_H);
+	AccelZ = AccelZ_high << 8 | AccelZ_low;
+	sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
+	writeMsg(&handlerUsart1, bufferData);
+	rxData = '\0';
+	}
+
+	else if( strcmp(cmd, "User") == 0) {
+
+		writeMsg(&handlerUsart1,  "CMD : User \n");
+		writeMsg(&handlerUsart1, userMsg);
+		writeMsg(&handlerUsart1, "\n");
+	}
+
+	else if (strcmp( cmd , "Semaforo") == 0) {
+
+		writeMsg(&handlerUsart1,  "CMD : Semaforo \n");
+	    writeMsg(&handlerUsart1, "Semaforo \n \r");
+
+	     for (int i=0;i<92500;i++){
+
+
+	    updateDuttyCycle(&handlerPWMR, 100);
+	    updateDuttyCycle(&handlerPWMG, 0);
+	    updateDuttyCycle(&handlerPWMB, 0);
+	    }
+
+	     for (int i=0;i<92500;i++){
+
+		updateDuttyCycle(&handlerPWMR, 50);
+		updateDuttyCycle(&handlerPWMG, 30);
+		updateDuttyCycle(&handlerPWMB, 0);
+
+
+	    }
+
+	    for (int i=0;i<92500;i++){
+
+		updateDuttyCycle(&handlerPWMR, 0);
+		updateDuttyCycle(&handlerPWMG, 100);
+		updateDuttyCycle(&handlerPWMB, 0);
+	    }
+
+
 	}
 
 
