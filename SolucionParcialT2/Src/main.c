@@ -1032,7 +1032,17 @@ void parseCommands(char *ptrBufferReception){
 
 		writeMsg(&handlerUsart1, " Wrong CMD \r");
 	}
-
-
 }
+
+//Revisión Parcial
+//- La terminal funciona, pero un poco mas de versatilidad
+//- El acelerometro funciona
+//- El RGB funciona
+//- El RTC funciona pero no es posible modificarlo
+//- No presenta la LCD
+//- El programa funciona cierto tiempo y luego se bloquea.
+//
+//(0+20+12+10+10+20)*5/100
+//
+//Calificación = 3.6
 
