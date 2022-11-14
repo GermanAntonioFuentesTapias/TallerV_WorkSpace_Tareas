@@ -196,16 +196,3 @@ uint8_t* leer_datos(void){
 
 	return calendario;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
