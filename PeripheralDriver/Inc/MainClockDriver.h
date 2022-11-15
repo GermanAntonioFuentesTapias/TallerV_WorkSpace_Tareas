@@ -31,6 +31,7 @@ PWR_TypeDef   *ptrResetClock;
 }ResetClock_100MHz;
 
 
-void ResetConfig(ResetClock_100MHz *ptrReset);
+void ResetClock(void);
+
 
 #endif /* MAINCLOCKDRIVER_H_ */
