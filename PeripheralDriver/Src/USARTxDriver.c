@@ -20,6 +20,8 @@ uint8_t auxRxDataC = 0;
 
 void USART_Config(USART_Handler_t *ptrUsartHandler){
 
+
+
 	/* Desactivamos las interrupciones globales mientras configuramos el sistema */
 	__disable_irq();
 
@@ -140,6 +142,17 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 		// Mantiza = 8 = 8, fraction = 0.6875*16= 11 = B
 		// valor a cargar 0x0811 o 0x08B
 		ptrUsartHandler -> ptrUSARTx -> BRR = 0x08B;
+	}
+
+	//Configuración para 100 MHz
+
+	else if(ptrUsartHandler->USART_Config.USART_baudrate == USART_BAUDRATE_115200_Extra){
+
+		// El valor a cargar es 27.1267 -> Mantiza = 27, fraction =  0.1267
+		// Mantiza = 27 , fraction = 0.1267 * 16 = 2
+		// valor a cargar 0x0B
+
+		ptrUsartHandler -> ptrUSARTx -> BRR = 0x01B2;
 	}
 
 	// 2.6 Configuramos el modo: TX only, RX only, RXTX, disable
