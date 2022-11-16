@@ -12,7 +12,7 @@
 #define MAINCLOCKDRIVER_H_
 
 
-#define USART_BAUDRATE_115200_Extra  3
+//#define USART_BAUDRATE_115200_Extra  3
 
 #define PLL_M 	8
 #define PLL_N 	100

@@ -99,7 +99,7 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 	}
 
 	/* 4. Activamos el Timer (el CNT debe comenzar a contar*/
-	ptrBTimerHandler->ptrTIMx->CR1 |= TIM_CR1_CEN; // estamos escribiendo en la pos 0 en CR1
+//	ptrBTimerHandler->ptrTIMx->CR1 |= TIM_CR1_CEN; // estamos escribiendo en la pos 0 en CR1
 
 	//Esto podria ser una limitación cuando configuramos los timers
 

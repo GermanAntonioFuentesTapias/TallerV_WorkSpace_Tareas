@@ -12,41 +12,24 @@
 
 void ResetClock(void){
 
+	// Se desactivan por precaución
+
+	__disable_irq();
  //Se activa HSI para escribir
- RCC -> CR |= RCC_CR_HSION;
 
- // Asi que mientras se activa esto es necesario
-
-// RCC -> CR |= RCC_APB1ENR_PWREN;
-
-
+// RCC -> CR |= RCC_CR_HSION;
 
  /* Se hace la configuración de latencia */
 
  // Primero se limpia el registro 4 Hz
 
- FLASH -> ACR &= ~(0xF << (FLASH_ACR_LATENCY_Pos));
+// FLASH -> ACR &= ~(0xF << (FLASH_ACR_LATENCY_Pos));
+ FLASH -> ACR &= ~(FLASH_ACR_LATENCY);
 
  // Ahora escribimos el necesario para la velocidad que queremos
 
  FLASH -> ACR |=  FLASH_ACR_LATENCY_3WS;
 
-
-
-  // Se configuran los 3 buses necesarios
-
-  //HPRE: AHB prescaler
-  RCC -> CFGR &= ~RCC_CFGR_HPRE;
-
-  //APB high-speed prescaler (APB2)
-  RCC -> CFGR &= ~RCC_CFGR_PPRE2; // No se divide por nada, por lo que se coloca un cero
-
-  // APB Low speed prescaler (APB1)
-  RCC -> CFGR |= RCC_CFGR_PPRE1_2;// Se escribe un 4
-
-
-  // Configura la salida del Pin A8
-  RCC -> CFGR |= RCC_CFGR_MCO1; // Se escribe un 3 para estar el modo PLL
 
   /* Luego configuramos el P,M Y N que recibira la señal */
 
@@ -61,7 +44,8 @@ void ResetClock(void){
 
   // Ahora lo escribo ,y yo quiero un 8 por lo tanto
 
-  RCC -> PLLI2SCFGR |= RCC_PLLCFGR_PLLM_3;
+  RCC -> PLLCFGR |= RCC_PLLCFGR_PLLM_3;
+
 
   /* Para N */
 
@@ -69,9 +53,12 @@ void ResetClock(void){
 
   RCC -> PLLCFGR &= ~RCC_PLLCFGR_PLLN;
 
-  // Ahora lo escribo
+  // Ahora lo escribo 100
 
-  RCC -> PLLCFGR |= RCC_PLLCFGR_PLLN_8;
+  RCC -> PLLCFGR |= RCC_PLLCFGR_PLLN_2;
+  RCC -> PLLCFGR |= RCC_PLLCFGR_PLLN_5;
+  RCC -> PLLCFGR |= RCC_PLLCFGR_PLLN_6;
+
 
   /* Para P */
 
@@ -81,10 +68,45 @@ void ResetClock(void){
 
   // Ahora lo escribo
 
-  RCC -> PLLCFGR |= RCC_PLLCFGR_PLLP_1;
+//  RCC -> PLLCFGR |= RCC_PLLCFGR_PLLP_1;
+
+  /* Despues de configurado se activa el PLL */
+
+  // NO SE PUEDE CONFIGURAR SI NO ESTA APAGADO
+
+  RCC -> CR |= RCC_CR_PLLON;
+
+  // Se carga el System clock switch
+	RCC -> CFGR &= ~RCC_CFGR_SW;
+	RCC -> CFGR |= RCC_CFGR_SW_PLL;
+//  RCC -> CFGR |= RCC_CFGR_SW_1;
+
+  // Se configura System clock switch status
+  RCC -> CFGR &= ~RCC_CFGR_SWS;
+  RCC -> CFGR |= RCC_CFGR_SWS_PLL;
+
+  // Se configuran los 3 buses necesarios y la salida para el pin A8
+  RCC -> CFGR &= ~RCC_CFGR_HPRE;
+  	RCC -> CFGR |= RCC_CFGR_HPRE_DIV1;
+
+  	// APB Low speed prescaler (APB1)
+  	RCC -> CFGR &= ~RCC_CFGR_PPRE1;
+  	RCC -> CFGR |= RCC_CFGR_PPRE1_DIV2;
+
+    //APB high-speed prescaler (APB2)
+  	RCC -> CFGR &= ~RCC_CFGR_PPRE2;
+  	RCC -> CFGR |= RCC_CFGR_PPRE2_DIV1;
+
+   /* Para el pin a sacar por el micro */
 
 
-  RCC -> CFGR |= RCC_CFGR_SW_1;
+  	RCC -> CFGR |= RCC_CFGR_MCO1;
+
+  	RCC -> CFGR &= ~RCC_CFGR_MCO1PRE;
+
+  	RCC -> CFGR |= RCC_CFGR_MCO1PRE;
+
+  	__enable_irq();
 
 //   while( !(RCC -> CFGR & RCC_CFGR_SWS_1)){
 //
@@ -93,12 +115,12 @@ void ResetClock(void){
 
   // Despues de lo anterior se porce a habilitar PLL para eso nos dirigimos RCC_CR y se activa la configguración
 
-  RCC -> CR |= RCC_CR_PLLON;
+//  RCC -> CR |= RCC_CR_PLLON;
 
-  while (!(RCC -> CR & RCC_CR_PLLRDY)){
-
- 	  __NOP();
-   }
+//  while (!(RCC -> CR & RCC_CR_PLLRDY)){
+//
+// 	  __NOP();
+//   }
 
   // Se escribre en SW un 2 debido a que se requiere seleccionar el PLL
 //
@@ -117,4 +139,4 @@ void ResetClock(void){
 
 
 }
-// RCC->CR |= CR
+
