@@ -17,6 +17,10 @@ void ResetClock(void){
 	__disable_irq();
  //Se activa HSI para escribir
 
+	RCC -> CR &= ~(PWR_CR_VOS);
+
+	RCC -> CR |= (PWR_CR_VOS);
+
 // RCC -> CR |= RCC_CR_HSION;
 
  /* Se hace la configuración de latencia */
@@ -62,13 +66,12 @@ void ResetClock(void){
 
   /* Para P */
 
-  // Primero lo limpio
+  // Primero lo escribo
 
   RCC -> PLLCFGR &= ~RCC_PLLCFGR_PLLP;
 
   // Ahora lo escribo
 
-//  RCC -> PLLCFGR |= RCC_PLLCFGR_PLLP_1;
 
   /* Despues de configurado se activa el PLL */
 
@@ -79,11 +82,17 @@ void ResetClock(void){
   // Se carga el System clock switch
 	RCC -> CFGR &= ~RCC_CFGR_SW;
 	RCC -> CFGR |= RCC_CFGR_SW_PLL;
-//  RCC -> CFGR |= RCC_CFGR_SW_1;
+
+
+	   while( !(RCC -> CFGR & RCC_CFGR_SWS_1)){
+
+		   __NOP();
+	   }
 
   // Se configura System clock switch status
   RCC -> CFGR &= ~RCC_CFGR_SWS;
   RCC -> CFGR |= RCC_CFGR_SWS_PLL;
+
 
   // Se configuran los 3 buses necesarios y la salida para el pin A8
   RCC -> CFGR &= ~RCC_CFGR_HPRE;

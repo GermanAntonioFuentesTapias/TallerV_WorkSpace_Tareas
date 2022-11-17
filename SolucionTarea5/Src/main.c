@@ -31,6 +31,7 @@ BasicTimer_Handler_t   handlerTimer2      = {0}; // Handler para el timer 2
 USART_Handler_t        Usart2             = {0};
 GPIO_Handler_t handlerTx     	    	  = {0};
 GPIO_Handler_t handlerRx	 	     	  = {0};
+GPIO_Handler_t MCO1_Pin                = {0};
 char bufferData[64] =  {0};
 char greetingMsg[] = "Millos el mas grande \n";
 
@@ -167,6 +168,16 @@ void InitSystem(void){
 
 			 	/* Se carga la configuración */
 			 	GPIO_Config(&handlerRx);
+
+			 	MCO1_Pin.pGPIOx											= GPIOA;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinNumber					= PIN_8;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinMode						= GPIO_MODE_ALTFN;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinAltFunMode				= AF0;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinSpeed					= GPIO_OSPEED_HIGH;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinOPType					= GPIO_OTYPE_PUSHPULL;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinPuPdControl				= GPIO_PUPDR_NOTHING;
+
+				GPIO_Config(&MCO1_Pin);
 
 
 
