@@ -21,23 +21,28 @@
 #include "USARTxDriver.h"
 #include "MainClockDriver.h"
 
+/* Variables para USART , GPIO y Timer */
+
 GPIO_Handler_t         blinkySimplePin    = {0}; // Handler para el blinkySimple
 
-uint8_t blinkySimple                      = 0; //Asignación a el blinky de led de estado
-uint8_t Bandera                           = 0;
-uint8_t contador                          = 0;
+uint8_t blinkySimple                      =  0; //Asignación a el blinky de led de estado
+uint8_t Bandera                           =  0; // Bandera para cargar mensaje
+uint8_t contador                          =  0; // Contador
 uint8_t rxData                            =  0;
 BasicTimer_Handler_t   handlerTimer2      = {0}; // Handler para el timer 2
-USART_Handler_t        Usart2             = {0};
+USART_Handler_t        Usart2             = {0}; // Usart para verificar mensaje
 GPIO_Handler_t handlerTx     	    	  = {0};
 GPIO_Handler_t handlerRx	 	     	  = {0};
-GPIO_Handler_t MCO1_Pin                = {0};
+GPIO_Handler_t MCO1_Pin                   = {0}; // Pin de salida donde se observa los 20 Mhz
 char bufferData[64] =  {0};
 char greetingMsg[] = "Millos el mas grande \n";
 
 void InitSystem(void);
 
 int main(void){
+
+	/* Se llaman las funciones */
+
 	ResetClock();
 	InitSystem();
 
@@ -56,11 +61,10 @@ while (1){
 					//Presentamos un mensaje
 					writeMsg(&Usart2 , greetingMsg);
 				}
-
-
-
 				rxData = '\0';
 			}
+     // Cada 4 estados de reloj nuestra bandera mandara el mensaje, que sera el contador
+	// almacenado en bufferData
 
 	if(Bandera == 4){
 
@@ -109,7 +113,9 @@ void USART2Rx_CallBack(void){
 
 void InitSystem(void){
 
-	blinkySimplePin.pGPIOx= GPIOA; // Selección del GPIOA
+	        /* Led de estado */
+
+	        blinkySimplePin.pGPIOx= GPIOA; // Selección del GPIOA
 
 			/*Configuración del Led de Blinky*/
 			blinkySimplePin.GPIO_PinConfig.GPIO_PinNumber           = PIN_5;
@@ -123,7 +129,7 @@ void InitSystem(void){
 			 GPIO_Config(&blinkySimplePin);
 
 
-
+             /* Timer 2 para salida a nueva velocidad */
 			 handlerTimer2.ptrTIMx = TIM2;
 			 handlerTimer2.TIMx_Config.TIMx_mode                    = BTIMER_MODE_UP;     // Cuenta hacia arriba
 			 handlerTimer2.TIMx_Config.TIMx_speed                   = 50000; // La velocidad
@@ -131,6 +137,8 @@ void InitSystem(void){
 			 handlerTimer2.TIMx_Config.TIMx_interruptEnable         = 1;                  // Activando la configuración, aunque todavia
 
 			 BasicTimer_Config(&handlerTimer2);
+
+			 /* Usart para comunicación serial */
 
 			 Usart2.ptrUSARTx  = USART2;
 			 Usart2.USART_Config.USART_baudrate   = USART_BAUDRATE_115200_Extra;
@@ -143,7 +151,7 @@ void InitSystem(void){
 
 			 USART_Config(&Usart2);
 
-			 // Los pines
+			 // Los pines del Usart2
 
 			 /* Handler para el PIN A2 para transmisión */
 			 	handlerTx.pGPIOx                       			= GPIOA;
@@ -169,13 +177,14 @@ void InitSystem(void){
 			 	/* Se carga la configuración */
 			 	GPIO_Config(&handlerRx);
 
-			 	MCO1_Pin.pGPIOx											= GPIOA;
-				MCO1_Pin.GPIO_PinConfig.GPIO_PinNumber					= PIN_8;
-				MCO1_Pin.GPIO_PinConfig.GPIO_PinMode						= GPIO_MODE_ALTFN;
-				MCO1_Pin.GPIO_PinConfig.GPIO_PinAltFunMode				= AF0;
-				MCO1_Pin.GPIO_PinConfig.GPIO_PinSpeed					= GPIO_OSPEED_HIGH;
-				MCO1_Pin.GPIO_PinConfig.GPIO_PinOPType					= GPIO_OTYPE_PUSHPULL;
-				MCO1_Pin.GPIO_PinConfig.GPIO_PinPuPdControl				= GPIO_PUPDR_NOTHING;
+			 	/* Configuración del A8 */
+			 	MCO1_Pin.pGPIOx									 = GPIOA;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinNumber			 = PIN_8;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinMode			 = GPIO_MODE_ALTFN;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinAltFunMode		 = AF0;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinSpeed			 = GPIO_OSPEED_HIGH;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinOPType			 = GPIO_OTYPE_PUSHPULL;
+				MCO1_Pin.GPIO_PinConfig.GPIO_PinPuPdControl		 = GPIO_PUPDR_NOTHING;
 
 				GPIO_Config(&MCO1_Pin);
 

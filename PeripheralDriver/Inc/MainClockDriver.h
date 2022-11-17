@@ -20,17 +20,6 @@
 
 
 
-
-
-typedef struct
-{
-
-PWR_TypeDef   *ptrResetClock;
-
-
-}ResetClock_100MHz;
-
-
 void ResetClock(void);
 
 
