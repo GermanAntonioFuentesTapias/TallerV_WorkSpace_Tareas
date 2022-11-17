@@ -132,8 +132,8 @@ void InitSystem(void){
              /* Timer 2 para salida a nueva velocidad */
 			 handlerTimer2.ptrTIMx = TIM2;
 			 handlerTimer2.TIMx_Config.TIMx_mode                    = BTIMER_MODE_UP;     // Cuenta hacia arriba
-			 handlerTimer2.TIMx_Config.TIMx_speed                   = 50000; // La velocidad
-			 handlerTimer2.TIMx_Config.TIMx_period                  = 500;               //250ms
+			 handlerTimer2.TIMx_Config.TIMx_speed                   =BTIMER_SPEED_100us_100; // La velocidad
+			 handlerTimer2.TIMx_Config.TIMx_period                  = 2500;               //250ms
 			 handlerTimer2.TIMx_Config.TIMx_interruptEnable         = 1;                  // Activando la configuración, aunque todavia
 
 			 BasicTimer_Config(&handlerTimer2);
