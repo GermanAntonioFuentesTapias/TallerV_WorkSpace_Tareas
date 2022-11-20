@@ -45,6 +45,12 @@ void BasicTimer3_CallBack(void);
 void BasicTimer4_CallBack(void);
 void BasicTimer5_CallBack(void);
 
+
+void capturefrecuencia2(void);
+void capturefrecuencia3(void);
+void capturefrecuencia4(void);
+void capturefrecuencia5(void);
+
 void startCounterTimer(BasicTimer_Handler_t *ptrTimerConfig);
 void StopCounterTimer(BasicTimer_Handler_t *ptrTimerConfig);
 //void GPIOxTooglePin (GPIO_Handler_t *pPinHandler)

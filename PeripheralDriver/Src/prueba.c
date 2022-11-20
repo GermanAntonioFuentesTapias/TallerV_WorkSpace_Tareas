@@ -1,21 +1,9 @@
 /*
- * I2CDriver.c
+ * prueba.c
  *
- *  Created on: 20/10/2022
+ *  Created on: 17/11/2022
  *      Author: German
- *
- *  Recordar que se debe configurar los pines para el I2C (SDA Y SCL),
- *  para lo cual se necesita el modulo GPIO y los pines configurados
- *  en el modo Alternate Function.
- *  Además, estos pines deben ser configurados como salidas open-drain
- *  y con la resistencias en modo pull-up
- *
  */
-
-#include "I2CDriver.h"
-#include "GPIOxDriver.h"
-#include <stdint.h>
-#include <stdio.h>
 
 void i2c_config (I2C_Handler_t *ptrHandlerI2C){
 
@@ -179,66 +167,3 @@ uint8_t i2c_readDataByte (I2C_Handler_t *ptrHandlerI2C){
 	ptrHandlerI2C -> dataI2C = ptrHandlerI2C -> ptrI2Cx -> DR;
 	return ptrHandlerI2C -> dataI2C;
 }
-
-uint8_t i2c_readSingleRegister(I2C_Handler_t *ptrHandlerI2C, uint8_t regToRead){
-
-	/* 0 Creamos una variables auxiliar para recibir el dato que leemos */
-	uint8_t auxRead = 0;
-
-	/* 1. Generamos la condición Start */
-	i2c_startTransaction(ptrHandlerI2C);
-
-	/* 2. Enviamos la dirección del esclavo yy la indicación de Escribir */
-	i2c_sendSlaveAddressRW(ptrHandlerI2C, ptrHandlerI2C->slaveAddress, I2C_WRITE_DATA);
-
-	/* 3. Enviamos la dirección de memoria que deseamos leer */
-   i2c_sendMemoryAddress(ptrHandlerI2C, regToRead);
-
-   /* 4 Creamos una condición de reStart */
-
-   i2c_reStartTransaction(ptrHandlerI2C);
-
-   /* 5. Enviamos la dirección del esclavo y la indicación de Leer */
-
-   i2c_sendSlaveAddressRW(ptrHandlerI2C, ptrHandlerI2C->slaveAddress, I2C_READ_DATA);
-
-   /* 6 Generamos la condición de NoAck, para que el Master no responda y el slave solo envie 1 byte */
-
-   i2c_sendNoAck(ptrHandlerI2C);
-
-   /* 7 Generamos la condición Stop, para que el slave se detenga despues de 1 byte */
-
-   i2c_stopTransaction(ptrHandlerI2C);
-
-   /* 8 Leemos el dato que envia el esclavo */
-
-   auxRead = i2c_readDataByte(ptrHandlerI2C);
-
-   return auxRead;
-
-}
-
-
-void i2c_writeSingleRegister(I2C_Handler_t *ptrHandlerI2C, uint8_t regToRead, uint8_t newValue){
-	/* 1. Generamos la condición Start */
-
-	i2c_startTransaction(ptrHandlerI2C);
-
-	/* 2 Enviamos la dirección del esclavo y la  indicación de Escribir */
-
-	i2c_sendSlaveAddressRW(ptrHandlerI2C, ptrHandlerI2C->slaveAddress, I2C_WRITE_DATA);
-
-	/* 3 Enviamos la dirección de memoria que deseamos escribir */
-
-	i2c_sendMemoryAddress(ptrHandlerI2C, regToRead);
-
-	/* 4 Enviamos el valor que deseamos escribir en el registro seleccionado */
-
-	i2c_sendDataByte(ptrHandlerI2C, newValue);
-
-	/* 5 Generamos la condición Stop, para que el slave se detenga despues de 1 byte */
-
-	i2c_stopTransaction(ptrHandlerI2C);
-
-}
-

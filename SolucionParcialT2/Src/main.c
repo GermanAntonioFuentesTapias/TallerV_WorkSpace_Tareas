@@ -176,21 +176,20 @@ int main(void)
 
 
   /* Configuración iniciación LCD del punto 2 */
-//
-//	LCD_Init(&handlerLCD);
-//
-//		delay_10();
-//
-//		LCD_Clear(&handlerLCD);
-//
-//		delay_10();
-//
-//		sprintf(data, "Hola ");
-//
-//		LCD_setCursor(&handlerLCD,1,0);
-//
-//
-//		LCD_sendSTR(&handlerLCD,data);
+
+	LCD_Init(&handlerLCD);
+
+		delay_10();
+		LCD_ClearScreen(&handlerLCD);
+
+		delay_10();
+
+		sprintf(data, "Hola bb, como estas?");
+
+		LCD_setCursor(&handlerLCD,1,0);
+
+
+		LCD_sendSTR(&handlerLCD,data);
 
 	/* Ciclo principal del programa */
 
@@ -535,7 +534,7 @@ void initSystem (void){
 	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_ALTFN;
 	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_OPENDRAIN;
 	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_PULLUP;
-	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_FAST;
+	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_HIGH;
 	handlerLCDcSCL.GPIO_PinConfig.GPIO_PinAltFunMode    = AF4;
 
 	/* Se carga a la configuración */
@@ -547,7 +546,7 @@ void initSystem (void){
 	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinMode          = GPIO_MODE_ALTFN;
 	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinOPType        = GPIO_OTYPE_OPENDRAIN;
 	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinPuPdControl   = GPIO_PUPDR_PULLUP;
-	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_FAST;
+	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinSpeed         = GPIO_OSPEED_HIGH;
 	handlerLCDcSDA.GPIO_PinConfig.GPIO_PinAltFunMode    = AF4;
 
 	/* Se carga la configuración */
@@ -575,7 +574,7 @@ void initSystem (void){
 	handlerI2cSCL.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
 	handlerI2cSCL.GPIO_PinConfig.GPIO_PinOPType		    = GPIO_OTYPE_OPENDRAIN;
 	handlerI2cSCL.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_PULLUP;
-	handlerI2cSCL.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_FAST;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_MEDIUM;
 	handlerI2cSCL.GPIO_PinConfig.GPIO_PinAltFunMode		= AF4;
 
 	/* Se carga la configuración */
@@ -587,7 +586,7 @@ void initSystem (void){
 	handlerI2cSDA.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
 	handlerI2cSDA.GPIO_PinConfig.GPIO_PinOPType			= GPIO_OTYPE_OPENDRAIN;
 	handlerI2cSDA.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_PULLUP;
-	handlerI2cSDA.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_FAST;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinSpeed			= GPIO_OSPEED_MEDIUM;
 	handlerI2cSDA.GPIO_PinConfig.GPIO_PinAltFunMode		= AF4;
 
 	/* Se carga la configuración */

@@ -6,7 +6,9 @@
  */
 
 #include "BasicTimer.h"
+#include "CaptureFrecDriver.h"
 
+uint16_t	RawData = 0;
 /* Variable que guarda la referencia del periférico que se esta utilizando*/
 
 /* Función en la que cargamos la configuración del Timer
@@ -177,12 +179,84 @@ __attribute__((weak)) void BasicTimer5_CallBack(void){
  * Al hacerlo correctamente, el sistema apunta a esta función y cuando la interrupción se lanza
  * el sistema inmediatamente salta a este lugar en la memoria*/
 //Este es de caracter generico
-void TIM4_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
-	/* Limpiamos la bandera que indica que la interrupción se ha generado */
-	TIM4->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
 
-	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
-	BasicTimer4_CallBack();  // LLamamos al call para la función particular de nosotros
+
+
+/* Atributos para Capture en esta configuración */
+
+__attribute__((weak)) void capturefrecuencia2(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void capturefrecuencia3(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void capturefrecuencia4(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void capturefrecuencia5(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+uint16_t getData(void){
+	// Esta variable es actualizada en la ISR de la conversión, cada vez que se obtiene
+	// un nuevo valor.
+	return RawData;
+}
+
+
+
+
+void TIM4_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE POR DEFECTO DE STARTUP
+//	/* Limpiamos la bandera que indica que la interrupción se ha generado */
+//	TIM4->SR &= ~TIM_SR_UIF; // BORRAR LA POSICION DEL UIF
+//
+//	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
+//	BasicTimer4_CallBack();  // LLamamos al call para la función particular de nosotros
+
+
+	// Se hara para el 4 canal
+
+	if (TIM4->SR & TIM_SR_UIF){
+
+		TIM4->SR &= ~TIM_SR_UIF;
+
+		BasicTimer4_CallBack();
+
+	}
+
+	else if (TIM4->SR & TIM_SR_CC3IF ){
+
+
+
+		TIM4->SR &= ~TIM_SR_CC3IF;
+
+		RawData =TIM4 -> DCR;
+		capturefrecuencia4();
+
+//		RawData =TIM4 -> DCR;
+	}
+
+	else{
+
+		__NOP();
+	}
+
+
 
 }
 // OJO VERIFICAR QUE TIMER SE NECESITA , SI NO SE LLAMA EN EL MAIN SALE ERRORES, SE PUEDEN TENER VARIOS AL TIEMPO

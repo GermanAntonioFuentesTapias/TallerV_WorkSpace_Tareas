@@ -7,45 +7,54 @@
 C_SRCS += \
 ../Src/AdcDriver.c \
 ../Src/BasicTimer.c \
+../Src/CaptureFrecDriver.c \
 ../Src/ExtiDriver.c \
 ../Src/GPIOxDriver.c \
 ../Src/I2CDriver.c \
 ../Src/I2CLCD.c \
+../Src/LCDDriver.c \
 ../Src/MainClockDriver.c \
 ../Src/PwmDriver.c \
 ../Src/RTCxDriver.c \
 ../Src/SpiDriver.c \
 ../Src/USARTxDriver.c \
+../Src/prueba.c \
 ../Src/syscalls.c \
 ../Src/sysmem.c 
 
 OBJS += \
 ./Src/AdcDriver.o \
 ./Src/BasicTimer.o \
+./Src/CaptureFrecDriver.o \
 ./Src/ExtiDriver.o \
 ./Src/GPIOxDriver.o \
 ./Src/I2CDriver.o \
 ./Src/I2CLCD.o \
+./Src/LCDDriver.o \
 ./Src/MainClockDriver.o \
 ./Src/PwmDriver.o \
 ./Src/RTCxDriver.o \
 ./Src/SpiDriver.o \
 ./Src/USARTxDriver.o \
+./Src/prueba.o \
 ./Src/syscalls.o \
 ./Src/sysmem.o 
 
 C_DEPS += \
 ./Src/AdcDriver.d \
 ./Src/BasicTimer.d \
+./Src/CaptureFrecDriver.d \
 ./Src/ExtiDriver.d \
 ./Src/GPIOxDriver.d \
 ./Src/I2CDriver.d \
 ./Src/I2CLCD.d \
+./Src/LCDDriver.d \
 ./Src/MainClockDriver.d \
 ./Src/PwmDriver.d \
 ./Src/RTCxDriver.d \
 ./Src/SpiDriver.d \
 ./Src/USARTxDriver.d \
+./Src/prueba.d \
 ./Src/syscalls.d \
 ./Src/sysmem.d 
 
