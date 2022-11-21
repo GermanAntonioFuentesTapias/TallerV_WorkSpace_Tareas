@@ -531,7 +531,7 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 				// Capturamos el valor del tiempo almacenado en el CCR3
 				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR3;
 
-				period[0] = lectura;
+//				period[0] = lectura;
 				// Bajamos la bandera que indica que existe un evento de captura
 //				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC3IF;
 
@@ -541,7 +541,7 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 				// Capturamos el valor del tiempo almacenado en el CCR3
 				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR3;
 
-				period[1] = lectura;
+//				period[1] = lectura;
 //				deltaTimestamp = timestamp2 - timestamp1;
 
 
