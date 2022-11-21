@@ -55,8 +55,17 @@ typedef struct
 void capture_Config (Capture_Handler_t *ptrCaptureHandler);
 uint32_t getPeriodFreq (Capture_Handler_t *ptrCaptureHandler);
 
-uint32_t  getInter (Capture_Handler_t *ptrCaptureHandler);
+void capturefrecuencia2(void);
+void capturefrecuencia3(void);
+void capturefrecuencia4(void);
+void capturefrecuencia5(void);
 
-uint16_t getData(void);
+uint32_t getPeriodFrec(Capture_Handler_t  *ptrCaptureHandler, uint32_t Captura1, uint32_t Captura2 );
+
+void CleanCapture(Capture_Handler_t *ptrCaptureHandler);
+
+//uint32_t  getInter (Capture_Handler_t *ptrCaptureHandler);
+//
+//uint16_t getData(void);
 
 #endif /* CAPTUREFRECDRIVER_H_ */

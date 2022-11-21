@@ -174,43 +174,12 @@ __attribute__((weak)) void BasicTimer5_CallBack(void){
 }
 
 
-/* Esta es la función a la que apunta el sistema en el vector de interrupciones.
+/* Esta es la| función a la que apunta el sistema en el vector de interrupciones.
  * Se debe utilizar usando exactamente el mismo nombre definido en el vector de interrupciones,
  * Al hacerlo correctamente, el sistema apunta a esta función y cuando la interrupción se lanza
  * el sistema inmediatamente salta a este lugar en la memoria*/
 //Este es de caracter generico
 
-
-
-/* Atributos para Capture en esta configuración */
-
-__attribute__((weak)) void capturefrecuencia2(void){
-	  /* NOTE : This function should not be modified, when the callback is needed,
-	            the BasicTimerX_Callback could be implemented in the main file
-	   */
-	__NOP();
-}
-
-__attribute__((weak)) void capturefrecuencia3(void){
-	  /* NOTE : This function should not be modified, when the callback is needed,
-	            the BasicTimerX_Callback could be implemented in the main file
-	   */
-	__NOP();
-}
-
-__attribute__((weak)) void capturefrecuencia4(void){
-	  /* NOTE : This function should not be modified, when the callback is needed,
-	            the BasicTimerX_Callback could be implemented in the main file
-	   */
-	__NOP();
-}
-
-__attribute__((weak)) void capturefrecuencia5(void){
-	  /* NOTE : This function should not be modified, when the callback is needed,
-	            the BasicTimerX_Callback could be implemented in the main file
-	   */
-	__NOP();
-}
 
 uint16_t getData(void){
 	// Esta variable es actualizada en la ISR de la conversión, cada vez que se obtiene
@@ -245,8 +214,9 @@ void TIM4_IRQHandler(void){   // FUNCION QUE MANEJA LA INTERRUPCION , OJO LA DE 
 
 		TIM4->SR &= ~TIM_SR_CC3IF;
 
-		RawData =TIM4 -> DCR;
-		capturefrecuencia4();
+//		RawData =TIM4 -> CCR300;
+
+		capturefrecuencia3();
 
 //		RawData =TIM4 -> DCR;
 	}
