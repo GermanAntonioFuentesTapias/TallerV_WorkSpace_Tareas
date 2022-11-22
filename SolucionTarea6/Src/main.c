@@ -7,6 +7,12 @@
  *      Correo = gafuentest@unal.edu.co
  *
  *       Solución tarea 6 captura de frecuencias a traves de timer
+ *
+ *
+ *       Paridad Even
+ *       Usart2 para comunicación serial
+ *      Velocidad 115200
+ *
  * ***************************************************************************************************************
  *       Se tomo el codigo CaptureFrecDriver del docente y se elimino la función en la cual se tenia el While
  *
