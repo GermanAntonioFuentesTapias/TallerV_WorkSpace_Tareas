@@ -2,11 +2,44 @@
  * main3.c
  *
  *  Created on: 18/11/2022
- *      Author: German
+ *      Author: German Antonio Fuentes Tapias
+ *
+ *      Correo = gafuentest@unal.edu.co
  *
  *       Solución tarea 6 captura de frecuencias a traves de timer
- */
+ * ***************************************************************************************************************
+ *       Se tomo el codigo CaptureFrecDriver del docente y se elimino la función en la cual se tenia el While
+ *
+ *       Al querer realizar por interrupción fue necesario usar las interrupciones de cada canal que trae los timer en
+ *       TIMx_DIER, generar 3 funciones nuevas ( 2 actuales modificadas) y una de limpiar el contador
+ *
+ *       Asi que el paso 1: fue crear o habilitar para cada canal TIM_CCER_CC1E; el modulo de captura
+ *       con su respectiva interrupción TIM_DIER_CC1IE;
+ *       El paso 2: fue entonces crear las funciones en el .h y los respectivos call back (llamados capturefrecuencia)
+ *       El paso 3: Meter esos capture en  el .c y empezar armar el cuerpo de las funciones
+ *       El paso 4: Colocar la activación y desactivación de las interrupciones globales como la habilitación de TIM_CR1_CEN;
+ *       El paso 5: Dentro de la funcion Start leer que canal es y con base a esto apuntar a CCR# dependiendo de cual sea,
+ *                  ya según despues de capturado el valor en CCR# bajar su respectiva bandera  &= ~TIM_SR_CC#OF; y retornar
+ *                  el evento  capture/compare register
+ *       El paso 6: Con la debida configuración de lo anterior puede tener registro de captura mas no la información requerida para
+ *                 saber el periodo, asi que entra la configuración de la siguiente función de leer los datos o interpretar lo ocurrido,
+ *                 Asi que en este main se toman Cap1 y Cap2 en los cuales se condicionan que la primera tomara el valor de Cap1 dado por
+ *                 el paso 5, la bandera que da la posibilidad de Cap2 se habilita, se obtiene el evento dado por esa función y se almacena
+ *                 en Cap 2, asi que tenemos los dos valores, es ahi donde entra la función de esta paso, toma Cap1 y Cap2, los procesa
+ *                 matematicamente que en nuestro caso cambian segun el prescaler establecido, se restan entre si y se operan por la velocidad
+ *                 segun sea el caso (us a ms) y es asi como se obtiene el valor de dato listo como el periodo generado por el PWM
+ *
+ *          paso 7: Desabilitar el timer4 aqui de la configuración de la forma anterior del driver y una correpción que se puede decir operativa
+ *                             con la impresión y listo. Se tiene el valor del periodo.
+ *
+ *         Caso a mejor: A mayores periodos dados por el PWM se tiene un aumento de 1 unidad respecto al valor verdadero, pero se puede afirmar
+ *                       que para valores como el inicial (20) se tiene una aproximación cercana.
+ *
 
+ *
+ *
+ *
+ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -107,16 +140,14 @@ int main(void){
 				if(Counter){
 
 					Captura2 = StartPeriod(&handlerCaptureFreq);
-					Counter = 0;
+
 					Dato = Period_Frecuen_Get(&handlerCaptureFreq, Captura1, Captura2);
 
-					sprintf(bufferData, "\n\r Captura= %u , %u ", (unsigned int) Captura1, (unsigned int) Captura2);
+					sprintf(bufferData, "\n\r El Periodo es de = %u", (unsigned int) Dato -1);
 
 					writeMsg(&handlerUSART2, bufferData);
 
-					sprintf(bufferData, "\n\r Periodo %u", (unsigned int) Dato -1);
-
-					writeMsg(&handlerUSART2, bufferData);
+					Counter = 0;
                  }
 
 
@@ -239,7 +270,7 @@ void initSystem (void){
 	handlerCaptureFreq.config.channel									= CAPTURE_CHANNEL_3;
 	handlerCaptureFreq.config.edgeSignal								= CAPTURE_FALLING_EDGE;
 	handlerCaptureFreq.config.prescalerCapture							= CAPTURE_PRESCALER_4_1;
-	handlerCaptureFreq.config.timerSpeed								= CAPTURE_TIMER_SPEED_1ms;
+	handlerCaptureFreq.config.timerSpeed								= CAPTURE_TIMER_SPEED_1ms ;
 
 	capture_Config(&handlerCaptureFreq);
 }

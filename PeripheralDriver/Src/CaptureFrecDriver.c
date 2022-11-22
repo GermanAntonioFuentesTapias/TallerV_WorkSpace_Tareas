@@ -648,35 +648,5 @@ __attribute__((weak)) void capturefrecuencia4(void){
 }
 
 
-/* Atributos para Capture en esta configuración */
-
-//__attribute__((weak)) void capturefrecuencia2(void){
-//	  /* NOTE : This function should not be modified, when the callback is needed,
-//	            the BasicTimerX_Callback could be implemented in the main file
-//	   */
-//	__NOP();
-//}
-//
-//__attribute__((weak)) void capturefrecuencia3(void){
-//	  /* NOTE : This function should not be modified, when the callback is needed,
-//	            the BasicTimerX_Callback could be implemented in the main file
-//	   */
-//	__NOP();
-//}
-//
-//__attribute__((weak)) void capturefrecuencia4(void){
-//	  /* NOTE : This function should not be modified, when the callback is needed,
-//	            the BasicTimerX_Callback could be implemented in the main file
-//	   */
-//	__NOP();
-//}
-//
-//__attribute__((weak)) void capturefrecuencia5(void){
-//	  /* NOTE : This function should not be modified, when the callback is needed,
-//	            the BasicTimerX_Callback could be implemented in the main file
-//	   */
-//	__NOP();
-//}
-
 
 
