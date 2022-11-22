@@ -7,6 +7,7 @@
 
 #include "CaptureFrecDriver.h"
 
+#include <math.h>
 
 
 void capture_Config (Capture_Handler_t *ptrCaptureHandler){
@@ -256,6 +257,9 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 				__NOP();
 			}
 
+			ptrCaptureHandler->ptrTIMx->CR1 |= TIM_CR1_CEN;
+
+
 
 
 
@@ -268,354 +272,352 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 	}
 
 
+__attribute__((weak)) void capturefrecuencia1(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void capturefrecuencia2(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void capturefrecuencia3(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void capturefrecuencia4(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
 
 	/* Esta función se encarga de lanzar la captura de la frecuencia. En este caso funciona como pulling,
 	 * examinando cuando se levanta la bandera del evento de captura.
 	 */
 
-	uint32_t getPeriodFreq (Capture_Handler_t *ptrCaptureHandler){
-
-		uint32_t timestamp1 = 0;
-		uint32_t timestamp2 = 0;
-		uint32_t deltaTimestamp = 0;
-
-		// Reiniciamos el contador del timer
-		ptrCaptureHandler -> ptrTIMx -> CNT = 0;
-
-		/* Todo lo que sigue depende del canal que se ha seleccionado, por lo cual se escribe cada
-		 * código dentro del "case" específico. Antes de lanzar la captura (encender el timer para
-		 * que cuente), debemos borrar el valor de los registro CCP, de forma que arranquen limpios
-		 */
-
-		switch (ptrCaptureHandler -> config.channel) {
-			case CAPTURE_CHANNEL_1:{
-				// Borramos el valor inicial del CCP
-				ptrCaptureHandler -> ptrTIMx -> CCR1 = 0;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC1IF;
-
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
-
-				// Esperamos a que se de el primer evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC1IF)){}
-
-				// Detenemos el timer
-				ptrCaptureHandler -> ptrTIMx -> CR1 &= ~TIM_CR1_CEN;
-
-				// Capturamos el valor del tiempo almacenando en el CCRx
-				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR1;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC1IF;
-
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
-
-				// Esperamos a que se de el primer evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC1IF)){}
-
-				// Detenemos el timer
-				ptrCaptureHandler -> ptrTIMx -> CR1 &= ~TIM_CR1_CEN;
-
-				// Capturamos el valor del tiempo almacenado en el CCRx (sin reiniciar después de primera captura)
-				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR1;
-
-				deltaTimestamp = timestamp2 - timestamp1;
-
-				break;
-			}
-
-			case CAPTURE_CHANNEL_2:{
-				// Borramos el valor inicial del CCP
-				ptrCaptureHandler -> ptrTIMx -> CCR2 = 0;
-
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC2IF;
-
-				// Esperamos a que se de el primer evento de captura
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC2IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCRx
-				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR2;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC2IF;
-
-				// Esperamos a que se de el segundo evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC2IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCrx (sin haber reiniciado después de la primera captura)
-				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR2;
-
-				deltaTimestamp = timestamp2 - timestamp1;
-
-				break;
-			}
-
-			case CAPTURE_CHANNEL_3: {
-				// Borramos el valor inicial del CCP
-				ptrCaptureHandler -> ptrTIMx -> CCR3 = 0;
-
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC3IF;
-
-				// Esperamos a que se de el primer evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC3IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCR3
-				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR3;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC3IF;
-
-				// Esperamos a que se de el segundo evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC3IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCR3
-				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR3;
-
-				deltaTimestamp = timestamp2 - timestamp1;
-
-				break;
-			}
-
-			case CAPTURE_CHANNEL_4: {
-				// Borramos el valor inicial del CCP
-				ptrCaptureHandler -> ptrTIMx -> CCR4 = 0;
-
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC4IF;
-
-				// Esperamos a que se de el primer evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC4IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCR4
-				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR4;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC4IF;
-
-				// Esperamos a que se de el primer evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC4IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCR4
-				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR4;
-
-				deltaTimestamp = timestamp2 - timestamp1;
-
-				break;
-			}
-
-			default:
-				break;
-		}
-
-		return deltaTimestamp;
-	}
+//	uint32_t getPeriodFreq (Capture_Handler_t *ptrCaptureHandler){
+//
+//		uint32_t timestamp1 = 0;
+//		uint32_t timestamp2 = 0;
+//		uint32_t deltaTimestamp = 0;
+//
+//		// Reiniciamos el contador del timer
+//		ptrCaptureHandler -> ptrTIMx -> CNT = 0;
+//
+//		/* Todo lo que sigue depende del canal que se ha seleccionado, por lo cual se escribe cada
+//		 * código dentro del "case" específico. Antes de lanzar la captura (encender el timer para
+//		 * que cuente), debemos borrar el valor de los registro CCP, de forma que arranquen limpios
+//		 */
+//
+//		switch (ptrCaptureHandler -> config.channel) {
+//			case CAPTURE_CHANNEL_1:{
+//				// Borramos el valor inicial del CCP
+//				ptrCaptureHandler -> ptrTIMx -> CCR1 = 0;
+//
+//				// Bajamos la bandera que indica que existe un evento de captura
+//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC1IF;
+//
+//				// Encendemos el timer para que comience a contar
+//				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
+//
+//				// Esperamos a que se de el primer evento
+//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC1IF)){}
+//
+//				// Detenemos el timer
+//				ptrCaptureHandler -> ptrTIMx -> CR1 &= ~TIM_CR1_CEN;
+//
+//				// Capturamos el valor del tiempo almacenando en el CCRx
+//				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR1;
+//
+//				// Bajamos la bandera que indica que existe un evento de captura
+//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC1IF;
+//
+//				// Encendemos el timer para que comience a contar
+//				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
+//
+//				// Esperamos a que se de el primer evento
+//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC1IF)){}
+//
+//				// Detenemos el timer
+//				ptrCaptureHandler -> ptrTIMx -> CR1 &= ~TIM_CR1_CEN;
+//
+//				// Capturamos el valor del tiempo almacenado en el CCRx (sin reiniciar después de primera captura)
+//				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR1;
+//
+//				deltaTimestamp = timestamp2 - timestamp1;
+//
+//				break;
+//			}
+//
+//			case CAPTURE_CHANNEL_2:{
+//				// Borramos el valor inicial del CCP
+//				ptrCaptureHandler -> ptrTIMx -> CCR2 = 0;
+//
+//				// Encendemos el timer para que comience a contar
+//				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
+//
+//				// Bajamos la bandera que indica que existe un evento de captura
+//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC2IF;
+//
+//				// Esperamos a que se de el primer evento de captura
+//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC2IF)){}
+//
+//				// Capturamos el valor del tiempo almacenado en el CCRx
+//				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR2;
+//
+//				// Bajamos la bandera que indica que existe un evento de captura
+//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC2IF;
+//
+//				// Esperamos a que se de el segundo evento
+//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC2IF)){}
+//
+//				// Capturamos el valor del tiempo almacenado en el CCrx (sin haber reiniciado después de la primera captura)
+//				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR2;
+//
+//				deltaTimestamp = timestamp2 - timestamp1;
+//
+//				break;
+//			}
+//
+//			case CAPTURE_CHANNEL_3: {
+//				// Borramos el valor inicial del CCP
+//				ptrCaptureHandler -> ptrTIMx -> CCR3 = 0;
+//
+//				// Encendemos el timer para que comience a contar
+//				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
+//
+//				// Bajamos la bandera que indica que existe un evento de captura
+//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC3IF;
+//
+//				// Esperamos a que se de el primer evento
+//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC3IF)){}
+//
+//				// Capturamos el valor del tiempo almacenado en el CCR3
+//				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR3;
+//
+//				// Bajamos la bandera que indica que existe un evento de captura
+//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC3IF;
+//
+//				// Esperamos a que se de el segundo evento
+//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC3IF)){}
+//
+//				// Capturamos el valor del tiempo almacenado en el CCR3
+//				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR3;
+//
+//				deltaTimestamp = timestamp2 - timestamp1;
+//
+//				break;
+//			}
+//
+//			case CAPTURE_CHANNEL_4: {
+//				// Borramos el valor inicial del CCP
+//				ptrCaptureHandler -> ptrTIMx -> CCR4 = 0;
+//
+//				// Encendemos el timer para que comience a contar
+//				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
+//
+//				// Bajamos la bandera que indica que existe un evento de captura
+//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC4IF;
+//
+//				// Esperamos a que se de el primer evento
+//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC4IF)){}
+//
+//				// Capturamos el valor del tiempo almacenado en el CCR4
+//				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR4;
+//
+//				// Bajamos la bandera que indica que existe un evento de captura
+//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC4IF;
+//
+//				// Esperamos a que se de el primer evento
+//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC4IF)){}
+//
+//				// Capturamos el valor del tiempo almacenado en el CCR4
+//				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR4;
+//
+//				deltaTimestamp = timestamp2 - timestamp1;
+//
+//				break;
+//			}
+//
+//			default:
+//				break;
+//		}
+//
+//		return deltaTimestamp;
+//	}
 
 
 
 
 	/*    P R U E B A */
 
+	/* Función de remplazo del While */
 
+	uint32_t StartPeriod(Capture_Handler_t  *ptrCaptureHandler){
 
-	uint32_t getInter(Capture_Handler_t *ptrCaptureHandler){
+		uint32_t timestamp = 0;
 
-		uint32_t timestamp1 = 0;
-		uint32_t timestamp2 = 0;
-		uint32_t deltaTimestamp = 0;
+		switch(ptrCaptureHandler->config.channel){
+				case CAPTURE_CHANNEL_1:{
 
-		// Reiniciamos el contador del timer
-		ptrCaptureHandler -> ptrTIMx -> CNT = 0;
+			// Capturamos el valor del tiempo almacenado en el CCRx
+			timestamp = ptrCaptureHandler->ptrTIMx->CCR1;
 
-		/* Todo lo que sigue depende del canal que se ha seleccionado, por lo cual se escribe cada
-		 * código dentro del "case" específico. Antes de lanzar la captura (encender el timer para
-		 * que cuente), debemos borrar el valor de los registro CCP, de forma que arranquen limpios
-		 */
+			// Bajamos la bandera del overcapture
+			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC1OF;
 
-		switch (ptrCaptureHandler -> config.channel) {
-			case CAPTURE_CHANNEL_1:{
-				// Borramos el valor inicial del CCP
-				ptrCaptureHandler -> ptrTIMx -> CCR1 = 0;
+			break;
+		}
+		case CAPTURE_CHANNEL_2:{
 
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC1IF;
+			// Capturamos el valor del tiempo almacenado en el CCRx
+			timestamp = ptrCaptureHandler->ptrTIMx->CCR2;
 
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
+			// Bajamos la bandera del overcapture
+			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC2OF;
 
-				// Esperamos a que se de el primer evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC1IF)){}
+			break;
+		}
+		case CAPTURE_CHANNEL_3:{
 
-				// Detenemos el timer
-				ptrCaptureHandler -> ptrTIMx -> CR1 &= ~TIM_CR1_CEN;
+			// Capturamos el valor del tiempo almacenado en el CCRx
+			timestamp = ptrCaptureHandler->ptrTIMx->CCR3;
 
-				// Capturamos el valor del tiempo almacenando en el CCRx
-				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR1;
+			// Bajamos la bandera del overcapture
+			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC3OF;
+			break;
+		}
+		case CAPTURE_CHANNEL_4:{
 
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC1IF;
+			// Bajamos la bandera que indica que existe un evento de captura
+			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC4IF;
 
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
+			// Capturamos el valor del tiempo almacenado en el CCRx
+			timestamp = ptrCaptureHandler->ptrTIMx->CCR4;
 
-				// Esperamos a que se de el primer evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC1IF)){}
+			// Bajamos la bandera del overcapture
+			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC4OF;
+			break;
+		}
+		default: {
+			break;
+		}
+	}
 
-				// Detenemos el timer
-				ptrCaptureHandler -> ptrTIMx -> CR1 &= ~TIM_CR1_CEN;
+	return timestamp;
 
-				// Capturamos el valor del tiempo almacenado en el CCRx (sin reiniciar después de primera captura)
-				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR1;
-
-				deltaTimestamp = timestamp2 - timestamp1;
-
-				break;
-			}
-
-			case CAPTURE_CHANNEL_2:{
-				// Borramos el valor inicial del CCP
-				ptrCaptureHandler -> ptrTIMx -> CCR2 = 0;
-
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC2IF;
-
-				// Esperamos a que se de el primer evento de captura
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC2IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCRx
-				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR2;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC2IF;
-
-				// Esperamos a que se de el segundo evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC2IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCrx (sin haber reiniciado después de la primera captura)
-				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR2;
-
-				deltaTimestamp = timestamp2 - timestamp1;
-
-				break;
-			}
-
-			case CAPTURE_CHANNEL_3: {
-				// Borramos el valor inicial del CCP
-				ptrCaptureHandler -> ptrTIMx -> CCR3 = 0;
-
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC3IF;
-
-//				// Esperamos a que se de el primer evento
-//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC3IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCR3
-				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR3;
-
-//				period[0] = lectura;
-				// Bajamos la bandera que indica que existe un evento de captura
-//				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC3IF;
-
-				// Esperamos a que se de el segundo evento
-//				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC3IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCR3
-				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR3;
-
-//				period[1] = lectura;
-//				deltaTimestamp = timestamp2 - timestamp1;
-
-
-
-				break;
-			}
-
-			case CAPTURE_CHANNEL_4: {
-				// Borramos el valor inicial del CCP
-				ptrCaptureHandler -> ptrTIMx -> CCR4 = 0;
-
-				// Encendemos el timer para que comience a contar
-				ptrCaptureHandler -> ptrTIMx -> CR1 |= TIM_CR1_CEN;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC4IF;
-
-				// Esperamos a que se de el primer evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC4IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCR4
-				timestamp1 = ptrCaptureHandler -> ptrTIMx -> CCR4;
-
-				// Bajamos la bandera que indica que existe un evento de captura
-				ptrCaptureHandler -> ptrTIMx -> SR &= ~TIM_SR_CC4IF;
-
-				// Esperamos a que se de el primer evento
-				while (!(ptrCaptureHandler -> ptrTIMx -> SR & TIM_SR_CC4IF)){}
-
-				// Capturamos el valor del tiempo almacenado en el CCR4
-				timestamp2 = ptrCaptureHandler -> ptrTIMx -> CCR4;
-
-				deltaTimestamp = timestamp2 - timestamp1;
-
-				break;
-			}
-
-			default:
-				break;
 		}
 
-		return deltaTimestamp;
+ /*  Función operativa para la captura de datos */
+
+	uint32_t Period_Frecuen_Get(Capture_Handler_t  *ptrCaptureHandler, uint32_t Captura1, uint32_t Captura2){
+
+		// Las capturas vendran por lo tanto el dato operado sera almacenado en RawData
+
+		int RawData =Captura2 - Captura1;
+
+		RawData = fabs(RawData);
+
+
+
+
+		RawData = RawData / (8);
+
+		switch(ptrCaptureHandler->config.timerSpeed){
+
+			case CAPTURE_TIMER_SPEED_1us:{
+
+				RawData = RawData* 1000;
+				break;
+			}
+			case CAPTURE_TIMER_SPEED_10us:{
+
+				RawData = RawData * 100;
+				break;
+			}
+			case CAPTURE_TIMER_SPEED_100us:{
+
+				RawData = RawData * 10;
+				break;
+			}
+			case CAPTURE_TIMER_SPEED_1ms:{
+
+				RawData = RawData;
+				break;
+			}
+			default: {
+				break;
+			}
+
+			}
+
+		return RawData;
 	}
 
+void CleanCapture(Capture_Handler_t *ptrCaptureHandler){
 
+	ptrCaptureHandler->ptrTIMx->CNT = 0;
 
-	/* Atributos para Capture en esta configuración */
-
-	__attribute__((weak)) void capturefrecuencia2(void){
-		  /* NOTE : This function should not be modified, when the callback is needed,
-		            the BasicTimerX_Callback could be implemented in the main file
-		   */
-		__NOP();
+	switch(ptrCaptureHandler->config.channel){
+		case CAPTURE_CHANNEL_1:{
+			ptrCaptureHandler->ptrTIMx->CCR1 = 0;
+			break;
+		}
+		case CAPTURE_CHANNEL_2:{
+			ptrCaptureHandler->ptrTIMx->CCR2 = 0;
+			break;
+		}
+		case CAPTURE_CHANNEL_3:{
+			ptrCaptureHandler->ptrTIMx->CCR3 = 0;
+			break;
+		}
+		case CAPTURE_CHANNEL_4:{
+			ptrCaptureHandler->ptrTIMx->CCR4 = 0;
+			break;
+		}
+		default: {
+			break;
+		}
 	}
+}
 
-	__attribute__((weak)) void capturefrecuencia3(void){
-		  /* NOTE : This function should not be modified, when the callback is needed,
-		            the BasicTimerX_Callback could be implemented in the main file
-		   */
-		__NOP();
-	}
+/* Atributos para Capture en esta configuración */
 
-	__attribute__((weak)) void capturefrecuencia4(void){
-		  /* NOTE : This function should not be modified, when the callback is needed,
-		            the BasicTimerX_Callback could be implemented in the main file
-		   */
-		__NOP();
-	}
-
-	__attribute__((weak)) void capturefrecuencia5(void){
-		  /* NOTE : This function should not be modified, when the callback is needed,
-		            the BasicTimerX_Callback could be implemented in the main file
-		   */
-		__NOP();
-	}
+//__attribute__((weak)) void capturefrecuencia2(void){
+//	  /* NOTE : This function should not be modified, when the callback is needed,
+//	            the BasicTimerX_Callback could be implemented in the main file
+//	   */
+//	__NOP();
+//}
+//
+//__attribute__((weak)) void capturefrecuencia3(void){
+//	  /* NOTE : This function should not be modified, when the callback is needed,
+//	            the BasicTimerX_Callback could be implemented in the main file
+//	   */
+//	__NOP();
+//}
+//
+//__attribute__((weak)) void capturefrecuencia4(void){
+//	  /* NOTE : This function should not be modified, when the callback is needed,
+//	            the BasicTimerX_Callback could be implemented in the main file
+//	   */
+//	__NOP();
+//}
+//
+//__attribute__((weak)) void capturefrecuencia5(void){
+//	  /* NOTE : This function should not be modified, when the callback is needed,
+//	            the BasicTimerX_Callback could be implemented in the main file
+//	   */
+//	__NOP();
+//}
 
 

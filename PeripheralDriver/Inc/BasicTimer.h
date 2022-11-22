@@ -47,7 +47,6 @@ void BasicTimer5_CallBack(void);
 
 
 
-
 void startCounterTimer(BasicTimer_Handler_t *ptrTimerConfig);
 void StopCounterTimer(BasicTimer_Handler_t *ptrTimerConfig);
 //void GPIOxTooglePin (GPIO_Handler_t *pPinHandler)

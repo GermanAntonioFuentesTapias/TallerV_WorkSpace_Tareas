@@ -8,7 +8,8 @@
 #include "BasicTimer.h"
 #include "CaptureFrecDriver.h"
 
-uint16_t	RawData = 0;
+TIM_TypeDef	*ptrTimerUsed;
+
 /* Variable que guarda la referencia del periférico que se esta utilizando*/
 
 /* Función en la que cargamos la configuración del Timer
@@ -181,11 +182,7 @@ __attribute__((weak)) void BasicTimer5_CallBack(void){
 //Este es de caracter generico
 
 
-uint16_t getData(void){
-	// Esta variable es actualizada en la ISR de la conversión, cada vez que se obtiene
-	// un nuevo valor.
-	return RawData;
-}
+
 
 
 

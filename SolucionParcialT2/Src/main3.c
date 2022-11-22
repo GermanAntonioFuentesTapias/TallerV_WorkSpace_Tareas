@@ -44,6 +44,13 @@ int16_t                     period []= {0};
 
 Capture_Handler_t			handlerCaptureFreq   = {0};
 
+uint8_t BanderaRegistro 								= 0;
+uint8_t BanderaCaptura									= 0;
+uint8_t Counter 										= 0;
+uint32_t Captura1 									    = 0;
+uint32_t Captura2	 								    = 0;
+uint32_t Dato									        = 0;
+
 uint16_t 					duttyValue			 = 5000;
 
 /* Para el barrido */
@@ -67,7 +74,6 @@ int main(void){
 	// Inicializamos todos los elementos del sistema
 	initSystem();
 
-	writeChar(&handlerUSART2, ' ');
 
 	/* Loop forever */
 	while(1){
@@ -93,6 +99,7 @@ int main(void){
 				writeMsg(&handlerUSART2, bufferData);
 				rxData = '\0';
 			}
+		}
 
 //			else if (rxData == 'c'){
 //				rawPeriod = getPeriodFreq(&handlerCaptureFreq) ;
@@ -102,23 +109,37 @@ int main(void){
 //			}
 //
 
-			else if (rxData == 'c'){
-				getInter(&handlerCaptureFreq);
-			}
+			 if (BanderaCaptura){
+				if(Counter){
 
-			else if(FinishCap){
+					Captura2 = StartPeriod(&handlerCaptureFreq);
+					Counter = 0;
+					Dato = Period_Frecuen_Get(&handlerCaptureFreq, Captura1, Captura2);
 
-				startCounterTimer(&handlerTimerPWM);
-				rawPeriod =period[1] - period[0] ;
-//				rawPeriod =  getInter(&handlerCaptureFreq) ;
-				sprintf (bufferData, "rawPeriod = %u \n", (unsigned int) rawPeriod);
-				writeMsg(&handlerUSART2, bufferData);
-				rxData = '\0';
+					sprintf(bufferData, "\n\r %u , %u ", (unsigned int) Captura1, (unsigned int) Captura2);
+
+					writeMsg(&handlerUSART2, bufferData);
+
+					sprintf(bufferData, "\n\r %u", (unsigned int) Dato -1);
+
+					writeMsg(&handlerUSART2, bufferData);
+                 }
+
+
+
+			else {
+
+				CleanCapture(&handlerCaptureFreq);
+
+				Captura1 = StartPeriod(&handlerCaptureFreq);
+
+				Counter = 1;
 			}
+				BanderaCaptura = 0;
 		}
 	}
 
-	//return 0;
+	return 0;
 }
 
 void initSystem (void){
@@ -178,13 +199,13 @@ void initSystem (void){
 
 	BasicTimer_Config(&handlerBlinkyTimer);
 
-	handlerTimerPWM.ptrTIMx                                          = TIM4;
-	handlerTimerPWM.TIMx_Config.TIMx_mode                            = BTIMER_MODE_UP;
-	handlerTimerPWM.TIMx_Config.TIMx_speed                           = BTIMER_SPEED_1ms;
-	handlerTimerPWM.TIMx_Config.TIMx_period                          = 200;
-	handlerTimerPWM.TIMx_Config.TIMx_interruptEnable                 = 1;
-
-	BasicTimer_Config(&handlerTimerPWM);
+//	handlerTimerPWM.ptrTIMx                                          = TIM4;
+//	handlerTimerPWM.TIMx_Config.TIMx_mode                            = BTIMER_MODE_UP;
+//	handlerTimerPWM.TIMx_Config.TIMx_speed                           = BTIMER_SPEED_1ms;
+//	handlerTimerPWM.TIMx_Config.TIMx_period                          = 200;
+//	handlerTimerPWM.TIMx_Config.TIMx_interruptEnable                 = 1;
+//
+//	BasicTimer_Config(&handlerTimerPWM);
 
 
 	// Activamos el TIM2
@@ -227,9 +248,9 @@ void initSystem (void){
 
 	handlerCaptureFreq.ptrTIMx											= TIM4;
 	handlerCaptureFreq.config.channel									= CAPTURE_CHANNEL_3;
-	handlerCaptureFreq.config.edgeSignal								= CAPTURE_FALLING_EDGE;
-	handlerCaptureFreq.config.prescalerCapture							= CAPTURE_PRESCALER_1_1;
-	handlerCaptureFreq.config.timerSpeed								= CAPTURE_TIMER_SPEED_100us;
+	handlerCaptureFreq.config.edgeSignal								= CAPTURE_RISING_EDGE;
+	handlerCaptureFreq.config.prescalerCapture							= CAPTURE_PRESCALER_8_1;
+	handlerCaptureFreq.config.timerSpeed								= CAPTURE_TIMER_SPEED_1ms;
 
 	capture_Config(&handlerCaptureFreq);
 }
@@ -251,6 +272,8 @@ void BasicTimer2_CallBack(void){
 					GPIO_WritePin(&handlerBlinkyPin, RESET); // Desactiva
 
 	}
+
+
 }
 
 /*
@@ -265,27 +288,11 @@ void USART2Rx_CallBack (void){
 	rxData = getRxData();
 }
 
-void capturefrecuencia4(void){
+void capturefrecuencia3(void){
 
 	// Se toma la representación para en canal 3 timer 4
 
-	lectura = getData();
 
-	j ++;
-
-	if(j == 1){
-
-		period[0] = lectura;
-	}
-
-	else if( j == 2){
-
-		period[1] = lectura;
-
-		FinishCap = 1;
-
-		j= 0;
-	}
-
+ BanderaCaptura  =1;
 
 }

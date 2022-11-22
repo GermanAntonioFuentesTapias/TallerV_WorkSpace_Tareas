@@ -9,6 +9,7 @@
 #define CAPTUREFRECDRIVER_H_
 
 #include "stm32f4xx.h"
+#include <math.h>
 
 #define CAPTURE_CHANNEL_1	0
 #define CAPTURE_CHANNEL_2	1
@@ -52,15 +53,19 @@ typedef struct
 
 /* Prototipos de las funciones */
 
+
 void capture_Config (Capture_Handler_t *ptrCaptureHandler);
 uint32_t getPeriodFreq (Capture_Handler_t *ptrCaptureHandler);
 
+void capturefrecuencia1(void);
 void capturefrecuencia2(void);
 void capturefrecuencia3(void);
 void capturefrecuencia4(void);
-void capturefrecuencia5(void);
 
-uint32_t getPeriodFrec(Capture_Handler_t  *ptrCaptureHandler, uint32_t Captura1, uint32_t Captura2 );
+/* Funciones para captura  */
+
+uint32_t StartPeriod(Capture_Handler_t  *ptrCaptureHandler);
+uint32_t Period_Frecuen_Get(Capture_Handler_t  *ptrCaptureHandler, uint32_t Captura1, uint32_t Captura2 );
 
 void CleanCapture(Capture_Handler_t *ptrCaptureHandler);
 
