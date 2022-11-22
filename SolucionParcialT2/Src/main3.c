@@ -29,7 +29,7 @@ uint8_t handlerLed                      = 0;
 BasicTimer_Handler_t 		handlerBlinkyTimer 	  = {0};
 BasicTimer_Handler_t        handlerTimerPWM       = {0};
 
-GPIO_Handler_t 				handlerPinPWMChannel 	  = {0};
+GPIO_Handler_t 				handlerPinPWMChannel  = {0};
 PWM_Handler_t				handlerSignalPWM  	  = {0};
 
 GPIO_Handler_t				handlerPinCapturaFreq = {0};
@@ -39,27 +39,19 @@ uint8_t 					rawPeriod 			  =  0;
 USART_Handler_t 			handlerUSART2		 = {0};
 uint8_t						rxData  			 =  0;
 char 						bufferData[64]		 = "Prueba";
-int16_t                     period []= {0};
-//int16_t                     period = 0;
+
 
 Capture_Handler_t			handlerCaptureFreq   = {0};
 
-uint8_t BanderaRegistro 								= 0;
-uint8_t BanderaCaptura									= 0;
-uint8_t Counter 										= 0;
-uint32_t Captura1 									    = 0;
-uint32_t Captura2	 								    = 0;
-uint32_t Dato									        = 0;
+uint8_t BanderaRegistro 			  = 0;
+uint8_t BanderaCaptura				  = 0;
+uint8_t Counter 					  = 0;
+uint32_t Captura1 		              = 0;
+uint32_t Captura2	                  = 0;
+uint32_t Dato						  = 0;
 
 uint16_t 					duttyValue			 = 5000;
 
-/* Para el barrido */
-
-uint8_t j = 0;
-uint16_t lectura= 0;
-//bool adcIsComplete 	 = false;
-
-uint8_t FinishCap = 0;
 
 /* Definición de prototipos de funciones */
 void initSystem (void);
@@ -116,11 +108,11 @@ int main(void){
 					Counter = 0;
 					Dato = Period_Frecuen_Get(&handlerCaptureFreq, Captura1, Captura2);
 
-					sprintf(bufferData, "\n\r %u , %u ", (unsigned int) Captura1, (unsigned int) Captura2);
+					sprintf(bufferData, "\n\r Captura= %u , %u ", (unsigned int) Captura1, (unsigned int) Captura2);
 
 					writeMsg(&handlerUSART2, bufferData);
 
-					sprintf(bufferData, "\n\r %u", (unsigned int) Dato -1);
+					sprintf(bufferData, "\n\r Periodo %u", (unsigned int) Dato -1);
 
 					writeMsg(&handlerUSART2, bufferData);
                  }
@@ -153,6 +145,7 @@ void initSystem (void){
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinSpeed					= GPIO_OSPEED_MEDIUM;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinAltFunMode				= AF0;
 
+	// Cargando la configuración
 	GPIO_Config(&handlerBlinkyPin);
 	GPIO_WritePin(&handlerBlinkyPin, SET);
 
@@ -165,6 +158,7 @@ void initSystem (void){
 	handlerTxPin.GPIO_PinConfig.GPIO_PinSpeed						= GPIO_OSPEED_FAST;
 	handlerTxPin.GPIO_PinConfig.GPIO_PinAltFunMode					= AF7;
 
+	// Cargando la configuración
 	GPIO_Config(&handlerTxPin);
 
 	// Configurando los pines sobre los que funciona el USART2 (RX)
@@ -176,6 +170,7 @@ void initSystem (void){
 	handlerRxPin.GPIO_PinConfig.GPIO_PinSpeed						= GPIO_OSPEED_FAST;
 	handlerRxPin.GPIO_PinConfig.GPIO_PinAltFunMode					= AF7;
 
+	// Cargando la configuración
 	GPIO_Config(&handlerRxPin);
 
 	// Configurando la comunicación serial (Cable verde es TX, Cable Blando es RX)
@@ -197,16 +192,8 @@ void initSystem (void){
 	handlerBlinkyTimer.TIMx_Config.TIMx_period 						= 2500;
 	handlerBlinkyTimer.TIMx_Config.TIMx_interruptEnable 			= 1;  //
 
+	// Cargando la configuración
 	BasicTimer_Config(&handlerBlinkyTimer);
-
-//	handlerTimerPWM.ptrTIMx                                          = TIM4;
-//	handlerTimerPWM.TIMx_Config.TIMx_mode                            = BTIMER_MODE_UP;
-//	handlerTimerPWM.TIMx_Config.TIMx_speed                           = BTIMER_SPEED_1ms;
-//	handlerTimerPWM.TIMx_Config.TIMx_period                          = 200;
-//	handlerTimerPWM.TIMx_Config.TIMx_interruptEnable                 = 1;
-//
-//	BasicTimer_Config(&handlerTimerPWM);
-
 
 	// Activamos el TIM2
 	startCounterTimer(&handlerBlinkyTimer);
@@ -228,7 +215,7 @@ void initSystem (void){
 	handlerSignalPWM.ptrTIMx											= TIM3;
 	handlerSignalPWM.config.channel										= PWM_CHANNEL_2;
 	handlerSignalPWM.config.duttyCicle									= duttyValue;
-	handlerSignalPWM.config.periodo										= 20000;
+	handlerSignalPWM.config.periodo										= 15000;
 	handlerSignalPWM.config.prescaler									= 16;
 
 	pwm_Config(&handlerSignalPWM);
@@ -248,8 +235,8 @@ void initSystem (void){
 
 	handlerCaptureFreq.ptrTIMx											= TIM4;
 	handlerCaptureFreq.config.channel									= CAPTURE_CHANNEL_3;
-	handlerCaptureFreq.config.edgeSignal								= CAPTURE_RISING_EDGE;
-	handlerCaptureFreq.config.prescalerCapture							= CAPTURE_PRESCALER_8_1;
+	handlerCaptureFreq.config.edgeSignal								= CAPTURE_FALLING_EDGE;
+	handlerCaptureFreq.config.prescalerCapture							= CAPTURE_PRESCALER_4_1;
 	handlerCaptureFreq.config.timerSpeed								= CAPTURE_TIMER_SPEED_1ms;
 
 	capture_Config(&handlerCaptureFreq);
@@ -291,7 +278,6 @@ void USART2Rx_CallBack (void){
 void capturefrecuencia3(void){
 
 	// Se toma la representación para en canal 3 timer 4
-
 
  BanderaCaptura  =1;
 

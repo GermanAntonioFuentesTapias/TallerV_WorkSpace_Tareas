@@ -62,15 +62,12 @@ void capturefrecuencia2(void);
 void capturefrecuencia3(void);
 void capturefrecuencia4(void);
 
-/* Funciones para captura  */
+/* Funciones para captura de frecuencia por timer */
 
 uint32_t StartPeriod(Capture_Handler_t  *ptrCaptureHandler);
 uint32_t Period_Frecuen_Get(Capture_Handler_t  *ptrCaptureHandler, uint32_t Captura1, uint32_t Captura2 );
 
 void CleanCapture(Capture_Handler_t *ptrCaptureHandler);
 
-//uint32_t  getInter (Capture_Handler_t *ptrCaptureHandler);
-//
-//uint16_t getData(void);
 
 #endif /* CAPTUREFRECDRIVER_H_ */

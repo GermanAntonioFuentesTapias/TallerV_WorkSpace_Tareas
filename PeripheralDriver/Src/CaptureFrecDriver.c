@@ -272,34 +272,6 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 	}
 
 
-__attribute__((weak)) void capturefrecuencia1(void){
-	  /* NOTE : This function should not be modified, when the callback is needed,
-	            the BasicTimerX_Callback could be implemented in the main file
-	   */
-	__NOP();
-}
-
-__attribute__((weak)) void capturefrecuencia2(void){
-	  /* NOTE : This function should not be modified, when the callback is needed,
-	            the BasicTimerX_Callback could be implemented in the main file
-	   */
-	__NOP();
-}
-
-__attribute__((weak)) void capturefrecuencia3(void){
-	  /* NOTE : This function should not be modified, when the callback is needed,
-	            the BasicTimerX_Callback could be implemented in the main file
-	   */
-	__NOP();
-}
-
-__attribute__((weak)) void capturefrecuencia4(void){
-	  /* NOTE : This function should not be modified, when the callback is needed,
-	            the BasicTimerX_Callback could be implemented in the main file
-	   */
-	__NOP();
-}
-
 	/* Esta función se encarga de lanzar la captura de la frecuencia. En este caso funciona como pulling,
 	 * examinando cuando se levanta la bandera del evento de captura.
 	 */
@@ -460,7 +432,7 @@ __attribute__((weak)) void capturefrecuencia4(void){
 
 	/*    P R U E B A */
 
-	/* Función de remplazo del While */
+	/* Función de remplazo del While  que nos inicia para cada canal*/
 
 	uint32_t StartPeriod(Capture_Handler_t  *ptrCaptureHandler){
 
@@ -469,43 +441,43 @@ __attribute__((weak)) void capturefrecuencia4(void){
 		switch(ptrCaptureHandler->config.channel){
 				case CAPTURE_CHANNEL_1:{
 
-			// Capturamos el valor del tiempo almacenado en el CCRx
+			// Capturamos el valor del tiempo almacenado en el CCR1
 			timestamp = ptrCaptureHandler->ptrTIMx->CCR1;
 
-			// Bajamos la bandera del overcapture
-			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC1OF;
+			// Se baja la bandera que ocurrio un evento de captura
+			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC1OF; // Interrupción para canal 1
 
 			break;
 		}
 		case CAPTURE_CHANNEL_2:{
 
-			// Capturamos el valor del tiempo almacenado en el CCRx
+			// Capturamos el valor del tiempo almacenado en el CCR2
 			timestamp = ptrCaptureHandler->ptrTIMx->CCR2;
 
-			// Bajamos la bandera del overcapture
-			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC2OF;
+			// Se baja la bandera que ocurrio un evento de captura
+			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC2OF; // Interrupción para canal 2
 
 			break;
 		}
 		case CAPTURE_CHANNEL_3:{
 
-			// Capturamos el valor del tiempo almacenado en el CCRx
+			// Capturamos el valor del tiempo almacenado en el CCR3
 			timestamp = ptrCaptureHandler->ptrTIMx->CCR3;
 
-			// Bajamos la bandera del overcapture
-			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC3OF;
+			// Se baja la bandera que ocurrio un evento de captura
+			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC3OF; // Interrupción para canal 3
 			break;
 		}
 		case CAPTURE_CHANNEL_4:{
 
-			// Bajamos la bandera que indica que existe un evento de captura
+			//Se baja la bandera que ocurrio un evento de captura
 			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC4IF;
 
-			// Capturamos el valor del tiempo almacenado en el CCRx
+			// Capturamos el valor del tiempo almacenado en el CCR4
 			timestamp = ptrCaptureHandler->ptrTIMx->CCR4;
 
 			// Bajamos la bandera del overcapture
-			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC4OF;
+			ptrCaptureHandler->ptrTIMx->SR &= ~TIM_SR_CC4OF; // Interrupción para canal 4
 			break;
 		}
 		default: {
@@ -519,20 +491,69 @@ __attribute__((weak)) void capturefrecuencia4(void){
 
  /*  Función operativa para la captura de datos */
 
+	// Se tiene la configuración del PWM que nos traera un periodo determinado y nosotros vamos a calcular cual es, por lo que necesitamos
+	// traer los datos de los eventos y almacenarlos en las variables Capturas.
+
 	uint32_t Period_Frecuen_Get(Capture_Handler_t  *ptrCaptureHandler, uint32_t Captura1, uint32_t Captura2){
 
 		// Las capturas vendran por lo tanto el dato operado sera almacenado en RawData
 
-		int RawData =Captura2 - Captura1;
+		int RawData =Captura2 - Captura1; // La segunda interrupción por la primera
 
-		RawData = fabs(RawData);
-
-
+		RawData = fabs(RawData); // Se hace el absoluto para garantizar la toma positiva
 
 
-		RawData = RawData / (8);
+		/* Casos de cambio de Prescaler en el  main por parte del usuario */
+
+		switch(ptrCaptureHandler->config.prescalerCapture){
+
+		case CAPTURE_PRESCALER_4_1:{
+
+		RawData = RawData / (4); // Por la división del prescaler
+
+			break;
+
+		}
+
+		case CAPTURE_PRESCALER_1_1:{
+
+		RawData = RawData / (1); // Por la división del prescaler
+
+					break;
+
+
+		}
+
+		case CAPTURE_PRESCALER_2_1:{
+
+		RawData = RawData / (2); // Por la división del prescaler
+
+					break;
+        }
+
+		case CAPTURE_PRESCALER_8_1:{
+
+		RawData = RawData / (8); // Por la división del prescaler
+
+					break;
+
+		}
+
+		default: {
+						break;
+					}
+
+		return RawData;
+
+
+
+		}
+
+		/* Función encargada de velocidad */
 
 		switch(ptrCaptureHandler->config.timerSpeed){
+
+		// Se observa que cambia desde Micro hasta mili
 
 			case CAPTURE_TIMER_SPEED_1us:{
 
@@ -563,9 +584,15 @@ __attribute__((weak)) void capturefrecuencia4(void){
 		return RawData;
 	}
 
+	/* Se encarga de limpiar los valores que llegan para la captura 1 */
+
 void CleanCapture(Capture_Handler_t *ptrCaptureHandler){
 
+	// Por lo que reiniciamos en Counter
+
 	ptrCaptureHandler->ptrTIMx->CNT = 0;
+
+	/* Se hace una configuracion para cada canal */
 
 	switch(ptrCaptureHandler->config.channel){
 		case CAPTURE_CHANNEL_1:{
@@ -589,6 +616,37 @@ void CleanCapture(Capture_Handler_t *ptrCaptureHandler){
 		}
 	}
 }
+
+/* Call Back de frecuencias */
+
+__attribute__((weak)) void capturefrecuencia1(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void capturefrecuencia2(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void capturefrecuencia3(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
+__attribute__((weak)) void capturefrecuencia4(void){
+	  /* NOTE : This function should not be modified, when the callback is needed,
+	            the BasicTimerX_Callback could be implemented in the main file
+	   */
+	__NOP();
+}
+
 
 /* Atributos para Capture en esta configuración */
 
@@ -619,5 +677,6 @@ void CleanCapture(Capture_Handler_t *ptrCaptureHandler){
 //	   */
 //	__NOP();
 //}
+
 
 
