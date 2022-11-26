@@ -44,25 +44,60 @@ uint8_t handlerLed                      = 0;
 uint8_t Code                            = 0;
 uint8_t Bandera                         = 0;
 uint8_t valor                           = 0;
+uint8_t Puerta                          = 0;
 GPIO_Handler_t	handlerI2CSDA			= {0};
 GPIO_Handler_t	handlerI2CSCL 			= {0};
 GPIO_Handler_t  handlerSensor           = {0};
 GPIO_Handler_t  handlerRojo             = {0};
+GPIO_Handler_t  handlerPuerta           = {0};
+
+/* Configuración Pines Key Pad */
+
+GPIO_Handler_t  handlerF1               = {0};
+GPIO_Handler_t  handlerF2               = {0};
+GPIO_Handler_t  handlerF3               = {0};
+GPIO_Handler_t  handlerF4               = {0};
+GPIO_Handler_t  handlerC1               = {0};
+GPIO_Handler_t  handlerC2               = {0};
+GPIO_Handler_t  handlerC3               = {0};
+GPIO_Handler_t  handlerC4               = {0};
+
+/**********************************************/
+
 I2C_Handler_t	handlerLCD 				= {0};
-EXTI_Config_t   handlerExtiSensor           = {0}; // Configuración para el boton externo
+EXTI_Config_t   handlerExtiSensor       = {0}; // Configuración para el boton externo
+EXTI_Config_t   handlerExtiPuerta       = {0};
 char dataLCD[64] = {0};
 char bufferData[64]    =  {0};
+
+/* Funciones para comandos */
+
+
+uint8_t counterReception = 0;
+char bufferReception[64] = {0};
+char cmd[64];
+char userMsg[64];
+char data[64] = {0} ;
+bool stringComplete = false;
+bool makeUpdateLCD  = false;
+unsigned int firstParameter;
+unsigned int secondParameter;
 
 
 #define LCD_ADRESS		0b0100111
 
 //Definición de las cabeceras del main
 void initSystem (void);
-
+//Para el KeyPad
+void ConfigKeyPad(void);
+// Alarma
 void Alarma(uint8_t Opciones);
+
+
 
 int main(void){
  	initSystem();
+ 	void parseCommands (char *ptrBufferReception);
 
 
 	LCD_Init(&handlerLCD);
@@ -85,7 +120,7 @@ while (1){
 
 	// Si hay interrupción , la bandera Code se activa
 
-	      if(Code){
+	      if((Puerta) ||  (Code)){
 //	      if (GPIO_ReadPin(&handlerSensor) ==  SET){
 //            if(!Bandera){
 	    	LCD_ClearScreen(&handlerLCD);
@@ -101,6 +136,8 @@ while (1){
 		// Se baja la bandera para otra interrupción
 		Code = 0;
 
+		Puerta = 0;
+
 
             }
 
@@ -114,42 +151,22 @@ while (1){
 	      			      		}
 
 
-//	      if(Bandera == 16){
-//
-//
-//	      			LCD_ClearScreen(&handlerLCD);
-//	      			LCD_setCursor(&handlerLCD,0,1);
-//	      			LCD_sendSTR(&handlerLCD,"Por favor reinicie ");
-//	      			LCD_setCursor(&handlerLCD,2,6);
-//	      			LCD_sendSTR(&handlerLCD,"Movimiento");
-//
-//	      			GPIO_WritePin(&handlerRojo, RESET);
-//
-//	      		}
+	      if(Bandera){
 
 
-//	      else{
-//
-//			 GPIO_WritePin(&handlerRojo, RESET);
-////
-//			LCD_ClearScreen(&handlerLCD);
-//			LCD_setCursor(&handlerLCD,0,1);
-//			LCD_sendSTR(&handlerLCD,"Por favor reinicie ");
-//			LCD_setCursor(&handlerLCD,2,6);
-//			LCD_sendSTR(&handlerLCD,"Movimiento");
-//
-//		}
-//
-//			 if(Code ==0) {
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"Detecto movimiento");
-//				LCD_setCursor(&handlerLCD,2,7);
-//				LCD_sendSTR(&handlerLCD,"Alerta");
-//
-//
-//
-//			 }
+	      			LCD_ClearScreen(&handlerLCD);
+	      			LCD_setCursor(&handlerLCD,0,1);
+	      			LCD_sendSTR(&handlerLCD,"Por favor reinicie ");
+	      			LCD_setCursor(&handlerLCD,2,6);
+	      			LCD_sendSTR(&handlerLCD,"Movimiento");
+
+	      			GPIO_WritePin(&handlerRojo, RESET);
+
+	      			Bandera = 0;
+
+	      		}
+
+
 
 
 	      /* Comunicacion serial */
@@ -179,6 +196,33 @@ while (1){
 	      				writeMsg(&handlerUsart, bufferData);
 
 	      			}
+	      		}
+
+
+			if(rxData != '\0'){
+
+
+			bufferReception[counterReception] = rxData;
+			counterReception++;
+				 if (rxData == '@'){
+					 stringComplete = true;
+
+					 // Agrego linea
+
+					 bufferReception[counterReception] = '\0';
+
+					 counterReception = 0;
+				 }
+
+				 rxData = '\0';
+
+		   }
+
+	      if ( stringComplete){
+
+	      			parseCommands(bufferReception);
+
+	      			stringComplete = false;
 	      		}
 
 
@@ -268,15 +312,37 @@ void initSystem(void){
 
 	GPIO_Config(&handlerRojo);
 
+	/* Configuración para Pin externo */
+
+	handlerPuerta.pGPIOx                             = GPIOB;
+	handlerPuerta.GPIO_PinConfig.GPIO_PinNumber      = PIN_1;
+	handlerPuerta.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
+	handlerPuerta.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
+	handlerPuerta.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_PULLUP;
+	handlerPuerta.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEED_FAST;
+
+	GPIO_Config(&handlerPuerta);
+
+
+
 
 	/* Configuraciones Exti */
+
+	// Sensor
 
 	handlerExtiSensor.pGPIOHandler  = &handlerSensor ;
 	handlerExtiSensor.edgeType      = EXTERNAL_INTERRUPT_RISING_EDGE; // Flanco de bajada
 
+
+	// Puerta
+
+	handlerExtiPuerta.pGPIOHandler  = &handlerPuerta;
+	handlerExtiPuerta.edgeType      = EXTERNAL_INTERRUPT_RISING_EDGE;
+
 	/* Cargando configuración */
 
 	extInt_Config(&handlerExtiSensor);
+	extInt_Config(&handlerExtiPuerta);
 
 
 	handlerTx.pGPIOx                       			= GPIOA;
@@ -320,6 +386,80 @@ void initSystem(void){
 
 }
 
+/* Configuración del Key Pad */
+
+void ConfigKeyPad(void){
+
+	handlerF1.pGPIOx                               =  GPIOB;
+    handlerF1.GPIO_PinConfig.GPIO_PinNumber        =  PIN_8;
+	handlerF1.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
+	handlerF1.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
+	handlerF1.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLDOWN;
+	handlerF1.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
+
+	handlerF2.pGPIOx                               =  GPIOB;
+	handlerF2.GPIO_PinConfig.GPIO_PinNumber        =  PIN_9;
+	handlerF2.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
+	handlerF2.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
+	handlerF2.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLDOWN;
+	handlerF2.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
+
+	handlerF3.pGPIOx                               =  GPIOC;
+	handlerF3.GPIO_PinConfig.GPIO_PinNumber        =  PIN_9;
+	handlerF3.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
+	handlerF3.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
+	handlerF3.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLDOWN;
+	handlerF3.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
+
+	handlerF4.pGPIOx                               =  GPIOC;
+	handlerF4.GPIO_PinConfig.GPIO_PinNumber        =  PIN_8;
+	handlerF4.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
+	handlerF4.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
+	handlerF4.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLDOWN;
+	handlerF4.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
+
+	handlerC1.pGPIOx                               =  GPIOA;
+	handlerC1.GPIO_PinConfig.GPIO_PinNumber        =  PIN_12;
+	handlerC1.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
+	handlerC1.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
+	handlerC1.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
+	handlerC1.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
+
+
+	handlerC2.pGPIOx                               =  GPIOA;
+	handlerC2.GPIO_PinConfig.GPIO_PinNumber        =  PIN_11;
+	handlerC2.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
+	handlerC2.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
+	handlerC2.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
+	handlerC2.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
+
+	handlerC3.pGPIOx                               =  GPIOB;
+	handlerC3.GPIO_PinConfig.GPIO_PinNumber        =  PIN_12;
+	handlerC3.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
+	handlerC3.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
+	handlerC3.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
+	handlerC3.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
+
+	handlerC4.pGPIOx                               =  GPIOB;
+	handlerC4.GPIO_PinConfig.GPIO_PinNumber        =  PIN_11;
+	handlerC4.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
+	handlerC4.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
+	handlerC4.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
+	handlerC4.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
+
+
+
+	GPIO_Config(&handlerF1);
+	GPIO_Config(&handlerF2);
+	GPIO_Config(&handlerF3);
+	GPIO_Config(&handlerF4);
+	GPIO_Config(&handlerC1);
+	GPIO_Config(&handlerC2);
+	GPIO_Config(&handlerC3);
+	GPIO_Config(&handlerC4);
+
+}
+
 
 void BasicTimer2_CallBack(void){
 
@@ -336,10 +476,10 @@ void BasicTimer2_CallBack(void){
 
 }
 
-			Bandera ++;
-				 if(Bandera > 16){
-					 Bandera = 0;
-				 }
+//			Bandera ++;
+//				 if(Bandera > 16){
+//					 Bandera = 0;
+//				 }
 
 
 }
@@ -353,8 +493,13 @@ void USART2Rx_CallBack(void){
 
 void callback_extInt7(void){
 
-	Code = 1; // Bandera que da inicio al envio del mensaje mediante comunicación serial
+	Code = 1; // Bandera que da inicio a alerta
 
+}
+
+void callback_extInt1(void){
+
+	Puerta = 1;
 }
 
 void Alarma(uint8_t Opciones){
@@ -394,3 +539,159 @@ void Alarma(uint8_t Opciones){
 
 }
 
+
+char read_keypad (void){
+
+		GPIO_WritePin(&handlerF1, RESET);//Pull the R1 low
+		GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
+		GPIO_WritePin(&handlerF3, SET);
+		GPIO_WritePin(&handlerF4, SET);
+
+		if(!(GPIO_ReadPin(&handlerC1))){
+			while(!(GPIO_ReadPin(&handlerC1)));
+			return '1';
+
+		}
+
+		if(!(GPIO_ReadPin(&handlerC2))){
+					while(!(GPIO_ReadPin(&handlerC2)));
+					return '2';
+
+				}
+
+
+		if(!(GPIO_ReadPin(&handlerC3))){
+					while(!(GPIO_ReadPin(&handlerC3)));
+					return '3';
+
+				}
+
+		if(!(GPIO_ReadPin(&handlerC4))){
+					while(!(GPIO_ReadPin(&handlerC4)));
+					return 'A';
+
+				}
+ // Para fila 2
+
+
+		GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
+		GPIO_WritePin(&handlerF2, RESET);  // Pull the R2 High
+		GPIO_WritePin(&handlerF3, SET);
+		GPIO_WritePin(&handlerF4, SET);
+
+		if(!(GPIO_ReadPin(&handlerC1))){
+					while(!(GPIO_ReadPin(&handlerC1)));
+					return '4';
+
+				}
+
+				if(!(GPIO_ReadPin(&handlerC2))){
+							while(!(GPIO_ReadPin(&handlerC2)));
+							return '5';
+
+						}
+
+
+				if(!(GPIO_ReadPin(&handlerC3))){
+							while(!(GPIO_ReadPin(&handlerC3)));
+							return '6';
+
+						}
+
+				if(!(GPIO_ReadPin(&handlerC4))){
+							while(!(GPIO_ReadPin(&handlerC4)));
+							return 'B';
+
+						}
+
+				// Para fila 3
+
+
+		GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
+		GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
+		GPIO_WritePin(&handlerF3, RESET);
+		GPIO_WritePin(&handlerF4, SET);
+
+		if(!(GPIO_ReadPin(&handlerC1))){
+					while(!(GPIO_ReadPin(&handlerC1)));
+					return '7';
+
+		}
+
+		if(!(GPIO_ReadPin(&handlerC2))){
+					while(!(GPIO_ReadPin(&handlerC2)));
+					return '8';
+
+				}
+
+
+		if(!(GPIO_ReadPin(&handlerC3))){
+					while(!(GPIO_ReadPin(&handlerC3)));
+					return '9';
+
+				}
+
+		if(!(GPIO_ReadPin(&handlerC4))){
+					while(!(GPIO_ReadPin(&handlerC4)));
+					return 'C';
+
+				}
+		// Para fila 4
+
+
+GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
+GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
+GPIO_WritePin(&handlerF3, SET);
+GPIO_WritePin(&handlerF4, RESET);
+
+if(!(GPIO_ReadPin(&handlerC1))){
+		while(!(GPIO_ReadPin(&handlerC1)));
+		return '*';
+
+	}
+
+	if(!(GPIO_ReadPin(&handlerC2))){
+				while(!(GPIO_ReadPin(&handlerC2)));
+				return '0';
+
+			}
+
+
+	if(!(GPIO_ReadPin(&handlerC3))){
+				while(!(GPIO_ReadPin(&handlerC3)));
+				return '#';
+
+			}
+
+	if(!(GPIO_ReadPin(&handlerC4))){
+				while(!(GPIO_ReadPin(&handlerC4)));
+				return 'D';
+
+	}
+
+}
+
+
+void parseCommands(char *ptrBufferReception){
+
+	sscanf(ptrBufferReception, " %s %u %u %s" , cmd , &firstParameter , &secondParameter ,userMsg);
+
+	if(strcmp(cmd , "help") == 0){
+
+		writeMsg(&handlerUsart, "Help Menu CMDs: \n");
+		writeMsg(&handlerUsart, "1) Millos = Colores del grande \n ");
+		writeMsg(&handlerUsart, "2) Nacional= Color verde \n");
+
+
+	}
+
+	else if(strcmp(cmd ,"Millos") == 0){
+
+//		   writeMsg(&handlerUsart1, "Color purpura \n \r");
+
+		Bandera = 1;
+
+
+		}
+
+}
