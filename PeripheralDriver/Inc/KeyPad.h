@@ -46,7 +46,7 @@ void KEYPAD_INIT(GPIO_Handler_t *ptrKey);
 
 // Obtener posiciones de pines para uso de cambio de columna, solo para pines de salida
 
-static void Keypad4x4_FindPins_positions(void);
+//static void Keypad4x4_FindPins_positions(void);
 //
 //// Cambiar numero de columna
 //

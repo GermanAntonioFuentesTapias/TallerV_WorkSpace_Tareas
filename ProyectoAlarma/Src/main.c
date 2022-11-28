@@ -27,6 +27,7 @@
 #include "USARTxDriver.h"
 #include "LCDDriver.h"
 #include "I2CDriver.h"
+#include "PwmDriver.h"
 #include "ExtiDriver.h"
 #include  "KeyPad.h"
 
@@ -42,14 +43,17 @@ uint8_t rxData      =  0;
 char DataRTC[64] = "Wipi";
 uint8_t handlerLed                      = 0;
 uint8_t Code                            = 0;
+uint8_t Fila1                           = 0;
 uint8_t Bandera                         = 0;
 uint8_t valor                           = 0;
 uint8_t Puerta                          = 0;
+uint16_t duttyValue                      = 15000;
 GPIO_Handler_t	handlerI2CSDA			= {0};
 GPIO_Handler_t	handlerI2CSCL 			= {0};
 GPIO_Handler_t  handlerSensor           = {0};
 GPIO_Handler_t  handlerRojo             = {0};
 GPIO_Handler_t  handlerPuerta           = {0};
+GPIO_Handler_t  handlerBuzzer           = {0};
 
 /* Configuración Pines Key Pad */
 
@@ -67,6 +71,8 @@ GPIO_Handler_t  handlerC4               = {0};
 I2C_Handler_t	handlerLCD 				= {0};
 EXTI_Config_t   handlerExtiSensor       = {0}; // Configuración para el boton externo
 EXTI_Config_t   handlerExtiPuerta       = {0};
+EXTI_Config_t   handlerF1Ex             = {0};
+PWM_Handler_t   handlerPWM              = {0};
 char dataLCD[64] = {0};
 char bufferData[64]    =  {0};
 
@@ -120,9 +126,14 @@ while (1){
 
 	// Si hay interrupción , la bandera Code se activa
 
-	      if((Puerta) ||  (Code)){
+        if((Puerta) ||  (Code)){
 //	      if (GPIO_ReadPin(&handlerSensor) ==  SET){
 //            if(!Bandera){
+        	updateFrequency(&handlerPWM, 18000);
+        	updateDuttyCycle(&handlerPWM, 15000);
+        	startPwmSignal(&handlerPWM);
+        	enableOutput(&handlerPWM);
+
 	    	LCD_ClearScreen(&handlerLCD);
 			LCD_setCursor(&handlerLCD,0,1);
 			LCD_sendSTR(&handlerLCD,"Detecto movimiento");
@@ -146,25 +157,29 @@ while (1){
 	    	  GPIO_WritePin(&handlerRojo, RESET);
 
 
-//	    	  Alarma(0);
-
 	      			      		}
 
 
-	      if(Bandera){
-
-
-	      			LCD_ClearScreen(&handlerLCD);
-	      			LCD_setCursor(&handlerLCD,0,1);
-	      			LCD_sendSTR(&handlerLCD,"Por favor reinicie ");
-	      			LCD_setCursor(&handlerLCD,2,6);
-	      			LCD_sendSTR(&handlerLCD,"Movimiento");
-
-	      			GPIO_WritePin(&handlerRojo, RESET);
-
-	      			Bandera = 0;
-
-	      		}
+//	      if(Bandera){
+//
+//
+//	      			LCD_ClearScreen(&handlerLCD);
+//	      			LCD_setCursor(&handlerLCD,0,1);
+//	      			LCD_sendSTR(&handlerLCD,"Por favor reinicie ");
+//	      			LCD_setCursor(&handlerLCD,2,6);
+//	      			LCD_sendSTR(&handlerLCD,"Movimiento");
+//
+//	      			GPIO_WritePin(&handlerRojo, RESET);
+//
+//	      			Bandera = 0;
+//
+//	      		}
+//
+//	      if((GPIO_ReadPin(&handlerC1) == 1)){
+//
+//
+//	    	  GPIO_WritePin(&handlerRojo, SET);
+//	      }
 
 
 
@@ -323,6 +338,29 @@ void initSystem(void){
 
 	GPIO_Config(&handlerPuerta);
 
+    /* Para PWM del Buzzer */
+
+	handlerBuzzer.pGPIOx                             = GPIOC;
+	handlerBuzzer.GPIO_PinConfig.GPIO_PinNumber      = PIN_6;
+	handlerBuzzer.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
+	handlerBuzzer.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
+	handlerBuzzer.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerBuzzer.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEED_FAST;
+	handlerBuzzer.GPIO_PinConfig.GPIO_PinAltFunMode  = AF2;
+
+
+	GPIO_Config(&handlerBuzzer);
+
+	// Handler para el PWM
+
+	handlerPWM.ptrTIMx                               = TIM3;
+	handlerPWM.config.channel                        = PWM_CHANNEL_1;
+	handlerPWM.config.duttyCicle                     = duttyValue;
+    handlerPWM.config.periodo                        = 18000;
+    handlerPWM.config.prescaler                      = 16;
+
+    pwm_Config(&handlerPWM);
+
 
 
 
@@ -339,13 +377,18 @@ void initSystem(void){
 	handlerExtiPuerta.pGPIOHandler  = &handlerPuerta;
 	handlerExtiPuerta.edgeType      = EXTERNAL_INTERRUPT_RISING_EDGE;
 
+	//
+
+	handlerF1Ex.pGPIOHandler       = &handlerF1;
+	handlerF1Ex.edgeType           = EXTERNAL_INTERRUPT_RISING_EDGE;
 	/* Cargando configuración */
 
 	extInt_Config(&handlerExtiSensor);
 	extInt_Config(&handlerExtiPuerta);
+	extInt_Config(&handlerF1Ex);
 
 
-	handlerTx.pGPIOx                       			= GPIOA;
+	    handlerTx.pGPIOx                       			= GPIOA;
 		handlerTx.GPIO_PinConfig.GPIO_PinNumber			= PIN_2;				// Pin TX USART2
 		handlerTx.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
 		handlerTx.GPIO_PinConfig.GPIO_PinOPType			= GPIO_OTYPE_PUSHPULL;
@@ -448,6 +491,7 @@ void ConfigKeyPad(void){
 	handlerC4.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 
+     /* Configuración de handlers */
 
 	GPIO_Config(&handlerF1);
 	GPIO_Config(&handlerF2);
@@ -497,6 +541,12 @@ void callback_extInt7(void){
 
 }
 
+//void callback_extInt8(void){
+//
+//	Fila1 = 1; // Bandera que da inicio a alerta
+//
+//}
+
 void callback_extInt1(void){
 
 	Puerta = 1;
@@ -540,136 +590,136 @@ void Alarma(uint8_t Opciones){
 }
 
 
-char read_keypad (void){
-
-		GPIO_WritePin(&handlerF1, RESET);//Pull the R1 low
-		GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
-		GPIO_WritePin(&handlerF3, SET);
-		GPIO_WritePin(&handlerF4, SET);
-
-		if(!(GPIO_ReadPin(&handlerC1))){
-			while(!(GPIO_ReadPin(&handlerC1)));
-			return '1';
-
-		}
-
-		if(!(GPIO_ReadPin(&handlerC2))){
-					while(!(GPIO_ReadPin(&handlerC2)));
-					return '2';
-
-				}
-
-
-		if(!(GPIO_ReadPin(&handlerC3))){
-					while(!(GPIO_ReadPin(&handlerC3)));
-					return '3';
-
-				}
-
-		if(!(GPIO_ReadPin(&handlerC4))){
-					while(!(GPIO_ReadPin(&handlerC4)));
-					return 'A';
-
-				}
- // Para fila 2
-
-
-		GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
-		GPIO_WritePin(&handlerF2, RESET);  // Pull the R2 High
-		GPIO_WritePin(&handlerF3, SET);
-		GPIO_WritePin(&handlerF4, SET);
-
-		if(!(GPIO_ReadPin(&handlerC1))){
-					while(!(GPIO_ReadPin(&handlerC1)));
-					return '4';
-
-				}
-
-				if(!(GPIO_ReadPin(&handlerC2))){
-							while(!(GPIO_ReadPin(&handlerC2)));
-							return '5';
-
-						}
-
-
-				if(!(GPIO_ReadPin(&handlerC3))){
-							while(!(GPIO_ReadPin(&handlerC3)));
-							return '6';
-
-						}
-
-				if(!(GPIO_ReadPin(&handlerC4))){
-							while(!(GPIO_ReadPin(&handlerC4)));
-							return 'B';
-
-						}
-
-				// Para fila 3
-
-
-		GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
-		GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
-		GPIO_WritePin(&handlerF3, RESET);
-		GPIO_WritePin(&handlerF4, SET);
-
-		if(!(GPIO_ReadPin(&handlerC1))){
-					while(!(GPIO_ReadPin(&handlerC1)));
-					return '7';
-
-		}
-
-		if(!(GPIO_ReadPin(&handlerC2))){
-					while(!(GPIO_ReadPin(&handlerC2)));
-					return '8';
-
-				}
-
-
-		if(!(GPIO_ReadPin(&handlerC3))){
-					while(!(GPIO_ReadPin(&handlerC3)));
-					return '9';
-
-				}
-
-		if(!(GPIO_ReadPin(&handlerC4))){
-					while(!(GPIO_ReadPin(&handlerC4)));
-					return 'C';
-
-				}
-		// Para fila 4
-
-
-GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
-GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
-GPIO_WritePin(&handlerF3, SET);
-GPIO_WritePin(&handlerF4, RESET);
-
-if(!(GPIO_ReadPin(&handlerC1))){
-		while(!(GPIO_ReadPin(&handlerC1)));
-		return '*';
-
-	}
-
-	if(!(GPIO_ReadPin(&handlerC2))){
-				while(!(GPIO_ReadPin(&handlerC2)));
-				return '0';
-
-			}
-
-
-	if(!(GPIO_ReadPin(&handlerC3))){
-				while(!(GPIO_ReadPin(&handlerC3)));
-				return '#';
-
-			}
-
-	if(!(GPIO_ReadPin(&handlerC4))){
-				while(!(GPIO_ReadPin(&handlerC4)));
-				return 'D';
-
-	}
-
-}
+//char read_keypad (void){
+//
+//		GPIO_WritePin(&handlerF1, RESET);//Pull the R1 low
+//		GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
+//		GPIO_WritePin(&handlerF3, SET);
+//		GPIO_WritePin(&handlerF4, SET);
+//
+//		if(!(GPIO_ReadPin(&handlerC1))){
+//			while(!(GPIO_ReadPin(&handlerC1)));
+//			return '1';
+//
+//		}
+//
+//		if(!(GPIO_ReadPin(&handlerC2))){
+//					while(!(GPIO_ReadPin(&handlerC2)));
+//					return '2';
+//
+//				}
+//
+//
+//		if(!(GPIO_ReadPin(&handlerC3))){
+//					while(!(GPIO_ReadPin(&handlerC3)));
+//					return '3';
+//
+//				}
+//
+//		if(!(GPIO_ReadPin(&handlerC4))){
+//					while(!(GPIO_ReadPin(&handlerC4)));
+//					return 'A';
+//
+//				}
+// // Para fila 2
+//
+//
+//		GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
+//		GPIO_WritePin(&handlerF2, RESET);  // Pull the R2 High
+//		GPIO_WritePin(&handlerF3, SET);
+//		GPIO_WritePin(&handlerF4, SET);
+//
+//		if(!(GPIO_ReadPin(&handlerC1))){
+//					while(!(GPIO_ReadPin(&handlerC1)));
+//					return '4';
+//
+//				}
+//
+//				if(!(GPIO_ReadPin(&handlerC2))){
+//							while(!(GPIO_ReadPin(&handlerC2)));
+//							return '5';
+//
+//						}
+//
+//
+//				if(!(GPIO_ReadPin(&handlerC3))){
+//							while(!(GPIO_ReadPin(&handlerC3)));
+//							return '6';
+//
+//						}
+//
+//				if(!(GPIO_ReadPin(&handlerC4))){
+//							while(!(GPIO_ReadPin(&handlerC4)));
+//							return 'B';
+//
+//						}
+//
+//				// Para fila 3
+//
+//
+//		GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
+//		GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
+//		GPIO_WritePin(&handlerF3, RESET);
+//		GPIO_WritePin(&handlerF4, SET);
+//
+//		if(!(GPIO_ReadPin(&handlerC1))){
+//					while(!(GPIO_ReadPin(&handlerC1)));
+//					return '7';
+//
+//		}
+//
+//		if(!(GPIO_ReadPin(&handlerC2))){
+//					while(!(GPIO_ReadPin(&handlerC2)));
+//					return '8';
+//
+//				}
+//
+//
+//		if(!(GPIO_ReadPin(&handlerC3))){
+//					while(!(GPIO_ReadPin(&handlerC3)));
+//					return '9';
+//
+//				}
+//
+//		if(!(GPIO_ReadPin(&handlerC4))){
+//					while(!(GPIO_ReadPin(&handlerC4)));
+//					return 'C';
+//
+//				}
+//		// Para fila 4
+//
+//
+//GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
+//GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
+//GPIO_WritePin(&handlerF3, SET);
+//GPIO_WritePin(&handlerF4, RESET);
+//
+//if(!(GPIO_ReadPin(&handlerC1))){
+//		while(!(GPIO_ReadPin(&handlerC1)));
+//		return '*';
+//
+//	}
+//
+//	if(!(GPIO_ReadPin(&handlerC2))){
+//				while(!(GPIO_ReadPin(&handlerC2)));
+//				return '0';
+//
+//			}
+//
+//
+//	if(!(GPIO_ReadPin(&handlerC3))){
+//				while(!(GPIO_ReadPin(&handlerC3)));
+//				return '#';
+//
+//			}
+//
+//	if(!(GPIO_ReadPin(&handlerC4))){
+//				while(!(GPIO_ReadPin(&handlerC4)));
+//				return 'D';
+//
+//	}
+//
+//}
 
 
 void parseCommands(char *ptrBufferReception){
@@ -693,5 +743,14 @@ void parseCommands(char *ptrBufferReception){
 
 
 		}
+
+	else if(strcmp(cmd ,"Nacional") == 0){
+
+		updateFrequency(&handlerPWM, 0);
+		  updateDuttyCycle(&handlerPWM, RESET);
+	       stopPwmSignal(&handlerPWM);
+
+
+}
 
 }
