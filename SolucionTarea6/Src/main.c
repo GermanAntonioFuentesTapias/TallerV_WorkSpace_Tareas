@@ -213,14 +213,7 @@ void initSystem (void){
 	GPIO_Config(&handlerRxPin);
 
 	// Configurando la comunicación serial (Cable verde es TX, Cable Blando es RX)
-	handlerUSART2.ptrUSARTx											= USART2;
-	handlerUSART2.USART_Config.USART_mode							= USART_MODE_RXTX;
-	handlerUSART2.USART_Config.USART_baudrate						= USART_BAUDRATE_115200;
-	handlerUSART2.USART_Config.USART_datasize               		= USART_DATASIZE_9BIT;
-	handlerUSART2.USART_Config.USART_parity							= USART_PARITY_EVEN;
-	handlerUSART2.USART_Config.USART_stopbits						= USART_STOPBIT_1;
-	handlerUSART2.USART_Config.USART_IntRx				            = USART_RX_INTERRUPT_ENABLE;
-	handlerUSART2.USART_Config.USART_IntTx				         	= USART_TX_INTERRUP_DISABLE;
+
 
 	USART_Config(&handlerUSART2);
 

@@ -88,7 +88,8 @@ bool stringComplete = false;
 bool makeUpdateLCD  = false;
 unsigned int firstParameter;
 unsigned int secondParameter;
-
+//int Filas[];
+//int Columnas[];
 
 #define LCD_ADRESS		0b0100111
 
@@ -113,8 +114,8 @@ int main(void){
 //	sprintf(dataLCD, "Alarmas S,A.        Bienvenidos");
 	LCD_setCursor(&handlerLCD,0,0);
 	LCD_sendSTR(&handlerLCD,"____________________");
-	LCD_setCursor(&handlerLCD,1,4);
-	LCD_sendSTR(&handlerLCD,"Alarmas S,A.");
+	LCD_setCursor(&handlerLCD,1,1);
+	LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
 	LCD_setCursor(&handlerLCD,2,4);
 	LCD_sendSTR(&handlerLCD,"Bienvenidos");
 	LCD_setCursor(&handlerLCD,3,0);
@@ -124,8 +125,17 @@ int main(void){
 
 while (1){
 
-	// Si hay interrupción , la bandera Code se activa
+//
+//	int Filas[] = { handlerF1 , handlerF2 , handlerF3 , handlerF4};
+//	int Columnas[] = { handlerC1 ,handlerC2 , handlerC3, handlerC4};
 
+	// Si hay interrupción , la bandera Code se activa
+        if((GPIO_ReadPin(&handlerF1) == RESET ) && (GPIO_ReadPin(&handlerC1) == SET)){
+
+
+        	GPIO_WritePin(&handlerRojo, SET);
+
+        }
         if((Puerta) ||  (Code)){
 //	      if (GPIO_ReadPin(&handlerSensor) ==  SET){
 //            if(!Bandera){
@@ -160,20 +170,20 @@ while (1){
 	      			      		}
 
 
-//	      if(Bandera){
-//
-//
-//	      			LCD_ClearScreen(&handlerLCD);
-//	      			LCD_setCursor(&handlerLCD,0,1);
-//	      			LCD_sendSTR(&handlerLCD,"Por favor reinicie ");
-//	      			LCD_setCursor(&handlerLCD,2,6);
-//	      			LCD_sendSTR(&handlerLCD,"Movimiento");
-//
-//	      			GPIO_WritePin(&handlerRojo, RESET);
-//
-//	      			Bandera = 0;
-//
-//	      		}
+	      if(Bandera){
+
+
+	      			LCD_ClearScreen(&handlerLCD);
+	      			LCD_setCursor(&handlerLCD,0,1);
+	      			LCD_sendSTR(&handlerLCD,"Por favor reinicie ");
+	      			LCD_setCursor(&handlerLCD,2,6);
+	      			LCD_sendSTR(&handlerLCD,"Movimiento");
+
+	      			GPIO_WritePin(&handlerRojo, RESET);
+
+	      			Bandera = 0;
+
+	      		}
 //
 //	      if((GPIO_ReadPin(&handlerC1) == 1)){
 //
@@ -463,7 +473,7 @@ void ConfigKeyPad(void){
 
 	handlerC1.pGPIOx                               =  GPIOA;
 	handlerC1.GPIO_PinConfig.GPIO_PinNumber        =  PIN_12;
-	handlerC1.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
+	handlerC1.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
 	handlerC1.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
 	handlerC1.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
 	handlerC1.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
@@ -471,23 +481,23 @@ void ConfigKeyPad(void){
 
 	handlerC2.pGPIOx                               =  GPIOA;
 	handlerC2.GPIO_PinConfig.GPIO_PinNumber        =  PIN_11;
-	handlerC2.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
+	handlerC2.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
 	handlerC2.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
-	handlerC2.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
+	handlerC2.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLUP;
 	handlerC2.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 	handlerC3.pGPIOx                               =  GPIOB;
 	handlerC3.GPIO_PinConfig.GPIO_PinNumber        =  PIN_12;
-	handlerC3.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
+	handlerC3.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
 	handlerC3.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
-	handlerC3.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
+	handlerC3.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLUP;
 	handlerC3.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 	handlerC4.pGPIOx                               =  GPIOB;
 	handlerC4.GPIO_PinConfig.GPIO_PinNumber        =  PIN_11;
-	handlerC4.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
+	handlerC4.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
 	handlerC4.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
-	handlerC4.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
+	handlerC4.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLUP;
 	handlerC4.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 
@@ -536,6 +546,7 @@ void USART2Rx_CallBack(void){
 
 
 void callback_extInt7(void){
+
 
 	Code = 1; // Bandera que da inicio a alerta
 
