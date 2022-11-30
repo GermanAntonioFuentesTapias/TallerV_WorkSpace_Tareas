@@ -5,6 +5,7 @@
 "./Src/GPIOxDriver.o"
 "./Src/I2CDriver.o"
 "./Src/I2CLCD.o"
+"./Src/KeyPad.o"
 "./Src/LCDDriver.o"
 "./Src/MainClockDriver.o"
 "./Src/PwmDriver.o"

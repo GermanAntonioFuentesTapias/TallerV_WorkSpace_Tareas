@@ -12,6 +12,7 @@ C_SRCS += \
 ../Src/GPIOxDriver.c \
 ../Src/I2CDriver.c \
 ../Src/I2CLCD.c \
+../Src/KeyPad.c \
 ../Src/LCDDriver.c \
 ../Src/MainClockDriver.c \
 ../Src/PwmDriver.c \
@@ -30,6 +31,7 @@ OBJS += \
 ./Src/GPIOxDriver.o \
 ./Src/I2CDriver.o \
 ./Src/I2CLCD.o \
+./Src/KeyPad.o \
 ./Src/LCDDriver.o \
 ./Src/MainClockDriver.o \
 ./Src/PwmDriver.o \
@@ -48,6 +50,7 @@ C_DEPS += \
 ./Src/GPIOxDriver.d \
 ./Src/I2CDriver.d \
 ./Src/I2CLCD.d \
+./Src/KeyPad.d \
 ./Src/LCDDriver.d \
 ./Src/MainClockDriver.d \
 ./Src/PwmDriver.d \

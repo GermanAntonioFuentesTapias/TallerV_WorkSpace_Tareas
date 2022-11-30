@@ -719,18 +719,25 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 	switch (extiConfig->pGPIOHandler->GPIO_PinConfig.GPIO_PinNumber) {
 	case 0: {
 		__NVIC_EnableIRQ(EXTI0_IRQn);
+
+		__NVIC_SetPriority(EXTI0_IRQn, 7);
+
 		break;
 	}
 
 	case 1: {
 
 		__NVIC_EnableIRQ(EXTI1_IRQn);
+
+		__NVIC_SetPriority(EXTI1_IRQn, 6 );
 		break;
 	}
 
 	case 2:{
 
 		__NVIC_EnableIRQ(EXTI2_IRQn);
+
+		__NVIC_SetPriority(EXTI2_IRQn, 8 );
 
 		break;
 
@@ -739,12 +746,16 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 	case 3: {
 
 		__NVIC_EnableIRQ(EXTI3_IRQn);
+
+		__NVIC_SetPriority(EXTI3_IRQn, 9 );
 		break;
 	}
 
 	case 4: {
 
 		__NVIC_EnableIRQ(EXTI4_IRQn);
+
+		__NVIC_SetPriority(EXTI4_IRQn, 10 );
 		break;
 	}
 
@@ -752,63 +763,89 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 
 		__NVIC_EnableIRQ(EXTI9_5_IRQn);
 
+		__NVIC_SetPriority(EXTI9_5_IRQn, 5 );
+
 			break;
 		}
 
 	case 6: {
 
 	    __NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+	    __NVIC_SetPriority(EXTI9_5_IRQn, 5 );
 			break;
 		}
 
 	case 7: {
 
 		__NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+		__NVIC_SetPriority(EXTI9_5_IRQn, 5 );
+
 			break;
 		}
 
 	case 8: {
 
 		__NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+		__NVIC_SetPriority(EXTI9_5_IRQn, 5);
 			break;
 		}
 
 	case 9: {
 
 		__NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+		__NVIC_SetPriority(EXTI9_5_IRQn, 5 );
 			break;
 		}
 
 	case 10: {
 
 		__NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+		__NVIC_SetPriority(EXTI15_10_IRQn, 4 );
 			break;
 		}
 
 	case 11: {
 
 		__NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+		__NVIC_SetPriority(EXTI15_10_IRQn, 4 );
+
+
 			break;
 		}
 	case 12: {
 
 		__NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+		__NVIC_SetPriority(EXTI15_10_IRQn, 4 );
 			break;
 		}
 	case 13: {
 
 		__NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+		__NVIC_SetPriority(EXTI15_10_IRQn, 4 );
 			break;
 		}
 	case 14: {
 
 		__NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+		__NVIC_SetPriority(EXTI15_10_IRQn, 4 );
 			break;
+
 		}
 
 	case 15: {
 
 		__NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+		__NVIC_SetPriority(EXTI15_10_IRQn, 4 );
 		break;
 	}
 
