@@ -33,8 +33,10 @@
 
 GPIO_Handler_t    handlerBlinkyPin   = {0};
 
+
 //Timer encargado del Blinky
 BasicTimer_Handler_t  handlerBlinkyTimer = {0};
+BasicTimer_Handler_t  handlerMuestroT    = {0};
 
 GPIO_Handler_t handlerTx     	    	= {0};
 GPIO_Handler_t handlerRx	 	     	= {0};
@@ -48,6 +50,15 @@ uint8_t Bandera                         = 0;
 uint8_t valor                           = 0;
 uint8_t Puerta                          = 0;
 uint16_t duttyValue                      = 15000;
+
+/* Para Muestro */
+
+uint8_t  Columna1                        = {0};
+uint8_t  Columna2                        = {1};
+uint8_t  Columna3                        = {0};
+uint8_t  Columna4                        = {1};
+
+
 GPIO_Handler_t	handlerI2CSDA			= {0};
 GPIO_Handler_t	handlerI2CSCL 			= {0};
 GPIO_Handler_t  handlerSensor           = {0};
@@ -72,6 +83,9 @@ I2C_Handler_t	handlerLCD 				= {0};
 EXTI_Config_t   handlerExtiSensor       = {0}; // Configuración para el boton externo
 EXTI_Config_t   handlerExtiPuerta       = {0};
 EXTI_Config_t   handlerF1Ex             = {0};
+EXTI_Config_t   handlerF2Ex             = {0};
+EXTI_Config_t   handlerF3Ex             = {0};
+EXTI_Config_t   handlerF4Ex             = {0};
 PWM_Handler_t   handlerPWM              = {0};
 char dataLCD[64] = {0};
 char bufferData[64]    =  {0};
@@ -101,9 +115,13 @@ void ConfigKeyPad(void);
 void Alarma(uint8_t Opciones);
 
 
+void Muestreo(void);
+
 
 int main(void){
- 	initSystem();
+  	initSystem();
+ 	ConfigKeyPad();
+
  	void parseCommands (char *ptrBufferReception);
 
 
@@ -122,20 +140,53 @@ int main(void){
 	LCD_sendSTR(&handlerLCD,"____________________");
 
 	startCounterTimer(&handlerBlinkyTimer);
+	startCounterTimer(&handlerMuestroT);
 
 while (1){
 
+//	  if(( GPIO_ReadPin(&handlerF1) == 1) && (Fila1 ) ){
 //
-//	int Filas[] = { handlerF1 , handlerF2 , handlerF3 , handlerF4};
-//	int Columnas[] = { handlerC1 ,handlerC2 , handlerC3, handlerC4};
+//	                	GPIO_WritePin(&handlerRojo, SET);
+//
+//
+//
+//	                }
+//
+//	  if(( GPIO_ReadPin(&handlerF1) == 1) ){
+//
+//	                 	GPIO_WritePin(&handlerRojo, SET);
+//
+//
+//
+//	                 }
+//
+//        if(( GPIO_ReadPin(&handlerF2) == 1) ){
+//
+//                	GPIO_WritePin(&handlerRojo, SET);
+//
+//
+//
+//                }
+//
+//
+//        if(( GPIO_ReadPin(&handlerF3) == 1) ){
+//
+//                	GPIO_WritePin(&handlerRojo, SET);
+//
+//
+//
+//                }
+//
+//
+//        if(( GPIO_ReadPin(&handlerF4) == 1) ){
+//
+//                    GPIO_WritePin(&handlerRojo, SET);
+//
+//
+//
+//                        }
 
-	// Si hay interrupción , la bandera Code se activa
-        if((GPIO_ReadPin(&handlerF1) == RESET ) && (GPIO_ReadPin(&handlerC1) == SET)){
 
-
-        	GPIO_WritePin(&handlerRojo, SET);
-
-        }
         if((Puerta) ||  (Code)){
 //	      if (GPIO_ReadPin(&handlerSensor) ==  SET){
 //            if(!Bandera){
@@ -274,6 +325,14 @@ void initSystem(void){
 		handlerBlinkyTimer.TIMx_Config.TIMx_period            = 2500;
 		BasicTimer_Config(&handlerBlinkyTimer);
 
+		//Configurando el Timer4 para que funcione para el muestreo
+		handlerMuestroT .ptrTIMx                            = TIM4;
+		handlerMuestroT .TIMx_Config.TIMx_mode              = BTIMER_MODE_UP;
+		handlerMuestroT .TIMx_Config.TIMx_speed             = BTIMER_SPEED_1ms;
+		handlerMuestroT .TIMx_Config.TIMx_interruptEnable   = 1;
+		handlerMuestroT .TIMx_Config.TIMx_period            = 4;
+		BasicTimer_Config(&handlerMuestroT );
+
 	handlerBlinkyPin.pGPIOx                              = GPIOA;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinNumber       = PIN_5;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
@@ -387,15 +446,30 @@ void initSystem(void){
 	handlerExtiPuerta.pGPIOHandler  = &handlerPuerta;
 	handlerExtiPuerta.edgeType      = EXTERNAL_INTERRUPT_RISING_EDGE;
 
-	//
+	//Lecturas Exti
 
-	handlerF1Ex.pGPIOHandler       = &handlerF1;
-	handlerF1Ex.edgeType           = EXTERNAL_INTERRUPT_RISING_EDGE;
+	handlerF1Ex.pGPIOHandler       = &handlerC1;
+	handlerF1Ex.edgeType           = EXTERNAL_INTERRUPT_FALLING_EDGE;
+
+	handlerF2Ex.pGPIOHandler       = &handlerC2;
+	handlerF2Ex.edgeType           = EXTERNAL_INTERRUPT_FALLING_EDGE;
+
+	handlerF3Ex.pGPIOHandler       = &handlerC3;
+	handlerF3Ex.edgeType           = EXTERNAL_INTERRUPT_FALLING_EDGE;
+
+	handlerF4Ex.pGPIOHandler       = &handlerC4;
+	handlerF4Ex.edgeType           = EXTERNAL_INTERRUPT_FALLING_EDGE;
+
+
 	/* Cargando configuración */
 
 	extInt_Config(&handlerExtiSensor);
 	extInt_Config(&handlerExtiPuerta);
 	extInt_Config(&handlerF1Ex);
+	extInt_Config(&handlerF2Ex);
+	extInt_Config(&handlerF3Ex);
+	extInt_Config(&handlerF4Ex);
+
 
 
 	    handlerTx.pGPIOx                       			= GPIOA;
@@ -445,37 +519,37 @@ void ConfigKeyPad(void){
 
 	handlerF1.pGPIOx                               =  GPIOB;
     handlerF1.GPIO_PinConfig.GPIO_PinNumber        =  PIN_8;
-	handlerF1.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
+	handlerF1.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
 	handlerF1.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
-	handlerF1.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLDOWN;
+	handlerF1.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
 	handlerF1.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 	handlerF2.pGPIOx                               =  GPIOB;
 	handlerF2.GPIO_PinConfig.GPIO_PinNumber        =  PIN_9;
-	handlerF2.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
+	handlerF2.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
 	handlerF2.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
-	handlerF2.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLDOWN;
+	handlerF2.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
 	handlerF2.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 	handlerF3.pGPIOx                               =  GPIOC;
 	handlerF3.GPIO_PinConfig.GPIO_PinNumber        =  PIN_9;
-	handlerF3.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
+	handlerF3.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
 	handlerF3.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
-	handlerF3.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLDOWN;
+	handlerF3.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
 	handlerF3.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 	handlerF4.pGPIOx                               =  GPIOC;
 	handlerF4.GPIO_PinConfig.GPIO_PinNumber        =  PIN_8;
-	handlerF4.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
+	handlerF4.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
 	handlerF4.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
-	handlerF4.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLDOWN;
+	handlerF4.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
 	handlerF4.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 	handlerC1.pGPIOx                               =  GPIOA;
 	handlerC1.GPIO_PinConfig.GPIO_PinNumber        =  PIN_12;
 	handlerC1.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
 	handlerC1.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
-	handlerC1.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_NOTHING;
+	handlerC1.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLUP;
 	handlerC1.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 
@@ -487,14 +561,14 @@ void ConfigKeyPad(void){
 	handlerC2.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 	handlerC3.pGPIOx                               =  GPIOB;
-	handlerC3.GPIO_PinConfig.GPIO_PinNumber        =  PIN_12;
+	handlerC3.GPIO_PinConfig.GPIO_PinNumber        =  PIN_14;
 	handlerC3.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
 	handlerC3.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
 	handlerC3.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLUP;
 	handlerC3.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 	handlerC4.pGPIOx                               =  GPIOB;
-	handlerC4.GPIO_PinConfig.GPIO_PinNumber        =  PIN_11;
+	handlerC4.GPIO_PinConfig.GPIO_PinNumber        =  PIN_13;
 	handlerC4.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
 	handlerC4.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
 	handlerC4.GPIO_PinConfig.GPIO_PinPuPdControl   =  GPIO_PUPDR_PULLUP;
@@ -512,29 +586,27 @@ void ConfigKeyPad(void){
 	GPIO_Config(&handlerC3);
 	GPIO_Config(&handlerC4);
 
+
+
 }
 
 
 void BasicTimer2_CallBack(void){
 
 	handlerLed = !handlerLed; // Activación de Blinky
-	//
-			if(handlerLed){
-	//
-				// Activa
-				GPIO_WritePin(&handlerBlinkyPin,  SET);
-	//
-			}else{
-	//
-				GPIO_WritePin(&handlerBlinkyPin, RESET); // Desactiva
+
+	Muestreo();
 
 }
 
-//			Bandera ++;
-//				 if(Bandera > 16){
-//					 Bandera = 0;
-//				 }
+void BasicTimer4_CallBack(void){
 
+	Columna1 = !Columna1;
+	Columna2 = !Columna2;
+	Columna3 = !Columna3;
+	Columna4 = !Columna4;
+
+	Muestreo();
 
 }
 
@@ -552,11 +624,11 @@ void callback_extInt7(void){
 
 }
 
-//void callback_extInt8(void){
-//
-//	Fila1 = 1; // Bandera que da inicio a alerta
-//
-//}
+void callback_extInt12(void){
+
+	Fila1 = 1; // Bandera que da inicio a alerta
+
+}
 
 void callback_extInt1(void){
 
@@ -597,6 +669,56 @@ void Alarma(uint8_t Opciones){
 	}
 
 }
+
+}
+
+void Muestreo(void){
+
+
+	if(Columna1){
+
+		GPIO_WritePin(&handlerF1, SET );
+	}else{
+
+		GPIO_WritePin(&handlerF1, RESET );
+	}
+
+	if(Columna2){
+
+		GPIO_WritePin(&handlerF2, SET );
+	}else{
+
+		GPIO_WritePin(&handlerF2, RESET );
+	}
+
+	if(Columna3){
+
+		GPIO_WritePin(&handlerF3, SET );
+	}else{
+
+		GPIO_WritePin(&handlerF3, RESET );
+	}
+
+	if(Columna4){
+
+		GPIO_WritePin(&handlerF4, SET );
+	}else{
+
+		GPIO_WritePin(&handlerF4, RESET );
+	}
+
+	if(handlerLed){
+		//
+					// Activa
+					GPIO_WritePin(&handlerBlinkyPin,  SET);
+		//
+				}else{
+		//
+					GPIO_WritePin(&handlerBlinkyPin, RESET); // Desactiva
+
+	}
+
+
 
 }
 
