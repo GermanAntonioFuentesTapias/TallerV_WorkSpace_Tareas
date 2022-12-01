@@ -58,9 +58,9 @@ uint16_t duttyValue                      = 15000;
 
 /* Para Muestro */
 
-uint8_t  Columna1                        = {0};
+uint8_t  Columna1                        = {1};
 uint8_t  Columna2                        = {1};
-uint8_t  Columna3                        = {0};
+uint8_t  Columna3                        = {1};
 uint8_t  Columna4                        = {1};
 
 
@@ -192,21 +192,85 @@ while (1){
 //                        }
 
 
-	    if(Fila1){
-
-	        GPIO_WritePin(&handlerRojo, SET);
-
-	    	Fila1 = 0;
-	    }
+//	    if(Fila4){
+//
+//	        GPIO_WritePin(&handlerRojo, SET);
+//
+//	    	Fila4 = 0;
+//	    }
 
 	    if(Fila3){
 
-	    	GPIO_WritePin(&handlerRojo, SET);
+//	    	__disable_irq();
 
-	    		    	Fila3 = 0;
+	    	GPIO_WritePin(&handlerF1, RESET);
+	    	GPIO_WritePin(&handlerF2, RESET);
+	    	GPIO_WritePin(&handlerF3, SET);
+	    	GPIO_WritePin(&handlerF4, RESET);
+
+	    	if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+
+//	    		GPIO_WritePin(&handlerRojo, SET);
+
+	    		LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,1);
+				LCD_sendSTR(&handlerLCD,"Letra = 9 ");
+				LCD_setCursor(&handlerLCD,2,6);
+				LCD_sendSTR(&handlerLCD,"Mk Si");
+
+				Fila3 = 0;
+	    	}
+
+	    	GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, SET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, RESET);
+
+	    	if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+
+	    		  //	    		GPIO_WritePin(&handlerRojo, SET);
+
+	    		  	    		LCD_ClearScreen(&handlerLCD);
+	    		  				LCD_setCursor(&handlerLCD,0,1);
+	    		  				LCD_sendSTR(&handlerLCD,"Letra = 6 ");
+	    		  				LCD_setCursor(&handlerLCD,2,6);
+	    		  				LCD_sendSTR(&handlerLCD,"Mk Si");
+
+	    		  				Fila3 = 0;
+	    		  	    	}
+
+	    		  	    	else{
+
+	    		  	    		__NOP();
+	    		  	    	}
+
 
 
 	    }
+
+
+
+
+//
+//	    if(Fila3){
+//
+//	   	    	GPIO_WritePin(&handlerRojo, SET);
+//
+//	   	    		    	Fila3 = 0;
+//
+//
+//	   	    }
+
+//	    if(Fila2){
+//
+//	   	    	GPIO_WritePin(&handlerRojo, SET);
+//
+//	   	    		    	Fila2 = 0;
+//
+//
+//	   	    }
+
+
 
 //	    if(!(Fila1)){
 //
@@ -360,12 +424,12 @@ void initSystem(void){
 
 		//MUESTREO
 
-		handlerMuestroT .ptrTIMx                            = TIM4;
-		handlerMuestroT .TIMx_Config.TIMx_mode              = BTIMER_MODE_UP;
-		handlerMuestroT .TIMx_Config.TIMx_speed             = BTIMER_SPEED_1ms;
-		handlerMuestroT .TIMx_Config.TIMx_interruptEnable   = 1;
-		handlerMuestroT .TIMx_Config.TIMx_period            = 25;
-		BasicTimer_Config(&handlerMuestroT );
+//		handlerMuestroT .ptrTIMx                            = TIM4;
+//		handlerMuestroT .TIMx_Config.TIMx_mode              = BTIMER_MODE_UP;
+//		handlerMuestroT .TIMx_Config.TIMx_speed             = BTIMER_SPEED_1ms;
+//		handlerMuestroT .TIMx_Config.TIMx_interruptEnable   = 1;
+//		handlerMuestroT .TIMx_Config.TIMx_period            = 25;
+//		BasicTimer_Config(&handlerMuestroT );
 
 	handlerBlinkyPin.pGPIOx                              = GPIOA;
 	handlerBlinkyPin.GPIO_PinConfig.GPIO_PinNumber       = PIN_5;
@@ -464,9 +528,6 @@ void initSystem(void){
 
     pwm_Config(&handlerPWM);
 
-
-
-
 	/* Configuraciones Exti */
 
 	// Sensor
@@ -530,7 +591,7 @@ void initSystem(void){
 
 void ConfigKeyPad(void){
 
-	handlerF1.pGPIOx                               =  GPIOB;
+     	handlerF1.pGPIOx                               =  GPIOB;
 	    handlerF1.GPIO_PinConfig.GPIO_PinNumber        =  PIN_8;
 		handlerF1.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_OUT;
 		handlerF1.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
@@ -566,7 +627,7 @@ void ConfigKeyPad(void){
 		handlerC1.GPIO_PinConfig.GPIO_PinSpeed         =  GPIO_OSPEED_FAST;
 
 
-		handlerC2.pGPIOx                               =  GPIOC;
+		handlerC2.pGPIOx                               =  GPIOA;
 		handlerC2.GPIO_PinConfig.GPIO_PinNumber        =  PIN_11;
 		handlerC2.GPIO_PinConfig.GPIO_PinMode          =  GPIO_MODE_IN;
 		handlerC2.GPIO_PinConfig.GPIO_PinOPType        =  GPIO_OTYPE_PUSHPULL;
@@ -637,10 +698,10 @@ void BasicTimer2_CallBack(void){
 
 void BasicTimer4_CallBack(void){
 
-	Columna1 = !Columna1;
-	Columna2 = !Columna2;
-	Columna3 = !Columna3;
-	Columna4 = !Columna4;
+//	Columna1 = !Columna1;
+//	Columna2 = !Columna2;
+//	Columna3 = !Columna3;
+//	Columna4 = !Columna4;
 
 	Muestreo();
 
@@ -663,19 +724,35 @@ void callback_extInt7(void){
 
 void callback_extInt11(void){
 
-	Fila1 = 1; // Bandera que da inicio a alerta de Key
+	Fila2 = 1; // Bandera que da inicio a alerta de Key
 
 }
 
 
 void callback_extInt12(void){
 
+	Fila1 = 1;
+}
+
+
+void callback_extInt13(void){
+
+	Fila4 = 1;
+}
+
+
+void callback_extInt14(void){
+
 	Fila3 = 1;
 }
+
+
+
 void callback_extInt1(void){
 
 	Puerta = 1;
 }
+
 
 void Alarma(uint8_t Opciones){
 
