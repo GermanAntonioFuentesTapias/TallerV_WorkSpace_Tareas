@@ -119,6 +119,7 @@ void ConfigKeyPad(void);
 // Alarma
 void Alarma(uint8_t Opciones);
 
+//Para las multiples opciones del KeyPad
 void read_keypad (void);
 
 
@@ -151,52 +152,55 @@ int main(void){
 
 while (1){
 
+	// Función madre
+	read_keypad();
 
-	    if(Fila3){
-
-//	    	__disable_irq();
-
-	    	GPIO_WritePin(&handlerF1, RESET);
-	    	GPIO_WritePin(&handlerF2, RESET);
-	    	GPIO_WritePin(&handlerF3, SET);
-	    	GPIO_WritePin(&handlerF4, RESET);
-
-	    	if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-
-//	    		GPIO_WritePin(&handlerRojo, SET);
-
-	    		LCD_ClearScreen(&handlerLCD);
-				LCD_setCursor(&handlerLCD,0,1);
-				LCD_sendSTR(&handlerLCD,"Letra = 9 ");
-				LCD_setCursor(&handlerLCD,2,6);
-				LCD_sendSTR(&handlerLCD,"Mk Si");
-
-				Fila3 = 0;
-	    	}
-
-	    	GPIO_WritePin(&handlerF1, RESET);
-			GPIO_WritePin(&handlerF2, SET);
-			GPIO_WritePin(&handlerF3, RESET);
-			GPIO_WritePin(&handlerF4, RESET);
-
-	    	if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-
-	    		  //	    		GPIO_WritePin(&handlerRojo, SET);
-
-	    		  	    		LCD_ClearScreen(&handlerLCD);
-	    		  				LCD_setCursor(&handlerLCD,0,1);
-	    		  				LCD_sendSTR(&handlerLCD,"Letra = 6 ");
-	    		  				LCD_setCursor(&handlerLCD,2,6);
-	    		  				LCD_sendSTR(&handlerLCD,"Mk Si");
-
-	    		  				Fila3 = 0;
-	    		  	    	}
-
-	    		  	    	else{
-
-	    		  	    		__NOP();
-	    		  	    	}
-	    }
+//
+//	    if(Fila3){
+//
+////	    	__disable_irq();
+//
+//	    	GPIO_WritePin(&handlerF1, RESET);
+//	    	GPIO_WritePin(&handlerF2, RESET);
+//	    	GPIO_WritePin(&handlerF3, SET);
+//	    	GPIO_WritePin(&handlerF4, RESET);
+//
+//	    	if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+//
+////	    		GPIO_WritePin(&handlerRojo, SET);
+//
+//	    		LCD_ClearScreen(&handlerLCD);
+//				LCD_setCursor(&handlerLCD,0,1);
+//				LCD_sendSTR(&handlerLCD,"Letra = 9 ");
+//				LCD_setCursor(&handlerLCD,2,6);
+//				LCD_sendSTR(&handlerLCD,"Mk Si");
+//
+//				Fila3 = 0;
+//	    	}
+//
+//	    	GPIO_WritePin(&handlerF1, RESET);
+//			GPIO_WritePin(&handlerF2, SET);
+//			GPIO_WritePin(&handlerF3, RESET);
+//			GPIO_WritePin(&handlerF4, RESET);
+//
+//	    	if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+//
+//	    		  //	    		GPIO_WritePin(&handlerRojo, SET);
+//
+//	    		  	    		LCD_ClearScreen(&handlerLCD);
+//	    		  				LCD_setCursor(&handlerLCD,0,1);
+//	    		  				LCD_sendSTR(&handlerLCD,"Letra = 6 ");
+//	    		  				LCD_setCursor(&handlerLCD,2,6);
+//	    		  				LCD_sendSTR(&handlerLCD,"Mk Si");
+//
+//	    		  				Fila3 = 0;
+//	    		  	    	}
+//
+//	    		  	    	else{
+//
+//	    		  	    		__NOP();
+//	    		  	    	}
+//	    }
 
 
         if((Puerta) ||  (Code)){
@@ -604,7 +608,6 @@ void ConfigKeyPad(void){
 
 }
 
-
 void BasicTimer2_CallBack(void){
 
 	handlerLed = !handlerLed; // Activación de Blinky
@@ -629,8 +632,6 @@ void USART2Rx_CallBack(void){
 	rxData = getRxData();
 }
 
-
-
 void callback_extInt7(void){
 
 
@@ -645,25 +646,20 @@ void callback_extInt11(void){
 
 }
 
-
 void callback_extInt12(void){
 
 	Fila1 = 1;
 }
-
 
 void callback_extInt13(void){
 
 	Fila4 = 1;
 }
 
-
 void callback_extInt14(void){
 
 	Fila3 = 1;
 }
-
-
 
 void callback_extInt1(void){
 
@@ -764,8 +760,7 @@ void read_keypad(void){
 	/* Columna 1 */
 	if(Fila1){
 
-
-
+                /* Fila 1- Columna 1 */
 		    	GPIO_WritePin(&handlerF1, SET);
 		    	GPIO_WritePin(&handlerF2, RESET);
 		    	GPIO_WritePin(&handlerF3, RESET);
@@ -782,8 +777,10 @@ void read_keypad(void){
 					Fila1 = 0;
 		    	}
 
-		    	GPIO_WritePin(&handlerF1, SET);
-				GPIO_WritePin(&handlerF2, RESET);
+		    	 /* Fila 2 - Columna 1 */
+
+		    	GPIO_WritePin(&handlerF1, RESET);
+				GPIO_WritePin(&handlerF2, SET);
 				GPIO_WritePin(&handlerF3, RESET);
 				GPIO_WritePin(&handlerF4, RESET);
 
@@ -791,118 +788,314 @@ void read_keypad(void){
 
 				LCD_ClearScreen(&handlerLCD);
 				LCD_setCursor(&handlerLCD,0,1);
-				LCD_sendSTR(&handlerLCD,"Letra = 6 ");
+				LCD_sendSTR(&handlerLCD,"Letra = 4 ");
 				LCD_setCursor(&handlerLCD,2,6);
-				LCD_sendSTR(&handlerLCD,"Mk Si");
+				LCD_sendSTR(&handlerLCD,"Presionada");
 
-				Fila3 = 0;
+				Fila1 = 0;
 		    		  	    	}
 
 
+				 /* Fila 3 - Columna 1 */
 
-				 if(Fila3){
+				GPIO_WritePin(&handlerF1, RESET);
+				GPIO_WritePin(&handlerF2, RESET);
+				GPIO_WritePin(&handlerF3, SET);
+				GPIO_WritePin(&handlerF4, RESET);
+
+				 if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC1) == 1){
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,1);
+				LCD_sendSTR(&handlerLCD,"Letra = 7 ");
+				LCD_setCursor(&handlerLCD,2,6);
+				LCD_sendSTR(&handlerLCD,"Presionada");
+
+				Fila1 = 0;
+								}
+
+
+				 /* Fila 4- Columna 1 */
+
+				GPIO_WritePin(&handlerF1, RESET);
+				GPIO_WritePin(&handlerF2, RESET);
+				GPIO_WritePin(&handlerF3, RESET);
+				GPIO_WritePin(&handlerF4, SET);
+
+				 if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC1) == 1){
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,1);
+				LCD_sendSTR(&handlerLCD,"Letra = * ");
+				LCD_setCursor(&handlerLCD,2,6);
+				LCD_sendSTR(&handlerLCD,"Presionada");
+
+				Fila1 = 0;
+								}
+
+				 else{
+
+					 __NOP();
+				 }
+
+	          }
+
+                /* Opciones para siguiente columna */
+
+				 if(Fila2){
+
+		    /* Fila 1 - Columna 2 */
+
+			GPIO_WritePin(&handlerF1, SET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, RESET);
+
+			if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC2) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = 2 ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+				Fila2 = 0;
+			}
+
+			/* Fila 2 - Columna  2*/
+
+
+			GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, SET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, RESET);
+
+			if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC2) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = 5 ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+			Fila2 = 0;
+			}
+
+			 /* Fila 3- Columna 2 */
 
 			GPIO_WritePin(&handlerF1, RESET);
 			GPIO_WritePin(&handlerF2, RESET);
 			GPIO_WritePin(&handlerF3, SET);
 			GPIO_WritePin(&handlerF4, RESET);
 
-			if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+			 if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC2) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = 8 ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+			Fila2 = 0;
+							}
 
 
+			 /* Fila 4- Columna 2 */
 
-				LCD_ClearScreen(&handlerLCD);
-				LCD_setCursor(&handlerLCD,0,1);
-				LCD_sendSTR(&handlerLCD,"Letra = 9 ");
-				LCD_setCursor(&handlerLCD,2,6);
-				LCD_sendSTR(&handlerLCD,"Mk Si");
+			GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, SET);
+
+			 if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC2) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = 0 ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+			Fila2 = 0;
+							}
+
+			 else{
+
+				 __NOP();
+
+				 }
+
+			 }// Cierre columna 2
+
+			 /* Columna 3 */
+
+			 if(Fila3){
+
+			/* Fila 1 - Columna 3 */
+
+			GPIO_WritePin(&handlerF1, SET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, RESET);
+
+			if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = 3 ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
 
 				Fila3 = 0;
 			}
 
+			/* Fila 2 - Columna  3*/
+
+
 			GPIO_WritePin(&handlerF1, RESET);
-			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF2, SET);
 			GPIO_WritePin(&handlerF3, RESET);
 			GPIO_WritePin(&handlerF4, RESET);
 
 			if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC3) == 1){
 
-				LCD_ClearScreen(&handlerLCD);
-				LCD_setCursor(&handlerLCD,0,1);
-				LCD_sendSTR(&handlerLCD,"Letra = 3 ");
-				LCD_setCursor(&handlerLCD,2,6);
-				LCD_sendSTR(&handlerLCD,"Mk Si");
-
-				Fila3 = 0;
-			}
-
-							else{
-
-								__NOP();
-							}
-		}
-
-				else{
-
-					__NOP();
-				}
-			}
-
-
-
-
-	/*  Columna 3 */
-
-
-	if(Fila3){
-
-	//	    	__disable_irq();
-
-	GPIO_WritePin(&handlerF1, RESET);
-	GPIO_WritePin(&handlerF2, RESET);
-	GPIO_WritePin(&handlerF3, SET);
-	GPIO_WritePin(&handlerF4, RESET);
-
-	if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-
-//	    		GPIO_WritePin(&handlerRojo, SET);
-
-		LCD_ClearScreen(&handlerLCD);
-		LCD_setCursor(&handlerLCD,0,1);
-		LCD_sendSTR(&handlerLCD,"Letra = 9 ");
-		LCD_setCursor(&handlerLCD,2,6);
-		LCD_sendSTR(&handlerLCD,"Mk Si");
-
-		Fila3 = 0;
-	}
-
-	GPIO_WritePin(&handlerF1, RESET);
-	GPIO_WritePin(&handlerF2, SET);
-	GPIO_WritePin(&handlerF3, RESET);
-	GPIO_WritePin(&handlerF4, RESET);
-
-	if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-
-
-
 			LCD_ClearScreen(&handlerLCD);
 			LCD_setCursor(&handlerLCD,0,1);
 			LCD_sendSTR(&handlerLCD,"Letra = 6 ");
 			LCD_setCursor(&handlerLCD,2,6);
-			LCD_sendSTR(&handlerLCD,"Mk Si");
+			LCD_sendSTR(&handlerLCD,"Presionada");
 
 			Fila3 = 0;
-		}
+			}
 
-		else{
+			 /* Fila 3- Columna 3 */
 
-			__NOP();
-		}
-		    }
+			GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, SET);
+			GPIO_WritePin(&handlerF4, RESET);
 
-    }
+			 if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = 9 ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+			Fila3 = 0;
+							}
 
 
+			 /* Fila 4- Columna 3 */
+
+			GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, SET);
+
+			 if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = # ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+			Fila3 = 0;
+							}
+
+			 else{
+
+				 __NOP();
+			 }
+
+			 }
+
+			 /* Nueva columna  4*/
+
+			 if(Fila4){
+
+			/* Fila 1 - Columna 4*/
+
+			GPIO_WritePin(&handlerF1, SET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, RESET);
+
+			if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC4) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = A ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+				Fila4 = 0;
+			}
+
+			/* Fila 2 - Columna  4*/
+
+
+			GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, SET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, RESET);
+
+			if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC4) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = B ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+			Fila4 = 0;
+			}
+
+			 /* Fila 3- Columna 4 */
+
+			GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, SET);
+			GPIO_WritePin(&handlerF4, RESET);
+
+			 if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC4) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = C ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+			Fila4 = 0;
+							}
+
+
+			 /* Fila 4- Columna 4 */
+
+			GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, SET);
+
+			 if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC4) == 1){
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = D ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Presionada");
+
+			Fila4 = 0;
+							}
+
+			else{
+
+				__NOP();
+			}
+		 } // Cierre Col 4
+
+       } // Cierre función
 
 
 void parseCommands(char *ptrBufferReception){
