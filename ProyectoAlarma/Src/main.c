@@ -119,6 +119,8 @@ void ConfigKeyPad(void);
 // Alarma
 void Alarma(uint8_t Opciones);
 
+void read_keypad (void);
+
 
 void Muestreo(void);
 
@@ -149,55 +151,6 @@ int main(void){
 
 while (1){
 
-//	  if(( GPIO_ReadPin(&handlerF1) == 1) && (Fila1 ) ){
-//
-//	                	GPIO_WritePin(&handlerRojo, SET);
-//
-//
-//
-//	                }
-//
-//	  if(( GPIO_ReadPin(&handlerF1) == 1) ){
-//
-//	                 	GPIO_WritePin(&handlerRojo, SET);
-//
-//
-//
-//	                 }
-//
-//        if(( GPIO_ReadPin(&handlerF2) == 1) ){
-//
-//                	GPIO_WritePin(&handlerRojo, SET);
-//
-//
-//
-//                }
-//
-//
-//        if(( GPIO_ReadPin(&handlerF3) == 1) ){
-//
-//                	GPIO_WritePin(&handlerRojo, SET);
-//
-//
-//
-//                }
-//
-//
-//        if(( GPIO_ReadPin(&handlerF4) == 1) ){
-//
-//                    GPIO_WritePin(&handlerRojo, SET);
-//
-//
-//
-//                        }
-
-
-//	    if(Fila4){
-//
-//	        GPIO_WritePin(&handlerRojo, SET);
-//
-//	    	Fila4 = 0;
-//	    }
 
 	    if(Fila3){
 
@@ -243,44 +196,8 @@ while (1){
 
 	    		  	    		__NOP();
 	    		  	    	}
-
-
-
 	    }
 
-
-
-
-//
-//	    if(Fila3){
-//
-//	   	    	GPIO_WritePin(&handlerRojo, SET);
-//
-//	   	    		    	Fila3 = 0;
-//
-//
-//	   	    }
-
-//	    if(Fila2){
-//
-//	   	    	GPIO_WritePin(&handlerRojo, SET);
-//
-//	   	    		    	Fila2 = 0;
-//
-//
-//	   	    }
-
-
-
-//	    if(!(Fila1)){
-//
-//	    	GPIO_WritePin(&handlerRojo, RESET);
-//	    }
-
-//	    if(GPIO_ReadPin(&handlerC2) == 1){
-//
-//	    	 GPIO_WritePin(&handlerRojo, SET);
-//	    }
 
         if((Puerta) ||  (Code)){
 //	      if (GPIO_ReadPin(&handlerSensor) ==  SET){
@@ -842,136 +759,150 @@ void Muestreo(void){
 }
 
 
-//char read_keypad (void){
-//
-//		GPIO_WritePin(&handlerF1, RESET);//Pull the R1 low
-//		GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
-//		GPIO_WritePin(&handlerF3, SET);
-//		GPIO_WritePin(&handlerF4, SET);
-//
-//		if(!(GPIO_ReadPin(&handlerC1))){
-//			while(!(GPIO_ReadPin(&handlerC1)));
-//			return '1';
-//
-//		}
-//
-//		if(!(GPIO_ReadPin(&handlerC2))){
-//					while(!(GPIO_ReadPin(&handlerC2)));
-//					return '2';
-//
-//				}
-//
-//
-//		if(!(GPIO_ReadPin(&handlerC3))){
-//					while(!(GPIO_ReadPin(&handlerC3)));
-//					return '3';
-//
-//				}
-//
-//		if(!(GPIO_ReadPin(&handlerC4))){
-//					while(!(GPIO_ReadPin(&handlerC4)));
-//					return 'A';
-//
-//				}
-// // Para fila 2
-//
-//
-//		GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
-//		GPIO_WritePin(&handlerF2, RESET);  // Pull the R2 High
-//		GPIO_WritePin(&handlerF3, SET);
-//		GPIO_WritePin(&handlerF4, SET);
-//
-//		if(!(GPIO_ReadPin(&handlerC1))){
-//					while(!(GPIO_ReadPin(&handlerC1)));
-//					return '4';
-//
-//				}
-//
-//				if(!(GPIO_ReadPin(&handlerC2))){
-//							while(!(GPIO_ReadPin(&handlerC2)));
-//							return '5';
-//
-//						}
-//
-//
-//				if(!(GPIO_ReadPin(&handlerC3))){
-//							while(!(GPIO_ReadPin(&handlerC3)));
-//							return '6';
-//
-//						}
-//
-//				if(!(GPIO_ReadPin(&handlerC4))){
-//							while(!(GPIO_ReadPin(&handlerC4)));
-//							return 'B';
-//
-//						}
-//
-//				// Para fila 3
-//
-//
-//		GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
-//		GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
-//		GPIO_WritePin(&handlerF3, RESET);
-//		GPIO_WritePin(&handlerF4, SET);
-//
-//		if(!(GPIO_ReadPin(&handlerC1))){
-//					while(!(GPIO_ReadPin(&handlerC1)));
-//					return '7';
-//
-//		}
-//
-//		if(!(GPIO_ReadPin(&handlerC2))){
-//					while(!(GPIO_ReadPin(&handlerC2)));
-//					return '8';
-//
-//				}
-//
-//
-//		if(!(GPIO_ReadPin(&handlerC3))){
-//					while(!(GPIO_ReadPin(&handlerC3)));
-//					return '9';
-//
-//				}
-//
-//		if(!(GPIO_ReadPin(&handlerC4))){
-//					while(!(GPIO_ReadPin(&handlerC4)));
-//					return 'C';
-//
-//				}
-//		// Para fila 4
-//
-//
-//GPIO_WritePin(&handlerF1, SET);//Pull the R1 low
-//GPIO_WritePin(&handlerF2, SET);  // Pull the R2 High
-//GPIO_WritePin(&handlerF3, SET);
-//GPIO_WritePin(&handlerF4, RESET);
-//
-//if(!(GPIO_ReadPin(&handlerC1))){
-//		while(!(GPIO_ReadPin(&handlerC1)));
-//		return '*';
-//
-//	}
-//
-//	if(!(GPIO_ReadPin(&handlerC2))){
-//				while(!(GPIO_ReadPin(&handlerC2)));
-//				return '0';
-//
-//			}
-//
-//
-//	if(!(GPIO_ReadPin(&handlerC3))){
-//				while(!(GPIO_ReadPin(&handlerC3)));
-//				return '#';
-//
-//			}
-//
-//	if(!(GPIO_ReadPin(&handlerC4))){
-//				while(!(GPIO_ReadPin(&handlerC4)));
-//				return 'D';
-//
-//	}
-//
-//}
+void read_keypad(void){
+
+	/* Columna 1 */
+	if(Fila1){
+
+
+
+		    	GPIO_WritePin(&handlerF1, SET);
+		    	GPIO_WritePin(&handlerF2, RESET);
+		    	GPIO_WritePin(&handlerF3, RESET);
+		    	GPIO_WritePin(&handlerF4, RESET);
+
+		    	if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC1) == 1){
+
+		    		LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,1);
+					LCD_sendSTR(&handlerLCD,"Letra = 1 ");
+					LCD_setCursor(&handlerLCD,2,6);
+					LCD_sendSTR(&handlerLCD,"Presionada");
+
+					Fila1 = 0;
+		    	}
+
+		    	GPIO_WritePin(&handlerF1, SET);
+				GPIO_WritePin(&handlerF2, RESET);
+				GPIO_WritePin(&handlerF3, RESET);
+				GPIO_WritePin(&handlerF4, RESET);
+
+				 if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC1) == 1){
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,1);
+				LCD_sendSTR(&handlerLCD,"Letra = 6 ");
+				LCD_setCursor(&handlerLCD,2,6);
+				LCD_sendSTR(&handlerLCD,"Mk Si");
+
+				Fila3 = 0;
+		    		  	    	}
+
+
+
+				 if(Fila3){
+
+			GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, SET);
+			GPIO_WritePin(&handlerF4, RESET);
+
+			if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+
+
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,1);
+				LCD_sendSTR(&handlerLCD,"Letra = 9 ");
+				LCD_setCursor(&handlerLCD,2,6);
+				LCD_sendSTR(&handlerLCD,"Mk Si");
+
+				Fila3 = 0;
+			}
+
+			GPIO_WritePin(&handlerF1, RESET);
+			GPIO_WritePin(&handlerF2, RESET);
+			GPIO_WritePin(&handlerF3, RESET);
+			GPIO_WritePin(&handlerF4, RESET);
+
+			if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,1);
+				LCD_sendSTR(&handlerLCD,"Letra = 3 ");
+				LCD_setCursor(&handlerLCD,2,6);
+				LCD_sendSTR(&handlerLCD,"Mk Si");
+
+				Fila3 = 0;
+			}
+
+							else{
+
+								__NOP();
+							}
+		}
+
+				else{
+
+					__NOP();
+				}
+			}
+
+
+
+
+	/*  Columna 3 */
+
+
+	if(Fila3){
+
+	//	    	__disable_irq();
+
+	GPIO_WritePin(&handlerF1, RESET);
+	GPIO_WritePin(&handlerF2, RESET);
+	GPIO_WritePin(&handlerF3, SET);
+	GPIO_WritePin(&handlerF4, RESET);
+
+	if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+
+//	    		GPIO_WritePin(&handlerRojo, SET);
+
+		LCD_ClearScreen(&handlerLCD);
+		LCD_setCursor(&handlerLCD,0,1);
+		LCD_sendSTR(&handlerLCD,"Letra = 9 ");
+		LCD_setCursor(&handlerLCD,2,6);
+		LCD_sendSTR(&handlerLCD,"Mk Si");
+
+		Fila3 = 0;
+	}
+
+	GPIO_WritePin(&handlerF1, RESET);
+	GPIO_WritePin(&handlerF2, SET);
+	GPIO_WritePin(&handlerF3, RESET);
+	GPIO_WritePin(&handlerF4, RESET);
+
+	if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC3) == 1){
+
+
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Letra = 6 ");
+			LCD_setCursor(&handlerLCD,2,6);
+			LCD_sendSTR(&handlerLCD,"Mk Si");
+
+			Fila3 = 0;
+		}
+
+		else{
+
+			__NOP();
+		}
+		    }
+
+    }
+
+
 
 
 void parseCommands(char *ptrBufferReception){
@@ -1005,4 +936,69 @@ void parseCommands(char *ptrBufferReception){
 
 }
 
+}
+
+void KeyPad_Confi(uint8_t opciones){
+
+	switch(opciones){
+
+
+	case 11:{
+
+		GPIO_WritePin(&handlerF1, SET);
+		GPIO_WritePin(&handlerF2, RESET);
+		GPIO_WritePin(&handlerF3, RESET);
+		GPIO_WritePin(&handlerF4, RESET);
+
+		break;
+
+
+	}
+
+	case 12:{
+
+
+		GPIO_WritePin(&handlerF1, RESET);
+		GPIO_WritePin(&handlerF2, SET);
+		GPIO_WritePin(&handlerF3, RESET);
+		GPIO_WritePin(&handlerF4, RESET);
+
+		break;
+
+
+	}
+
+
+	case 13:{
+
+		GPIO_WritePin(&handlerF1, RESET);
+		GPIO_WritePin(&handlerF2, RESET);
+		GPIO_WritePin(&handlerF3, SET);
+		GPIO_WritePin(&handlerF4, RESET);
+
+		break;
+	}
+
+	case 14:{
+
+	GPIO_WritePin(&handlerF1, RESET);
+	GPIO_WritePin(&handlerF2, RESET);
+	GPIO_WritePin(&handlerF3, RESET);
+	GPIO_WritePin(&handlerF4, SET);
+
+	break;
+
+	}
+
+	default:{
+
+		GPIO_WritePin(&handlerF1, SET);
+		GPIO_WritePin(&handlerF2, SET);
+		GPIO_WritePin(&handlerF3, SET);
+		GPIO_WritePin(&handlerF4, SET);
+
+		break;
+	}
+
+	}
 }
