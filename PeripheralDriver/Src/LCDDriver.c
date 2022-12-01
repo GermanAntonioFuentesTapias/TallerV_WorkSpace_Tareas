@@ -210,6 +210,25 @@ void LCD_setCursor(I2C_Handler_t *ptrHandlerI2C, uint8_t x, uint8_t y) {
 		case 19 : cursor = 0x67; break;
 		} break;
 	}
+
+//
+//	switch (y) {
+//			case 0 :
+//				cursor = x;
+//				break;
+//			case 1 :
+//				cursor = 0x40 + x;
+//				break;
+//
+//			case 2 :
+//				cursor = 0x14 + x;
+//				break;
+//
+//			case 3 :
+//				cursor = 0x54 + x;
+//				break;
+//			}
+
 	LCD_sendCMD(ptrHandlerI2C, 0x80|cursor);
 }
 void delay_50 (void){
