@@ -42,7 +42,8 @@ GPIO_Handler_t handlerTx     	    	= {0};
 GPIO_Handler_t handlerRx	 	     	= {0};
 USART_Handler_t        handlerUsart     = {0}; // Handler para el Usart
 uint8_t rxData      =  0;
-char DataRTC[64] = "Wipi";
+char DataRTC[64]    = "Wipi";
+uint16_t clave_acceso          = 1234;
 
 uint8_t stateKeypad            = NOTHING;
 uint8_t posicionMenu           = SALIO;
@@ -56,11 +57,8 @@ uint8_t visualPantalla         = NOTHING;
 //uint8_t EstadoBoton = 0;
 // Interrupciones importantes
 //uint8_t stop                            = 1;
-uint8_t movimiento_puerta               = 0;
-//uint8_t activacion                      = 0;
-//uint8_t inicial                         = 1;
-//uint8_t opcion4                         = 0;
-//uint8_t opcion41                         = 0;
+uint8_t movimiento_puerta                 = 0;
+uint8_t desactivar_puerta                 = 0;
 
 uint8_t Confi1                          = 0;
 uint8_t Confi2                          = 0;
@@ -81,7 +79,7 @@ uint8_t desactivar                      = 0;
 uint8_t reset                           = 0;
 uint8_t handlerLed                      = 0;
 uint8_t Code                            = 0;
-uint8_t Columna_1                           = 0;
+uint8_t Columna_1                         = 0;
 uint8_t Columna_2                           = 0;
 uint8_t Columna_3                           = 0;
 uint8_t Columna_4                           = 0;
@@ -89,6 +87,7 @@ uint8_t Bandera                         = 0;
 uint8_t valor                           = 0;
 uint8_t Puerta                          = 0;
 uint16_t duttyValue                      = 15000;
+uint16_t frequencyValue                  = 18000;
 
 /* Para Muestro */
 
@@ -195,8 +194,7 @@ int main(void){
 		delay_10();
 		LCD_ClearScreen(&handlerLCD);
 		delay_10();
-	//	sprintf(dataLCD, "Alarmas S,A.        Bienvenidos");
-		LCD_setCursor(&handlerLCD,2,0);
+
 		LCD_sendSTR(&handlerLCD,"____________________");
 		LCD_setCursor(&handlerLCD,0,0);
 		LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
@@ -213,13 +211,14 @@ while (1){
 	    config_general();
 
 
-
+       /* Función que se encarga de prender la alarma */
 
         if(((Puerta) ||  (Code)) && ((movimiento_puerta) == 1) ) {
-//	      if (GPIO_ReadPin(&handlerSensor) ==  SET){
-//            if(!Bandera){
-        	updateFrequency(&handlerPWM, 18000);
-        	updateDuttyCycle(&handlerPWM, 15000);
+
+            frequencyValue = 18000;
+            duttyValue     = 15000;
+        	updateFrequency(&handlerPWM,frequencyValue);
+        	updateDuttyCycle(&handlerPWM, duttyValue);
         	startPwmSignal(&handlerPWM);
         	enableOutput(&handlerPWM);
 
@@ -240,6 +239,38 @@ while (1){
 
 
             }
+
+        /* Función que se encarga de apagar la alarma */
+
+        if( desactivar_puerta == 1){
+             disableOutPut(&handlerPWM);
+//        	 frequencyValue = 0;
+//        	 duttyValue     = 0;
+//
+//        	updateDuttyCycle(&handlerPWM, duttyValue );
+//        	updateFrequency(&handlerPWM, frequencyValue);
+        	stopPwmSignal(&handlerPWM);
+
+
+
+
+        	LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,3);
+			LCD_sendSTR(&handlerLCD,"Se Desactivo");
+			LCD_setCursor(&handlerLCD,1,1);
+			LCD_sendSTR(&handlerLCD,"Recuerda activarla");
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,"Para retornar usa D");
+			LCD_setCursor(&handlerLCD,3,0);
+			LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+        	 GPIO_WritePin(&handlerRojo, RESET);
+
+        	 desactivar_puerta = 0;
+        	 movimiento_puerta = 0;
+
+        }
 
 	      /* Comunicacion serial */
 
@@ -294,7 +325,9 @@ while (1){
 
 //			  read_keypad(stateKeypad);
 
-			/* Configuración Menu */
+			/* Configuración Menu del KEYPAD */
+
+
 			if(estadoPantalla == INICIO){
 
               if((stateKeypad == TECLA_UNO) || (stateKeypad == TECLA_DOS) ||(stateKeypad == TECLA_TRES) || (stateKeypad == TECLA_CUARTRO) ){
@@ -329,15 +362,146 @@ while (1){
 
 //					movimiento_puerta = 1;
 
-			  	   posicionMenu = ENTRO; // Case de opcion
-			  	   estadoPantalla = MENUS; // No deja que se produzca el menu de inicio
-			  	   visualPantalla = MENU_CONF; // Para saber que caso
+			   posicionMenu = ENTRO; // Case de opcion
+			   estadoPantalla = MENUS; // No deja que se produzca el menu de inicio
+			   visualPantalla = MENU_CONF; // Para saber que caso
 
-					stateKeypad = NOTHING;
+			   stateKeypad = NOTHING;
 
 
               }
 			}
+
+			/************************************************************************/
+
+			/* Configuración para  el menu CONFIGURACIÓN del menu */
+
+			if(estadoPantalla == CONFIGURACION){
+
+				if((stateKeypad == TECLA_A)){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"Into to password");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"The password=");
+					LCD_setCursor(&handlerLCD,2,6);
+					LCD_sendSTR(&handlerLCD,"Digitos");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D|atras");
+
+                   posicionMenu = ACTIVAR_A;
+				   estadoPantalla = MENUS;
+				   visualPantalla = CONFIGURACION;
+
+				   stateKeypad = NOTHING;
+				}
+
+
+				if((stateKeypad == TECLA_B)){
+
+					estadoPantalla = MENUS;
+					visualPantalla = CONFIGURACION;
+
+
+					stateKeypad = NOTHING;
+
+				}
+
+				if((stateKeypad == TECLA_C)){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"Into to password");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"The password=");
+					LCD_setCursor(&handlerLCD,2,6);
+					LCD_sendSTR(&handlerLCD,"Digitos");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D|atras");
+
+				   posicionMenu = DESACTIVAR;
+				   estadoPantalla = MENUS;
+				   visualPantalla = CONFIGURACION;
+
+				   stateKeypad = NOTHING;
+				}
+
+				if((stateKeypad == TECLA_D)){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Configuracion");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"B| Parametros");
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,"C| Fecha y hora");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D| Atras");
+
+					posicionMenu = ENTRO; // Case de opcion
+				   estadoPantalla = MENUS; // No deja que se produzca el menu de inicio
+				   visualPantalla = MENU_CONF; // Para saber que caso
+
+				   stateKeypad = NOTHING;
+				}
+			}
+
+			/* Configuración de la opcion PARAMETROS */
+
+			if(estadoPantalla == PARAMETROS){
+
+				if((stateKeypad == TECLA_D)){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Configuracion");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"B| Parametros");
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,"C| Fecha y hora");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D| Atras");
+
+					posicionMenu = ENTRO; // Case de opcion
+				   estadoPantalla = MENUS; // No deja que se produzca el menu de inicio
+				   visualPantalla = MENU_CONF; // Para saber que caso
+
+				   stateKeypad = NOTHING;
+
+
+				}
+			}
+
+			/* Configuración para configuraciones de fecha y hora */
+
+			if(estadoPantalla == FECHAYHORA){
+
+			if((stateKeypad == TECLA_D)){
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Configuracion");
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,"B| Parametros");
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,"C| Fecha y hora");
+				LCD_setCursor(&handlerLCD,3,0);
+				LCD_sendSTR(&handlerLCD,"D| Atras");
+
+				posicionMenu = ENTRO; // Case de opcion
+			   estadoPantalla = MENUS; // No deja que se produzca el menu de inicio
+			   visualPantalla = MENU_CONF; // Para saber que caso
+
+			   stateKeypad = NOTHING;
+
+
+			}
+		}
+
+
+
+			/***************************************************************/
 
 			/* Se encarga de leer letras ya en el menu DESPUES DE INICIO */
 
@@ -348,28 +512,29 @@ while (1){
        		   visualPantalla  = SALIO;
 
 			   seleccionConfiguracion = CONFIGURACION;
-//
-				   stateKeypad = NOTHING;
+
+			   stateKeypad = NOTHING;
 
         	   }
         	   if(stateKeypad == TECLA_B){
 
 
-//        		   visualPantalla  = SALIO;
-//				   seleccionConfiguracion = ATRAS;
-//
-//				   stateKeypad = NOTHING;
+        		   visualPantalla  = SALIO;
+
+				   seleccionConfiguracion = PARAMETROS;
+
+				   stateKeypad = NOTHING;
 
         	          	   }
 
         	   if(stateKeypad == TECLA_C){
 
 
-//        		   visualPantalla  = SALIO;
-//
-//				   seleccionConfiguracion = ATRAS;
-//
-//				   stateKeypad = NOTHING;
+        		   visualPantalla  = SALIO;
+
+				   seleccionConfiguracion = FECHAYHORA;
+
+				   stateKeypad = NOTHING;
 
         	          	   }
 
@@ -383,18 +548,167 @@ while (1){
 
         	          	   }
 
-           } // FIN DE OPCIÓN 1
+           } // FIN DE OPCIÓN 1 DE INICIO, LAS DISTINTAS OPCIONES
 
 
            /* Se encarga de opcion despues de oprimir A para pasar activar alarma */
 
+       	/* Configuracion para pantalla a seguir en configuracion */
+
+       			if(visualPantalla == CONFIGURACION){
+
+       		    if(stateKeypad == TECLA_A){
+
+				   visualPantalla  = SALIO;
+
+				   seleccionConfiguracion = ACTIVAR_A;
+
+				    stateKeypad = NOTHING;
+
+       		   }
+       			 if(stateKeypad == TECLA_B){
+
+
+       			   visualPantalla  = SALIO;
+       			   seleccionConfiguracion = ACTIVAR_S;
+
+       			   stateKeypad = NOTHING;
+
+       			        	          	   }
+
+       			   if(stateKeypad == TECLA_C){
+
+
+       			   visualPantalla  = SALIO;
+
+       			   seleccionConfiguracion = DESACTIVAR;
+
+       			   stateKeypad = NOTHING;
+
+       			        	          	   }
+
+       			   if(stateKeypad == TECLA_D){
+
+       			   visualPantalla  = SALIO;
+
+       			   seleccionConfiguracion = ATRAS;
+
+       			   stateKeypad = NOTHING;
+
+       			        	          	   }
+
+       			           } // FIN DE OPCIÓN MENU CONFIGURACIÓN
+
+
+
+
+       			/*****************************************************************/
+
+
+       			/* Se encarga de la opción B despues del inicio, osea de parametros */
+
+       			if(visualPantalla == PARAMETROS){
+
+					if(stateKeypad == TECLA_A){
+
+					   visualPantalla  = SALIO;
+
+					   seleccionConfiguracion = CONTRASE;
+
+						stateKeypad = NOTHING;
+
+					   }
+					 if(stateKeypad == TECLA_B){
+
+
+					   visualPantalla  = SALIO;
+					   seleccionConfiguracion = SONIDO;
+
+					   stateKeypad = NOTHING;
+
+											   }
+
+					   if(stateKeypad == TECLA_C){
+
+
+					   visualPantalla  = SALIO;
+
+					   seleccionConfiguracion = PANICO;
+
+					   stateKeypad = NOTHING;
+
+												   }
+
+						   if(stateKeypad == TECLA_D){
+
+						   visualPantalla  = SALIO;
+
+						   seleccionConfiguracion = ATRAS;
+
+						   stateKeypad = NOTHING;
+
+												   }
+
+       			       			           } // FIN DE OPCIÓN MENU PARAMETROS
+
+       			/* OPCION DE FECHA Y HORA */
+
+       			if(visualPantalla == FECHAYHORA){
+
+				if(stateKeypad == TECLA_A){
+
+				   visualPantalla  = SALIO;
+
+				   seleccionConfiguracion = CAMBIAR_FECHA;
+
+					stateKeypad = NOTHING;
+
+			   }
+
+				 if(stateKeypad == TECLA_B){
+
+
+				   visualPantalla  = SALIO;
+				   seleccionConfiguracion = CAMBIAR_HORA;
+
+				   stateKeypad = NOTHING;
+
+										   }
+
+				   if(stateKeypad == TECLA_C){
+
+
+				   visualPantalla  = SALIO;
+
+				   seleccionConfiguracion = EVENTOS;
+
+				   stateKeypad = NOTHING;
+
+										   }
+
+				   if(stateKeypad == TECLA_D){
+
+				   visualPantalla  = SALIO;
+
+				   seleccionConfiguracion = ATRAS;
+
+				   stateKeypad = NOTHING;
+
+										   }
+
+								   } // FIN DE OPCIÓN MENU FECHA Y HORA
+
+
+
+
+           /****************************************************************/
 
               if(posicionMenu == ENTRO){
-
 
             	  switch(seleccionConfiguracion){
 
             	  case CONFIGURACION:{
+
             		  stateKeypad = NOTHING;
          		      posicionMenu = CONFIGURACION;
 
@@ -403,8 +717,7 @@ while (1){
 
             	  case PARAMETROS:{
             		  stateKeypad = NOTHING;
-//            		  posicionMenu = ACTIVAR_S;
-//            		  posicionMenu = ATRAS;
+            		  posicionMenu = PARAMETROS;
 
             		  break;
             	  }
@@ -412,30 +725,15 @@ while (1){
             	  case FECHAYHORA:{
 
             		  stateKeypad = NOTHING;
-//            		  posicionMenu = DESACTIVAR;
-
-//            		  posicionMenu = ATRAS;
+            		  posicionMenu = FECHAYHORA;
 
             		  break;
             	  }
 
             	  case ATRAS:{
 
-//            		  LCD_ClearScreen(&handlerLCD);
-//						LCD_setCursor(&handlerLCD,0,0);
-//						LCD_sendSTR(&handlerLCD,"A| Configuracion");
-//						LCD_setCursor(&handlerLCD,1,0);
-//						LCD_sendSTR(&handlerLCD,"B| Parametros");
-//						LCD_setCursor(&handlerLCD,2,0);
-//						LCD_sendSTR(&handlerLCD,"C| Activacion");
-//						LCD_setCursor(&handlerLCD,3,0);
-//						LCD_sendSTR(&handlerLCD,"D| Fecha y hora");
-
-
             		  stateKeypad = NOTHING;
             		  posicionMenu = ATRAS;
-
-
 
             		  break;
             	  }
@@ -444,39 +742,12 @@ while (1){
 
             		  __NOP();
 
-
             	  }
               }
 
               /* Estados de pantalla */
 
-//              if(estadoPantalla == MENUS){
-//
-//            	  LCD_ClearScreen(&handlerLCD);
-//				  LCD_setCursor(&handlerLCD,0,0);
-//				  LCD_sendSTR(&handlerLCD,"A| Activar Alarma");
-//				  LCD_setCursor(&handlerLCD,1,0);
-//				  LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				  LCD_setCursor(&handlerLCD,2,0);
-//				  LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				  LCD_setCursor(&handlerLCD,3,0);
-//				  LCD_sendSTR(&handlerLCD,"D| Devolverse");
-//
-//				 estadoPantalla = NOTHING;
-//
-//              }
-
               if(posicionMenu == ATRAS){
-
-//			  LCD_ClearScreen(&handlerLCD);
-//			  LCD_setCursor(&handlerLCD,0,0);
-//		      LCD_sendSTR(&handlerLCD,"A| Configuracion");
-//			  LCD_setCursor(&handlerLCD,1,0);
-//			  LCD_sendSTR(&handlerLCD,"B| Parametros");
-//			  LCD_setCursor(&handlerLCD,2,0);
-//			  LCD_sendSTR(&handlerLCD,"C| Activacion");
-//			  LCD_setCursor(&handlerLCD,3,0);
-//			  LCD_sendSTR(&handlerLCD,"D| Fecha y hora");
 
             	LCD_ClearScreen(&handlerLCD);
 				LCD_setCursor(&handlerLCD,2,0);
@@ -491,8 +762,32 @@ while (1){
               seleccionConfiguracion = NOTHING;
 			  stateKeypad = NOTHING;
 			  estadoPantalla = INICIO;
-			  visualPantalla = NOTHING;
+
 			  posicionMenu = SALIO;
+              }
+
+              /* Configuración de atras de la OPCION configuración */
+
+              if(posicionMenu == ATRAS_CONFI){
+
+
+            		LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Configuracion");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"B| Parametros");
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,"C| Fecha y hora");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D| Atras");
+
+					seleccionConfiguracion = NOTHING;
+					posicionMenu = SALIO;
+					stateKeypad = NOTHING;
+					estadoPantalla = MENUS;
+
+
+
               }
 
               /* Configuración para configuración despues de inicio */
@@ -509,19 +804,147 @@ while (1){
             	  	LCD_setCursor(&handlerLCD,3,0);
             	  	LCD_sendSTR(&handlerLCD,"D| Atras");
 
-
+                    seleccionConfiguracion = NOTHING;
+                    estadoPantalla = CONFIGURACION;
             	  	stateKeypad = NOTHING;
-            	  	visualPantalla = NOTHING;
+
             	  	posicionMenu = SALIO;
 
+              }
+
+              /* Configuración para parametros despues de inicio */
+
+
+              if(posicionMenu == PARAMETROS){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A|Cambiar contraseña");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"B|Cambiar sonido");
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,"C|Panico");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D| Atras");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+			        posicionMenu = SALIO;
+
+                            }
+
+              if(posicionMenu == FECHAYHORA){
+
+            	 LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A|Cambiar Fecha");
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,"B|Cambiar Hora");
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,"C|Eventos");
+				LCD_setCursor(&handlerLCD,3,0);
+				LCD_sendSTR(&handlerLCD,"D| Atras");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = FECHAYHORA;
+				stateKeypad = NOTHING;
+
+				posicionMenu = SALIO;
 
 
               }
 
 
 
+              /* Configuraciones particulares */
+
+              if(posicionMenu == ACTIVAR_A){
+
+            	  if(stateKeypad == TECLA_ESTRELLA){
 
 
+					    LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"La alarma activa");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,"Felices fiestas");
+						LCD_setCursor(&handlerLCD,3,0);
+						LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+            		  movimiento_puerta = 1;
+
+            		  seleccionConfiguracion = NOTHING;
+					  estadoPantalla = CONFIGURACION;
+					  stateKeypad = NOTHING;
+
+					  posicionMenu = SALIO;
+            	  }
+
+
+            	  if(stateKeypad == TECLA_D){
+
+            		  LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Activar alarmas");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"B| Activar sensor");
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,"C| Desactivar");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D| Atras");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+					posicionMenu = SALIO;
+
+
+            	  }
+              }
+             /* Opción para desactivar */
+
+              if(posicionMenu == DESACTIVAR){
+
+            	  if(stateKeypad == TECLA_NUMERAL){
+
+            		  seleccionConfiguracion = NOTHING;
+            		  estadoPantalla = CONFIGURACION;
+            		  desactivar_puerta = 1;
+            		  posicionMenu = SALIO;
+            		  stateKeypad = NOTHING;
+
+
+
+
+            	  }
+
+
+            	  }
+
+
+            	  if(stateKeypad == TECLA_D){
+
+				 LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Activar alarmas");
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,"C| Desactivar");
+				LCD_setCursor(&handlerLCD,3,0);
+				LCD_sendSTR(&handlerLCD,"D| Atras");
+
+				  seleccionConfiguracion = NOTHING;
+				  estadoPantalla = CONFIGURACION;
+				stateKeypad = NOTHING;
+
+				posicionMenu = SALIO;
+              }
 		} // While
 
 	    } // Funcion
@@ -639,7 +1062,7 @@ void initSystem(void){
 	handlerPWM.ptrTIMx                               = TIM3;
 	handlerPWM.config.channel                        = PWM_CHANNEL_1;
 	handlerPWM.config.duttyCicle                     = duttyValue;
-    handlerPWM.config.periodo                        = 18000;
+    handlerPWM.config.periodo                        = frequencyValue;
     handlerPWM.config.prescaler                      = 16;
 
     pwm_Config(&handlerPWM);
@@ -940,16 +1363,6 @@ void read_keypad(uint8_t EstadoBoton){
 
 			if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC1) == 1){
 
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"1");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
-
 				stateKeypad = TECLA_UNO;
 
 			   }
@@ -967,15 +1380,6 @@ void read_keypad(uint8_t EstadoBoton){
 			GPIO_WritePin(&handlerF4, RESET);
 
 			if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC2) == 1){
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"2");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
 
 				stateKeypad = TECLA_DOS;
 			}
@@ -994,16 +1398,6 @@ void read_keypad(uint8_t EstadoBoton){
 			GPIO_WritePin(&handlerF4, RESET);
 
 			if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"3");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
 
 				stateKeypad = TECLA_TRES;
 
@@ -1025,16 +1419,6 @@ void read_keypad(uint8_t EstadoBoton){
 
 			if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC1) == 1){
 
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"4");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
-
 				stateKeypad = TECLA_CUARTRO;
 
 			}
@@ -1053,17 +1437,6 @@ void read_keypad(uint8_t EstadoBoton){
 			GPIO_WritePin(&handlerF4, RESET);
 
 	if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC2) == 1){
-
-
-//		LCD_ClearScreen(&handlerLCD);
-//		LCD_setCursor(&handlerLCD,0,0);
-//		LCD_sendSTR(&handlerLCD,"5");
-//		LCD_setCursor(&handlerLCD,1,0);
-//		LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//		LCD_setCursor(&handlerLCD,2,0);
-//		LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//		LCD_setCursor(&handlerLCD,3,0);
-//		LCD_sendSTR(&handlerLCD,"D| Devolverse");
 
 		stateKeypad = TECLA_CINCO;
 
@@ -1085,16 +1458,6 @@ void read_keypad(uint8_t EstadoBoton){
 
 		if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC3) == 1){
 
-//			LCD_ClearScreen(&handlerLCD);
-//			LCD_setCursor(&handlerLCD,0,0);
-//			LCD_sendSTR(&handlerLCD,"6");
-//			LCD_setCursor(&handlerLCD,1,0);
-//			LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//			LCD_setCursor(&handlerLCD,2,0);
-//			LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//			LCD_setCursor(&handlerLCD,3,0);
-//			LCD_sendSTR(&handlerLCD,"D| Devolverse");
-
 			stateKeypad = TECLA_SEIS;
 		}
 
@@ -1113,16 +1476,6 @@ void read_keypad(uint8_t EstadoBoton){
 			GPIO_WritePin(&handlerF4, RESET);
 
 			if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC1) == 1){
-
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"7");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
 
 				stateKeypad = TECLA_SIETE;
 
@@ -1145,16 +1498,6 @@ void read_keypad(uint8_t EstadoBoton){
 
 			if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC2) == 1){
 
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"8");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
-
 				stateKeypad = TECLA_OCHO;
 
 			}
@@ -1176,16 +1519,6 @@ void read_keypad(uint8_t EstadoBoton){
 
 
 			if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-//
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"9");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
 
 				stateKeypad = TECLA_NUEVE;
 
@@ -1207,16 +1540,6 @@ void read_keypad(uint8_t EstadoBoton){
 
 			if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC1) == 1){
 
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"*");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
-
 				stateKeypad = TECLA_ESTRELLA;
 
 			}
@@ -1235,16 +1558,6 @@ void read_keypad(uint8_t EstadoBoton){
 			GPIO_WritePin(&handlerF4, SET);
 
 			if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"#");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
 
 				stateKeypad = TECLA_NUMERAL;
 			}
@@ -1265,17 +1578,6 @@ void read_keypad(uint8_t EstadoBoton){
 
 			if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC2) == 1){
 
-
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"0");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
-
 				stateKeypad = TECLA_CERO;
 
 			}
@@ -1295,17 +1597,7 @@ void read_keypad(uint8_t EstadoBoton){
 
 			if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC4) == 1){
 
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"A");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
-
-				stateKeypad = TECLA_A;
+			stateKeypad = TECLA_A;
 			}
 
 		}
@@ -1323,16 +1615,6 @@ void read_keypad(uint8_t EstadoBoton){
 			GPIO_WritePin(&handlerF4, RESET);
 
 			if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"B");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
 
 				stateKeypad = TECLA_B;
 
@@ -1355,17 +1637,6 @@ void read_keypad(uint8_t EstadoBoton){
 
 			if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC4) == 1){
 
-
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"C");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
-
 				stateKeypad = TECLA_C;
 
 			}
@@ -1387,17 +1658,6 @@ void read_keypad(uint8_t EstadoBoton){
 
 			if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC4) == 1){
 
-
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"D");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Devolverse");
-
 				stateKeypad = TECLA_D;
 			}
 
@@ -1410,12 +1670,9 @@ void read_keypad(uint8_t EstadoBoton){
    } // Fin  Switch case
  } // Fin de la función
 
-
-
 void config_general(void){
 
      // El stop es para que no se devuelva la función sin querer
-//    if((Columna_1) && (stop)) {
 
 	if((Columna_1)){
 
@@ -1427,8 +1684,6 @@ void config_general(void){
 	Columna_1=0;
 
     }
-
-//    if((Columna_2) && (stop)){
     if((Columna_2)){
 
 	read_keypad(TECLA_DOS);
@@ -1439,10 +1694,6 @@ void config_general(void){
 	Columna_2=0;
 
     }
-
-
-
-//    if((Columna_3) && (stop)){
 
     if((Columna_3)){
 
@@ -1455,8 +1706,6 @@ void config_general(void){
 	Columna_3=0;
 
     }
-
-//    if((Columna_4) && (stop)){
 
     	if((Columna_4)){
 
@@ -1472,653 +1721,6 @@ void config_general(void){
 
 }
 
-//void config_inicial(uint8_t entrada){
-//
-//
-//
-//	switch(entrada){
-//
-//		/* Columna 1 */
-//
-//			case 11:{
-//
-//				if(Columna_1){
-//
-//				/* Fila 1- Columna 1 */
-//				GPIO_WritePin(&handlerF1, SET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC1) == 1){
-//
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"____________________");
-//				LCD_setCursor(&handlerLCD,1,1);
-//				LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//				LCD_setCursor(&handlerLCD,2,4);
-//				LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//
-//					Columna_1 = 0;
-//				}
-//
-//			    	break;
-//	 	     }
-//			}
-//
-//			    	 /* Fila 2 - Columna 1 */
-//			case 21:{
-//
-//				if(Columna_1){
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, SET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				 if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC1) == 1){
-//
-//				 LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"____________________");
-//				LCD_setCursor(&handlerLCD,1,1);
-//				LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//				LCD_setCursor(&handlerLCD,2,4);
-//				LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//				Columna_1 = 0;
-//							}
-//
-//			 break;
-//			}
-//
-//			}
-//
-//			case 31:{
-//
-//					 /* Fila 3 - Columna 1 */
-//
-//				if(Columna_1){
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, SET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				 if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC1) == 1){
-//
-//				 LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"____________________");
-//				LCD_setCursor(&handlerLCD,1,1);
-//				LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//				LCD_setCursor(&handlerLCD,2,4);
-//				LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//
-//				Columna_1 = 0;
-//								}
-//
-//				 break;
-//
-//			 }
-//
-//			}
-//
-//			case 41:{
-//
-//					 /* Fila 4- Columna 1 */
-//
-//				if(Columna_1){
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, SET);
-//
-//				 if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC1) == 1){
-//
-//					LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"____________________");
-//					LCD_setCursor(&handlerLCD,1,1);
-//					LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//					LCD_setCursor(&handlerLCD,2,4);
-//					LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//				Columna_1 = 0;
-//								}
-//					 break;
-//			}
-//			}
-//
-//		       // Me cierra Columna 1
-//
-//	                /* Opciones para siguiente columna */
-//			   case 12:{
-//
-//
-//					 if(Columna_2){
-//
-//			    /* Fila 1 - Columna 2 */
-//
-//				GPIO_WritePin(&handlerF1, SET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC2) == 1){
-//
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"____________________");
-//				LCD_setCursor(&handlerLCD,1,1);
-//				LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//				LCD_setCursor(&handlerLCD,2,4);
-//				LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//
-//					Columna_2 = 0;
-//				}
-//
-//				break;
-//
-//					 }
-//
-//			   }
-//
-//				/* Fila 2 - Columna  2*/
-//			   case 22:{
-//
-//
-//			   if(Columna_2){
-//
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, SET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC2) == 1){
-//
-//				LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"____________________");
-//				LCD_setCursor(&handlerLCD,1,1);
-//				LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//				LCD_setCursor(&handlerLCD,2,4);
-//				LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//
-//				Columna_2 = 0;
-//				}
-//
-//		       break;
-//
-//			   }
-//			   } // Cierra el case
-//
-//				 /* Fila 3- Columna 2 */
-//			   case 32:{
-//
-//				 if(Columna_2){
-//
-//			    GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, SET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				 if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC2) == 1){
-//
-//				 LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"____________________");
-//				LCD_setCursor(&handlerLCD,1,1);
-//				LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//				LCD_setCursor(&handlerLCD,2,4);
-//				LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//
-//				Columna_2 = 0;
-//								}
-//
-//				 break;
-//
-//			   }
-//
-//		       }
-//
-//
-//				 /* Fila 4- Columna 2 */
-//
-//			   case 42:{
-//
-//				   if(Columna_2){
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, SET);
-//
-//				 if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC2) == 1){
-//
-//			// Menu
-//
-//					LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"____________________");
-//					LCD_setCursor(&handlerLCD,1,1);
-//					LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//					LCD_setCursor(&handlerLCD,2,4);
-//					LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//
-//				Columna_2 = 0;
-//								}
-//
-//	             break;
-//
-//			     }
-//				 }// Cierre columna 2
-//
-//				 /* Columna 3 */
-//
-//			   case 13: {
-//
-//
-//				 if(Columna_3){
-//
-//				/* Fila 1 - Columna 3 */
-//
-//				GPIO_WritePin(&handlerF1, SET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-//
-//					LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"____________________");
-//					LCD_setCursor(&handlerLCD,1,1);
-//					LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//					LCD_setCursor(&handlerLCD,2,4);
-//					LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//
-//					Columna_3 = 0;
-//				}
-//
-//				break;
-//
-//				 }
-//
-//			   }
-//
-//				/* Fila 2 - Columna  3*/
-//
-//			   case 23:{
-//
-//				 if(Columna_3){
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, SET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-//
-//					LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"____________________");
-//					LCD_setCursor(&handlerLCD,1,1);
-//					LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//					LCD_setCursor(&handlerLCD,2,4);
-//					LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//				Columna_3 = 0;
-//				}
-//
-//				break;
-//
-//				 }
-//
-//			   }
-//
-//				 /* Fila 3- Columna 3 */
-//
-//			   case 33:{
-//
-//				if(Columna_3){
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, SET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				 if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-//
-//					LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"____________________");
-//					LCD_setCursor(&handlerLCD,1,1);
-//					LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//					LCD_setCursor(&handlerLCD,2,4);
-//					LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//
-//				Columna_3 = 0;
-//								}
-//
-//				 break;
-//
-//				}
-//
-//			   }
-//
-//
-//				 /* Fila 4- Columna 3 */
-//
-//			   case 43:{
-//
-//			    if(Columna_3){
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, SET);
-//
-//				 if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC3) == 1){
-//
-//					LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"____________________");
-//					LCD_setCursor(&handlerLCD,1,1);
-//					LCD_sendSTR(&handlerLCD,"Alarmas German S.A");
-//					LCD_setCursor(&handlerLCD,2,4);
-//					LCD_sendSTR(&handlerLCD,"Bienvenidos");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"____Menu  Letras____");
-//
-//				Columna_3 = 0;
-//								}
-//
-//				 break;
-//
-//			    }
-//
-//				 }
-//
-//				 /* Nueva columna  4*/
-//
-//			   case 14:{
-//
-//
-//				 if(Columna_4){
-//
-//				/* Fila 1 - Columna 4*/
-//
-//				GPIO_WritePin(&handlerF1, SET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//
-//
-//				 Confi1 = 1;
-//				 Confi2 = 1;
-//				 Confi3 = 1;
-//				 Confi4 = 1;
-//
-//
-//				 LCD_ClearScreen(&handlerLCD);
-//				LCD_setCursor(&handlerLCD,0,0);
-//				LCD_sendSTR(&handlerLCD,"A| Configuracion");
-//				LCD_setCursor(&handlerLCD,1,0);
-//				LCD_sendSTR(&handlerLCD,"B| Parametros");
-//				LCD_setCursor(&handlerLCD,2,0);
-//				LCD_sendSTR(&handlerLCD,"C| Activacion");
-//				LCD_setCursor(&handlerLCD,3,0);
-//				LCD_sendSTR(&handlerLCD,"D| Fecha y hora");
-//
-////
-////			menu();
-////
-////					opcion4 = 1;
-//
-//
-//					Columna_4 = 0;
-//				}
-//
-//
-//				 }
-//
-//				 if((Columna_4) && ((Confi1) == 1)){
-//
-//					GPIO_WritePin(&handlerF1, SET);
-//					GPIO_WritePin(&handlerF2, RESET);
-//					GPIO_WritePin(&handlerF3, RESET);
-//					GPIO_WritePin(&handlerF4, RESET);
-//
-//					 if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//
-//							LCD_ClearScreen(&handlerLCD);
-//							LCD_setCursor(&handlerLCD,0,0);
-//							LCD_sendSTR(&handlerLCD,"A| Activar alarmas");
-//							LCD_setCursor(&handlerLCD,1,0);
-//							LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//							LCD_setCursor(&handlerLCD,2,0);
-//							LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//							LCD_setCursor(&handlerLCD,3,0);
-//							LCD_sendSTR(&handlerLCD,"D| Devolverse");
-//
-//
-//						 activarA = 1;
-//						 activarS = 1;
-//						 desactivar=1;
-//						 devolverse=1;
-//
-//						 Columna_4 = 0;
-//
-//						 Confi1 = 0;
-//						 Confi2 = 0;
-//						 Confi3 = 0;
-//						 Confi4 = 0;
-//
-//
-//
-//
-//					 }
-//
-//
-//				 } // Cierre condicional de  Confi
-//
-//
-//				 if((Columna_4) && ( (activarA)== 1)){
-//
-//
-//					 activarA = 0;
-//					 activarS = 0;
-//					 desactivar=0;
-//					 devolverse=0;
-//
-//					 movimiento_puerta = 1;
-//
-//					 Columna_4= 0;
-//
-//
-//				 }
-//
-//
-//
-//				 break;
-//
-//			   }
-//
-//				/* Fila 2 - Columna  4*/
-//
-//			   case 24:{
-//
-//				if(Columna_4){
-//
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, SET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//					 Confi1 = 1;
-//					 Confi2 = 1;
-//					 Confi3 = 1;
-//					 Confi4 = 1;
-//
-//					LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"A| Configuracion");
-//					LCD_setCursor(&handlerLCD,1,0);
-//					LCD_sendSTR(&handlerLCD,"B| Parametros");
-//					LCD_setCursor(&handlerLCD,2,0);
-//					LCD_sendSTR(&handlerLCD,"C| Activacion");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"D| Fecha y hora");
-//
-////					menu();
-////
-////					opcion4 = 1;
-////
-//				Columna_4 = 0;
-//				}
-//
-//				break;
-//
-//				}
-//
-//			   }
-//
-//				 /* Fila 3- Columna 4 */
-//
-//			   case 34:{
-//
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, SET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				 if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//					 LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"A| Configuracion");
-//					LCD_setCursor(&handlerLCD,1,0);
-//					LCD_sendSTR(&handlerLCD,"B| Parametros");
-//					LCD_setCursor(&handlerLCD,2,0);
-//					LCD_sendSTR(&handlerLCD,"C| Activacion");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"D| Fecha y hora");
-//
-//
-//					 Confi1 = 1;
-//					 Confi2 = 1;
-//					 Confi3 = 1;
-//					 Confi4 = 1;
-//
-//
-////					 stop = 0;
-////
-////					 menu();
-////
-////					 menu_activacion();
-////					 menu_parametros();
-////					 opcion4 = 1;
-//
-//
-//				Columna_4 = 0;
-//								}
-//
-//				 break;
-//
-//			   }
-//
-//
-//				 /* Fila 4- Columna 4 */
-//
-//			   case 44: {
-//
-//				if(Columna_4){
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, SET);
-//
-//				 if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//
-//					 Confi1 = 1;
-//					 Confi2 = 1;
-//					 Confi3 = 1;
-//					 Confi4 = 1;
-//
-//					LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"A| Configuracion");
-//					LCD_setCursor(&handlerLCD,1,0);
-//					LCD_sendSTR(&handlerLCD,"B| Parametros");
-//					LCD_setCursor(&handlerLCD,2,0);
-//					LCD_sendSTR(&handlerLCD,"C| Activacion");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"D| Fecha y hora");
-//
-////
-////					opcion4 = 1;
-//
-//
-//
-//
-//				Columna_4 = 0;
-//								}
-//
-//			    break;
-//				}
-//			 } // Cierre Col 4
-//
-//			   default:
-//
-//				   __NOP();
-//
-//		  }
-//
-//
-//}
 
 
 //void parseCommands(char *ptrBufferReception){
@@ -2154,358 +1756,3 @@ void config_general(void){
 //
 //}
 
-//void menu(void){
-//
-//    /* Se viene de Configuracion General */
-//
-// // Aqui empieza la magia a revisar, al dar click al menu
-//	LCD_ClearScreen(&handlerLCD);
-//	LCD_setCursor(&handlerLCD,0,0);
-//	LCD_sendSTR(&handlerLCD,"A| Configuracion");
-//	LCD_setCursor(&handlerLCD,1,0);
-//	LCD_sendSTR(&handlerLCD,"B| Parametros");
-//	LCD_setCursor(&handlerLCD,2,0);
-//	LCD_sendSTR(&handlerLCD,"C| Activacion");
-//	LCD_setCursor(&handlerLCD,3,0);
-//	LCD_sendSTR(&handlerLCD,"D| Fecha y hora");
-//
-////	stop = 0; // Para que no se devuelva
-//	inicial = 0;
-//
-//
-//
-//                // Esta ya solo deja al menu
-//			    if((Columna_4) && opcion4 == 1 ){
-//
-//			    	/* SE PRESIONO LA LETRA A */
-//
-//				GPIO_WritePin(&handlerF1, SET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				 if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-////				menu_configuracion();
-//
-//				opcion41 = 1;
-//
-//				Columna_4 = 0;
-//
-//
-//
-//				 }
-//
-//				 /* SE PRESIONO LA LETRA B */
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, SET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				// Me manda  a parametros
-//				 if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//				menu_parametros();
-//
-//				Columna_4 = 0;
-//
-//				 }
-//
-//				 /* SE PRESIONO LA LETRA C */
-//
-//				// Opcion C
-//
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, SET);
-//				GPIO_WritePin(&handlerF4, RESET);
-//
-//				 if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//			   // Me manda a menu de activacion
-//
-//				// Se activa otra vez el menu
-//
-//
-//				menu_activacion(); // Nos dirigimos a activación
-//
-//				activacion = 1;
-//
-//				Columna_4 = 0;
-//								}
-//
-//
-//				 /* SE PRESIONO LA LETRA D */
-//
-//				GPIO_WritePin(&handlerF1, RESET);
-//				GPIO_WritePin(&handlerF2, RESET);
-//				GPIO_WritePin(&handlerF3, RESET);
-//				GPIO_WritePin(&handlerF4, SET);
-//
-//				 if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//				// Me manda a configuración de fecha y hora
-//
-//				fechahora();
-//
-//				Columna_4 = 0;
-//
-//			    }
-//
-//				 }
-//
-//                }
-//
-//
-//
-//void menu_activacion(void){
-//
-//
-//	/* Se despliega un nuevo menu dentro de este que se tiene que cambiar */
-//
-//	LCD_ClearScreen(&handlerLCD);
-//	LCD_setCursor(&handlerLCD,0,0);
-//	LCD_sendSTR(&handlerLCD,"A| Activar alarmas");
-//	LCD_setCursor(&handlerLCD,1,0);
-//	LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//	LCD_setCursor(&handlerLCD,2,0);
-//	LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//	LCD_setCursor(&handlerLCD,3,0);
-//	LCD_sendSTR(&handlerLCD,"D| Devolverse");
-//
-////	activacion = 1;
-//
-//	 if((Columna_4) && (activacion == 1)){
-//
-//		/* Fila 1 - Columna 4*/
-//
-//		 // Configuracion para el despliegue del menu de activacion
-//
-//		 /* SE PRESIONO LA LETRA A */
-//
-//		GPIO_WritePin(&handlerF1, SET);
-//		GPIO_WritePin(&handlerF2, RESET);
-//		GPIO_WritePin(&handlerF3, RESET);
-//		GPIO_WritePin(&handlerF4, RESET);
-//
-//		// Caso activar sensores ambos
-//
-//		if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//
-//		LCD_ClearScreen(&handlerLCD);
-//		LCD_setCursor(&handlerLCD,0,0);
-//		LCD_sendSTR(&handlerLCD,"Se activo la alarma");
-//		LCD_setCursor(&handlerLCD,1,0);
-//		LCD_sendSTR(&handlerLCD,"Correctamente");
-//		LCD_setCursor(&handlerLCD,2,0);
-//		LCD_sendSTR(&handlerLCD,"Pulsa cualquier");
-//		LCD_setCursor(&handlerLCD,3,0);
-//		LCD_sendSTR(&handlerLCD,"letra para volver");
-//
-//		/* Bajar todas las banderas involucradas */
-//        stop = 1;
-//        activacion = 0;
-//		movimiento_puerta = 1;
-//
-//		inicial = 1;
-//
-//		Columna_4 = 0;
-//
-//		}
-//
-//		/* SE PRESIONO LA LETRA B */
-//
-//		GPIO_WritePin(&handlerF1, RESET);
-//		GPIO_WritePin(&handlerF2, SET);
-//		GPIO_WritePin(&handlerF3, RESET);
-//		GPIO_WritePin(&handlerF4, RESET);
-//
-//		// Caso activar solo de movimiento
-//
-//		if((GPIO_ReadPin(&handlerF2) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//
-//		// Otra bandera sola para esa opción
-//
-//
-//
-//		Columna_4 = 0;
-//		}
-//
-//		/* SE PRESIONO LA LETRA C */
-//
-//
-//		GPIO_WritePin(&handlerF1, RESET);
-//		GPIO_WritePin(&handlerF2, RESET);
-//		GPIO_WritePin(&handlerF3, SET);
-//		GPIO_WritePin(&handlerF4, RESET);
-//
-//
-//		// Caso de desactivar alarma ya configurada
-//
-//		if((GPIO_ReadPin(&handlerF3) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//
-//			// Parametros de clave largos :O
-//
-//
-//
-//			Columna_4 = 0;
-//		}
-//
-//		/* SE PRESIONO LA LETRA D */
-//
-//
-//		GPIO_WritePin(&handlerF1, RESET);
-//		GPIO_WritePin(&handlerF2, RESET);
-//		GPIO_WritePin(&handlerF3, RESET);
-//		GPIO_WritePin(&handlerF4, SET);
-//
-//		// Devolverse al menu
-//
-//		if((GPIO_ReadPin(&handlerF4) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//
-//			Columna_4 = 0;
-//		}
-//
-//		 }
-//
-//        }
-//
-//void menu_configuracion(void){
-//
-//
-//	LCD_ClearScreen(&handlerLCD);
-//	LCD_setCursor(&handlerLCD,0,0);
-//	LCD_sendSTR(&handlerLCD,"A| Activar alarmas");
-//	LCD_setCursor(&handlerLCD,1,0);
-//	LCD_sendSTR(&handlerLCD,"B| Activar sensor");
-//	LCD_setCursor(&handlerLCD,2,0);
-//	LCD_sendSTR(&handlerLCD,"C| Desactivar");
-//	LCD_setCursor(&handlerLCD,3,0);
-//	LCD_sendSTR(&handlerLCD,"D| Devolverse");
-//
-//
-//	/* SE PRESIONO LA LETRA C */
-//
-//	if((Columna_4) && (opcion41 == 1)){
-//			GPIO_WritePin(&handlerF1, SET);
-//			GPIO_WritePin(&handlerF2, RESET);
-//			GPIO_WritePin(&handlerF3, RESET);
-//			GPIO_WritePin(&handlerF4, RESET);
-//
-//
-//			// Caso de desactivar alarma ya configurada
-//
-//			if((GPIO_ReadPin(&handlerF1) == 1) && GPIO_ReadPin(&handlerC4) == 1){
-//
-//
-//				// Parametros de clave largos :O
-//
-//				movimiento_puerta = 1;
-//
-//
-//
-//				Columna_4 = 0;
-//			}
-//
-//	}
-//}
-//
-//void menu_parametros(void){
-//
-//	LCD_ClearScreen(&handlerLCD);
-//	LCD_setCursor(&handlerLCD,0,1);
-//	LCD_sendSTR(&handlerLCD,"Zona de parametros");
-//	LCD_setCursor(&handlerLCD,1,3);
-//	LCD_sendSTR(&handlerLCD,"en esta podras");
-//	LCD_setCursor(&handlerLCD,2,1);
-//	LCD_sendSTR(&handlerLCD,"cambiar el sonido del");
-//	LCD_setCursor(&handlerLCD,3,6);
-//	LCD_sendSTR(&handlerLCD,"buzzer. Return D");
-//
-//
-//}
-//
-//void fechahora(void){
-//
-//	LCD_ClearScreen(&handlerLCD);
-//	LCD_setCursor(&handlerLCD,0,1);
-//	LCD_sendSTR(&handlerLCD,"Zona de cambio tanto");
-//	LCD_setCursor(&handlerLCD,1,3);
-//	LCD_sendSTR(&handlerLCD,"de la fecha como la");
-//	LCD_setCursor(&handlerLCD,2,1);
-//	LCD_sendSTR(&handlerLCD,"hora. Hora Push = A");
-//	LCD_setCursor(&handlerLCD,3,6);
-//	LCD_sendSTR(&handlerLCD,",Fecha:Push=B.Return D");
-//
-//
-//}
-
-//void KeyPad_Confi(uint8_t opciones){
-//
-//	switch(opciones){
-//
-//
-//	case 11:{
-//
-//		GPIO_WritePin(&handlerF1, SET);
-//		GPIO_WritePin(&handlerF2, RESET);
-//		GPIO_WritePin(&handlerF3, RESET);
-//		GPIO_WritePin(&handlerF4, RESET);
-//
-//		break;
-//
-//
-//	}
-//
-//	case 12:{
-//
-//
-//		GPIO_WritePin(&handlerF1, RESET);
-//		GPIO_WritePin(&handlerF2, SET);
-//		GPIO_WritePin(&handlerF3, RESET);
-//		GPIO_WritePin(&handlerF4, RESET);
-//
-//		break;
-//
-//
-//	}
-//
-//
-//	case 13:{
-//
-//		GPIO_WritePin(&handlerF1, RESET);
-//		GPIO_WritePin(&handlerF2, RESET);
-//		GPIO_WritePin(&handlerF3, SET);
-//		GPIO_WritePin(&handlerF4, RESET);
-//
-//		break;
-//	}
-//
-//	case 14:{
-//
-//	GPIO_WritePin(&handlerF1, RESET);
-//	GPIO_WritePin(&handlerF2, RESET);
-//	GPIO_WritePin(&handlerF3, RESET);
-//	GPIO_WritePin(&handlerF4, SET);
-//
-//	break;
-//
-//	}
-//
-//	default:{
-//
-//		GPIO_WritePin(&handlerF1, SET);
-//		GPIO_WritePin(&handlerF2, SET);
-//		GPIO_WritePin(&handlerF3, SET);
-//		GPIO_WritePin(&handlerF4, SET);
-//
-//		break;
-//	}
-//
-//	}
-//}

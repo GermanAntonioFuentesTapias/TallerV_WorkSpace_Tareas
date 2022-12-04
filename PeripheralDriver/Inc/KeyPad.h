@@ -37,6 +37,7 @@
 #define ACTIVAR_S       18
 #define DESACTIVAR      19
 #define ATRAS           20
+#define ATRAS_CONFI     29
 // Menus y estados
 #define INICIO          21
 #define MENUS           22
@@ -49,6 +50,20 @@
 
 #define ENTRO           24
 #define SALIO           25
+
+/* Parametros opciones */
+
+#define CONTRASE        30
+#define SONIDO          31
+#define PANICO          32
+#define ATRAS_PARA      33
+
+/* Fecha y hora opciones */
+
+#define CAMBIAR_FECHA   34
+#define CAMBIAR_HORA    35
+#define EVENTOS         36
+#define ATRAS_FyH       37
 
 
 #endif /* KEYPAD_H_ */

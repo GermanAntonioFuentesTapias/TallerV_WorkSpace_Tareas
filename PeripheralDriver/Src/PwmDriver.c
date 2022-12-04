@@ -314,4 +314,54 @@ void updateDuttyCycle(PWM_Handler_t *ptrPwmHandler, uint16_t newDutty){
 
 
 
+void disableOutPut(PWM_Handler_t *ptrPwmHandler){
+
+	switch(ptrPwmHandler -> config.channel){
+
+	case PWM_CHANNEL_1:{
+
+		//desactivamos
+		ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC1E);
+
+		break;
+	}
+
+	case PWM_CHANNEL_2:{
+
+			//desactivamos
+			ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC2E);
+
+			break;
+		}
+
+	case PWM_CHANNEL_3:{
+
+			//desactivamos
+			ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC3E);
+
+			break;
+		}
+
+	case PWM_CHANNEL_4:{
+
+			//desactivamos
+			ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC4E);
+
+			break;
+		}
+
+	default:{
+
+		break;
+	}
+
+
+
+
+
+	}
+}
+
+
+
 
