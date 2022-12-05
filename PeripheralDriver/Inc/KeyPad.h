@@ -65,5 +65,7 @@
 #define EVENTOS         36
 #define ATRAS_FyH       37
 
+#define MOVIMIENTO      38
+
 
 #endif /* KEYPAD_H_ */

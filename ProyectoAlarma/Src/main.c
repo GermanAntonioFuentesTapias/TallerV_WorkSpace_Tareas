@@ -30,6 +30,7 @@
 #include "PwmDriver.h"
 #include "ExtiDriver.h"
 #include  "KeyPad.h"
+#include  "RTCxDriver.h"
 
 GPIO_Handler_t    handlerBlinkyPin   = {0};
 
@@ -128,6 +129,18 @@ PWM_Handler_t   handlerPWM              = {0};
 char dataLCD[64] = {0};
 char bufferData[64]    =  {0};
 
+
+
+/* Configuración para RTC */
+
+uint8_t  Seg ;
+uint8_t  Min ;
+uint8_t  Hor;
+uint8_t  Sem ;
+uint8_t  Day;
+uint8_t  Mes;
+uint8_t  Ano;
+
 /* Funciones para comandos */
 
 
@@ -215,8 +228,8 @@ while (1){
 
         if(((Puerta) ||  (Code)) && ((movimiento_puerta) == 1) ) {
 
-            frequencyValue = 18000;
-            duttyValue     = 15000;
+
+
         	updateFrequency(&handlerPWM,frequencyValue);
         	updateDuttyCycle(&handlerPWM, duttyValue);
         	startPwmSignal(&handlerPWM);
@@ -239,6 +252,31 @@ while (1){
 
 
             }
+
+        /* Función encargada de activar solo puerta */
+
+        if(movimiento_puerta == MOVIMIENTO){
+
+        	frequencyValue = 18000;
+			duttyValue     = 15000;
+			updateFrequency(&handlerPWM,frequencyValue);
+			updateDuttyCycle(&handlerPWM, duttyValue);
+			startPwmSignal(&handlerPWM);
+			enableOutput(&handlerPWM);
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,1);
+			LCD_sendSTR(&handlerLCD,"Detecto apertura");
+			LCD_setCursor(&handlerLCD,2,7);
+			LCD_sendSTR(&handlerLCD,"Alerta!");
+			LCD_setCursor(&handlerLCD,3,0);
+			LCD_sendSTR(&handlerLCD,"Por favor desactive");
+
+		  GPIO_WritePin(&handlerRojo, SET);
+
+		  movimiento_puerta = NOTHING;
+
+        }
 
         /* Función que se encarga de apagar la alarma */
 
@@ -322,7 +360,7 @@ while (1){
 		   }
 
 
-
+     /********************************************************************************************************************************************/
 //			  read_keypad(stateKeypad);
 
 			/* Configuración Menu del KEYPAD */
@@ -360,7 +398,6 @@ while (1){
 			  	LCD_setCursor(&handlerLCD,3,0);
 			  	LCD_sendSTR(&handlerLCD,"D| Atras");
 
-//					movimiento_puerta = 1;
 
 			   posicionMenu = ENTRO; // Case de opcion
 			   estadoPantalla = MENUS; // No deja que se produzca el menu de inicio
@@ -382,7 +419,7 @@ while (1){
 
 					LCD_ClearScreen(&handlerLCD);
 					LCD_setCursor(&handlerLCD,0,0);
-					LCD_sendSTR(&handlerLCD,"Into to password");
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
 					LCD_setCursor(&handlerLCD,1,0);
 					LCD_sendSTR(&handlerLCD,"The password=");
 					LCD_setCursor(&handlerLCD,2,6);
@@ -400,11 +437,21 @@ while (1){
 
 				if((stateKeypad == TECLA_B)){
 
-					estadoPantalla = MENUS;
-					visualPantalla = CONFIGURACION;
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"B| Into to password");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"The password=");
+					LCD_setCursor(&handlerLCD,2,6);
+					LCD_sendSTR(&handlerLCD,"Digitos");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D|atras");
 
+					posicionMenu = ACTIVAR_S;
+				   estadoPantalla = MENUS;
+				   visualPantalla = CONFIGURACION;
 
-					stateKeypad = NOTHING;
+				   stateKeypad = NOTHING;
 
 				}
 
@@ -412,7 +459,7 @@ while (1){
 
 					LCD_ClearScreen(&handlerLCD);
 					LCD_setCursor(&handlerLCD,0,0);
-					LCD_sendSTR(&handlerLCD,"Into to password");
+					LCD_sendSTR(&handlerLCD,"C| Into to password");
 					LCD_setCursor(&handlerLCD,1,0);
 					LCD_sendSTR(&handlerLCD,"The password=");
 					LCD_setCursor(&handlerLCD,2,6);
@@ -447,9 +494,68 @@ while (1){
 				}
 			}
 
+            /**************************************************************************/
+
 			/* Configuración de la opcion PARAMETROS */
 
 			if(estadoPantalla == PARAMETROS){
+
+
+				if((stateKeypad == TECLA_A)){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					LCD_setCursor(&handlerLCD,2,6);
+					LCD_sendSTR(&handlerLCD,"Digitos");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D|atras");
+
+				   posicionMenu = CONTRASE;
+				   estadoPantalla = MENUS;
+				   visualPantalla = CONFIGURACION;
+
+				   stateKeypad = NOTHING;
+
+
+				}
+
+				if((stateKeypad == TECLA_B)){
+
+
+					updateDuttyCycle(&handlerPWM, duttyValue);
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"Configuracion sonido");
+					sprintf(dataLCD, "El valor es = %u ", (unsigned int) duttyValue );
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+
+
+//					LCD_ClearScreen(&handlerLCD);
+//					LCD_setCursor(&handlerLCD,0,0);
+//					LCD_sendSTR(&handlerLCD,"Valor actual =");
+//					LCD_setCursor(&handlerLCD,1,0);
+//					LCD_sendSTR(&handlerLCD,"Nuevo valor =");
+//					LCD_setCursor(&handlerLCD,2,6);
+//					LCD_sendSTR(&handlerLCD,"Digitos");
+//					LCD_setCursor(&handlerLCD,3,0);
+//					LCD_sendSTR(&handlerLCD,"D|atras");
+
+				   posicionMenu = SONIDO;
+				   estadoPantalla = MENUS;
+				   visualPantalla = CONFIGURACION;
+
+				   stateKeypad = NOTHING;
+
+				}
+
+				if((stateKeypad == TECLA_C)){
+
+
+				}
 
 				if((stateKeypad == TECLA_D)){
 
@@ -471,7 +577,78 @@ while (1){
 
 
 				}
-			}
+			} // Fin de parametros opciones
+
+
+
+			/**********************************************************************/
+
+			/* Dentro de parametros para tener actualizaciones de sonido */
+
+//			if(estadoPantalla ==  SONIDO){
+//
+//				//Subir
+//				if(stateKeypad == TECLA_ESTRELLA){
+//
+//
+//					duttyValue += 100;
+//
+//
+//					updateDuttyCycle(&handlerPWM, duttyValue);
+//					sprintf(dataLCD, "El nuevo valor es %u ", (unsigned int) duttyValue );
+//				    LCD_setCursor(&handlerLCD,1,0);
+//					LCD_sendSTR(&handlerLCD,dataLCD);
+//
+//
+//
+////					LCD_ClearScreen(&handlerLCD);
+////					LCD_setCursor(&handlerLCD,0,0);
+////					LCD_sendSTR(&handlerLCD,"A| Configuracion");
+////					LCD_setCursor(&handlerLCD,1,0);
+////					LCD_sendSTR(&handlerLCD,"B| Parametros");
+////					LCD_setCursor(&handlerLCD,2,0);
+////					LCD_sendSTR(&handlerLCD,"C| Fecha y hora");
+////					LCD_setCursor(&handlerLCD,3,0);
+////					LCD_sendSTR(&handlerLCD,"D| Atras");
+//
+//
+//					stateKeypad = NOTHING;
+//
+//				}
+//
+//				// Bajar
+//
+//				if(stateKeypad == TECLA_NUMERAL){
+//
+//					duttyValue -= 100;
+//
+//					updateDuttyCycle(&handlerPWM, duttyValue);
+//					sprintf(dataLCD, "El nuevo valor es %u ", (unsigned int) duttyValue );
+//					LCD_setCursor(&handlerLCD,1,0);
+//					LCD_sendSTR(&handlerLCD,dataLCD);
+//
+//					stateKeypad = NOTHING;
+//				}
+//
+//                 /* Devolverse o retorna */
+//
+//				if(stateKeypad == TECLA_D){
+//
+//
+//					stateKeypad = NOTHING;
+//
+//				}
+//
+//
+//			}
+
+
+
+
+
+
+
+			/******************************************************************/
 
 			/* Configuración para configuraciones de fecha y hora */
 
@@ -819,7 +996,7 @@ while (1){
 
 					LCD_ClearScreen(&handlerLCD);
 					LCD_setCursor(&handlerLCD,0,0);
-					LCD_sendSTR(&handlerLCD,"A|Cambiar contraseña");
+					LCD_sendSTR(&handlerLCD,"A|Cambiar contrasena");
 					LCD_setCursor(&handlerLCD,1,0);
 					LCD_sendSTR(&handlerLCD,"B|Cambiar sonido");
 					LCD_setCursor(&handlerLCD,2,0);
@@ -856,7 +1033,7 @@ while (1){
 
               }
 
-
+ /******************************************************************************************************/
 
               /* Configuraciones particulares */
 
@@ -906,6 +1083,57 @@ while (1){
 
             	  }
               }
+              /* Opción activar un solo sensor (movimiento) */
+
+
+              if(posicionMenu == ACTIVAR_S){
+
+
+            	if(stateKeypad == TECLA_CERO){
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,2);
+				LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+				LCD_setCursor(&handlerLCD,2,2);
+				LCD_sendSTR(&handlerLCD,"Felices fiestas");
+				LCD_setCursor(&handlerLCD,3,0);
+				LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+			   movimiento_puerta = 1;
+
+			  seleccionConfiguracion = NOTHING;
+			  estadoPantalla = CONFIGURACION;
+			  desactivar_puerta = MOVIMIENTO; // Sensor puerta
+			  stateKeypad = NOTHING;
+
+			  posicionMenu = SALIO;
+		  }
+
+
+		  if(stateKeypad == TECLA_D){
+
+			  LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"A| Activar alarmas");
+			LCD_setCursor(&handlerLCD,1,0);
+			LCD_sendSTR(&handlerLCD,"B| Activar sensor");
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,"C| Desactivar");
+			LCD_setCursor(&handlerLCD,3,0);
+			LCD_sendSTR(&handlerLCD,"D| Atras");
+
+			seleccionConfiguracion = NOTHING;
+			estadoPantalla = CONFIGURACION;
+			stateKeypad = NOTHING;
+
+			posicionMenu = SALIO;
+
+
+		  }
+              }
+
              /* Opción para desactivar */
 
               if(posicionMenu == DESACTIVAR){
@@ -917,13 +1145,6 @@ while (1){
             		  desactivar_puerta = 1;
             		  posicionMenu = SALIO;
             		  stateKeypad = NOTHING;
-
-
-
-
-            	  }
-
-
             	  }
 
 
@@ -939,12 +1160,152 @@ while (1){
 				LCD_setCursor(&handlerLCD,3,0);
 				LCD_sendSTR(&handlerLCD,"D| Atras");
 
-				  seleccionConfiguracion = NOTHING;
-				  estadoPantalla = CONFIGURACION;
+				 seleccionConfiguracion = NOTHING;
+				 estadoPantalla = CONFIGURACION;
 				stateKeypad = NOTHING;
 
 				posicionMenu = SALIO;
               }
+
+              }
+
+              /************************************************************/
+
+              /* Otras confis --> Parametros */
+
+              if(posicionMenu == CONTRASE){
+
+            	  if(stateKeypad == TECLA_A){
+
+            		  seleccionConfiguracion = NOTHING;
+					  estadoPantalla = PARAMETROS;
+					  posicionMenu = SALIO;
+					  stateKeypad = NOTHING;
+            	  }
+
+            	  if(stateKeypad == TECLA_D){
+
+
+            		LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A|Cambiar contrasena");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"B|Cambiar sonido");
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,"C|Panico");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D| Atras");
+
+            	 	 seleccionConfiguracion = NOTHING;
+            	 	 estadoPantalla = PARAMETROS;
+            	 	 stateKeypad = NOTHING;
+
+            	 	  posicionMenu = SALIO;
+
+            	               }
+
+              } // Fin de contrase
+
+
+              /* Configuración para sonido  */
+
+          if(posicionMenu == SONIDO){
+
+
+
+
+        	if(stateKeypad == TECLA_ESTRELLA){
+
+
+			duttyValue += 100;
+
+
+			updateDuttyCycle(&handlerPWM, duttyValue);
+			LCD_Clear(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"Configuracion sonido");
+			sprintf(dataLCD, "Nuevo valor = %u ", (unsigned int) duttyValue );
+			LCD_setCursor(&handlerLCD,1,0);
+			LCD_sendSTR(&handlerLCD,dataLCD);
+			LCD_setCursor(&handlerLCD,3,1);
+			LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+        	stateKeypad = NOTHING;
+        	estadoPantalla = MENUS;
+        	posicionMenu = SONIDO;
+        	seleccionConfiguracion = NOTHING;
+
+        	  }
+
+        	  // Bajar
+
+			if(stateKeypad == TECLA_NUMERAL){
+
+				duttyValue -= 100;
+
+
+				updateDuttyCycle(&handlerPWM, duttyValue);
+				LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"Configuracion sonido");
+				sprintf(dataLCD, "Nuevo valor = %u ", (unsigned int) duttyValue );
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				stateKeypad = NOTHING;
+				estadoPantalla = MENUS;
+				posicionMenu = SONIDO;
+				seleccionConfiguracion = NOTHING;
+			}
+
+			   /* Devolverse o retorna */
+
+//        	  if(stateKeypad == TECLA_B){
+//
+//		  seleccionConfiguracion = NOTHING;
+//		  estadoPantalla = SONIDO; //  NUEVO SONIDO, OJO VOLVER A PARAMETROS
+//		  posicionMenu = SALIO;
+//		  stateKeypad = NOTHING;
+//
+//
+//        	            	}
+
+        	  if(stateKeypad == TECLA_D){
+
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"A|Cambiar contrasena");
+			LCD_setCursor(&handlerLCD,1,0);
+			LCD_sendSTR(&handlerLCD,"B|Cambiar sonido");
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,"C|Panico");
+			LCD_setCursor(&handlerLCD,3,0);
+			LCD_sendSTR(&handlerLCD,"D| Atras");
+
+			 seleccionConfiguracion = NOTHING;
+			 estadoPantalla = PARAMETROS;
+			 stateKeypad = NOTHING;
+
+			  posicionMenu = SALIO;
+
+        	             	               }
+
+
+
+
+
+
+          } // Fin de sonido
+
+          if(posicionMenu == PANICO){
+
+
+          }
+
+
 		} // While
 
 	    } // Funcion
