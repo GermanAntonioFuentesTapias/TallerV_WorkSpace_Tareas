@@ -1,3 +1,4 @@
+"./Src/PruebaTecla.o"
 "./Src/main.o"
 "./Src/mainCase.o"
 "./Src/syscalls.o"

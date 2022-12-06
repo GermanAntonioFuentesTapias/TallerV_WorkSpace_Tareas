@@ -98,7 +98,7 @@ uint8_t  Mes;
 uint8_t  Ano;
 
 /* Para mensajes */
-char DataRTC[64] = "Wipi";
+char DataRTC[64]     = "Wipi";
 char DataRTCDate[64] = "Wipi";
 char bufferData[64] = "esto es una pequeña prueba";
 char bufferDataY[64] = " Valor Y";

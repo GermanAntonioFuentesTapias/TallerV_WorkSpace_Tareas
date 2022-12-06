@@ -58,6 +58,8 @@ typedef struct
 
 
 void RTC_Config(RTC_handler_t *ptrRTCHandler);
+void RTC_UpdateFecha(RTC_handler_t *ptrRTCHandler, uint16_t New);
+void RTC_SetFecha(RTC_handler_t *ptrRTCHandler);
 uint8_t* leer_datos(void);
 
 #endif /* RTCDRIVER_H_ */

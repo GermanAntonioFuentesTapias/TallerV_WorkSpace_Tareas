@@ -66,6 +66,24 @@
 #define ATRAS_FyH       37
 
 #define MOVIMIENTO      38
+#define CAMBIO          39
+
+
+typedef struct
+{
+  uint8_t Primera_Posicion; /* Primera posición*/
+
+  uint8_t Segunda_Posicion; /* Segunda posición */
+
+  uint8_t Tercera_Posicion; /* Tercera posición */
+
+}handler_Contrasena;
+
+uint8_t* datos_Posicion(void);
+
+void Set_KeyPad(handler_Contrasena *ptrHandlerKey);
+
+void Key_Update(handler_Contrasena  *ptrRTCHandler, uint16_t New);
 
 
 #endif /* KEYPAD_H_ */

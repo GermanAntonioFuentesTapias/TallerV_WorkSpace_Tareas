@@ -35,7 +35,7 @@
 GPIO_Handler_t    handlerBlinkyPin   = {0};
 
 
-//Timer encargado del Blinky
+//Timer encargado del Blinkym
 BasicTimer_Handler_t  handlerBlinkyTimer = {0};
 BasicTimer_Handler_t  handlerReset       = {0};
 
@@ -43,7 +43,8 @@ GPIO_Handler_t handlerTx     	    	= {0};
 GPIO_Handler_t handlerRx	 	     	= {0};
 USART_Handler_t        handlerUsart     = {0}; // Handler para el Usart
 uint8_t rxData      =  0;
-char DataRTC[64]    = "Wipi";
+
+
 uint16_t clave_acceso          = 1234;
 
 uint8_t stateKeypad            = NOTHING;
@@ -51,7 +52,14 @@ uint8_t posicionMenu           = SALIO;
 uint8_t seleccionConfiguracion = NOTHING;
 uint8_t estadoPantalla         = INICIO;
 uint8_t visualPantalla         = NOTHING;
+char  valorNumerosArreglo[3]   = {0, 0, 0};
 
+/* Arreglos para clave */
+
+char ContrasenaInicial[3] = {1,2,3};
+char ContrasenaUsuario[3] = {0,0,0};
+char Actualizar[3]           = {0};
+char Actualizar_des[3]       = {0};
 
 /* Banderas interrupciones */
 
@@ -80,15 +88,15 @@ uint8_t desactivar                      = 0;
 uint8_t reset                           = 0;
 uint8_t handlerLed                      = 0;
 uint8_t Code                            = 0;
-uint8_t Columna_1                         = 0;
-uint8_t Columna_2                           = 0;
-uint8_t Columna_3                           = 0;
-uint8_t Columna_4                           = 0;
+uint8_t Columna_1                       = 0;
+uint8_t Columna_2                       = 0;
+uint8_t Columna_3                       = 0;
+uint8_t Columna_4                       = 0;
 uint8_t Bandera                         = 0;
 uint8_t valor                           = 0;
 uint8_t Puerta                          = 0;
-uint16_t duttyValue                      = 15000;
-uint16_t frequencyValue                  = 18000;
+uint16_t duttyValue                     = 15000;
+uint16_t frequencyValue                 = 18000;
 
 /* Para Muestro */
 
@@ -126,13 +134,16 @@ EXTI_Config_t   handlerF2Ex             = {0};
 EXTI_Config_t   handlerF3Ex             = {0};
 EXTI_Config_t   handlerF4Ex             = {0};
 PWM_Handler_t   handlerPWM              = {0};
-char dataLCD[64] = {0};
-char bufferData[64]    =  {0};
-
+char dataLCD[64]                        = {0};
+char bufferData[64]                     = {0};
+uint8_t  Casos                          =   0;
 
 
 /* Configuración para RTC */
 
+uint8_t  *ptrData;
+
+RTC_handler_t handlerRTC = {0};
 uint8_t  Seg ;
 uint8_t  Min ;
 uint8_t  Hor;
@@ -141,8 +152,10 @@ uint8_t  Day;
 uint8_t  Mes;
 uint8_t  Ano;
 
-/* Funciones para comandos */
+char DataRTC[64]     = "Wipi";
+char DataRTCDate[64] = "Wipi";
 
+/* Funciones para comandos */
 
 uint8_t counterReception = 0;
 char bufferReception[64] = {0};
@@ -153,8 +166,6 @@ bool stringComplete = false;
 bool makeUpdateLCD  = false;
 unsigned int firstParameter;
 unsigned int secondParameter;
-//int Filas[];
-//int Columnas[];
 
 #define LCD_ADRESS		0b0100111
 
@@ -200,7 +211,8 @@ void fechahora(void);
 
 int main(void){
 
-	initSystem();
+
+	 initSystem();
 	 ConfigKeyPad();
 
 		LCD_Init(&handlerLCD);
@@ -222,6 +234,19 @@ int main(void){
 while (1){
 
 	    config_general();
+
+
+	    /* Función del RTC que carga los datos */
+      // Cargandolos de forma acedente
+		ptrData =leer_datos();
+
+		   Seg = ptrData[0];
+		   Min = ptrData[1];
+		   Hor = ptrData[2];
+		   Sem = ptrData[3];
+		   Day = ptrData[4];
+		   Mes = ptrData[5];
+		   Ano = ptrData[6];
 
 
        /* Función que se encarga de prender la alarma */
@@ -250,12 +275,11 @@ while (1){
 
 		Puerta = 0;
 
-
             }
 
         /* Función encargada de activar solo puerta */
 
-        if(movimiento_puerta == MOVIMIENTO){
+        if((movimiento_puerta == 2) && (Puerta ==1 )){
 
         	frequencyValue = 18000;
 			duttyValue     = 15000;
@@ -275,6 +299,7 @@ while (1){
 		  GPIO_WritePin(&handlerRojo, SET);
 
 		  movimiento_puerta = NOTHING;
+		  Puerta = 0;
 
         }
 
@@ -282,15 +307,7 @@ while (1){
 
         if( desactivar_puerta == 1){
              disableOutPut(&handlerPWM);
-//        	 frequencyValue = 0;
-//        	 duttyValue     = 0;
-//
-//        	updateDuttyCycle(&handlerPWM, duttyValue );
-//        	updateFrequency(&handlerPWM, frequencyValue);
         	stopPwmSignal(&handlerPWM);
-
-
-
 
         	LCD_ClearScreen(&handlerLCD);
 			LCD_setCursor(&handlerLCD,0,3);
@@ -313,6 +330,7 @@ while (1){
 	      /* Comunicacion serial */
 
 	      if (rxData != '\0'){
+
 	      			writeChar(&handlerUsart, rxData);
 
 	      			if (rxData == 'd'){
@@ -359,7 +377,11 @@ while (1){
 
 		   }
 
+			if(estadoPantalla == PANICO){
 
+				writeMsg(&handlerUsart, "Alerta, Panico activado");
+
+			}
      /********************************************************************************************************************************************/
 //			  read_keypad(stateKeypad);
 
@@ -405,7 +427,6 @@ while (1){
 
 			   stateKeypad = NOTHING;
 
-
               }
 			}
 
@@ -430,6 +451,7 @@ while (1){
                    posicionMenu = ACTIVAR_A;
 				   estadoPantalla = MENUS;
 				   visualPantalla = CONFIGURACION;
+				   Casos = ENTRO;
 
 				   stateKeypad = NOTHING;
 				}
@@ -506,12 +528,12 @@ while (1){
 					LCD_ClearScreen(&handlerLCD);
 					LCD_setCursor(&handlerLCD,0,0);
 					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
-					LCD_setCursor(&handlerLCD,1,0);
+					LCD_setCursor(&handlerLCD,1,1);
 					LCD_sendSTR(&handlerLCD,"Los valores son =");
-					LCD_setCursor(&handlerLCD,2,6);
-					LCD_sendSTR(&handlerLCD,"Digitos");
+					LCD_setCursor(&handlerLCD,2,5);
+					LCD_sendSTR(&handlerLCD,"*Digitos*");
 					LCD_setCursor(&handlerLCD,3,0);
-					LCD_sendSTR(&handlerLCD,"D|atras");
+					LCD_sendSTR(&handlerLCD,"D|atras ");
 
 				   posicionMenu = CONTRASE;
 				   estadoPantalla = MENUS;
@@ -532,17 +554,9 @@ while (1){
 					sprintf(dataLCD, "El valor es = %u ", (unsigned int) duttyValue );
 					LCD_setCursor(&handlerLCD,1,0);
 					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD," + = * Y  - = # ");
 
-
-//					LCD_ClearScreen(&handlerLCD);
-//					LCD_setCursor(&handlerLCD,0,0);
-//					LCD_sendSTR(&handlerLCD,"Valor actual =");
-//					LCD_setCursor(&handlerLCD,1,0);
-//					LCD_sendSTR(&handlerLCD,"Nuevo valor =");
-//					LCD_setCursor(&handlerLCD,2,6);
-//					LCD_sendSTR(&handlerLCD,"Digitos");
-//					LCD_setCursor(&handlerLCD,3,0);
-//					LCD_sendSTR(&handlerLCD,"D|atras");
 
 				   posicionMenu = SONIDO;
 				   estadoPantalla = MENUS;
@@ -579,7 +593,20 @@ while (1){
 				}
 			} // Fin de parametros opciones
 
+			/***************************************************************************/
 
+			if(estadoPantalla == CONTRASE){
+
+
+
+				if(stateKeypad == TECLA_D){
+
+
+
+				}
+
+
+			}
 
 			/**********************************************************************/
 
@@ -642,17 +669,80 @@ while (1){
 //
 //			}
 
-
-
-
-
-
-
 			/******************************************************************/
 
 			/* Configuración para configuraciones de fecha y hora */
 
 			if(estadoPantalla == FECHAYHORA){
+
+			if((stateKeypad == TECLA_A)){
+
+				// Aqui impresión de la actual fecha
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"Configuracion fecha");
+				sprintf(DataRTCDate, "fecha = %u/ %u/ %u  ", (unsigned int) Day , (unsigned int) Mes, (unsigned int) Ano);
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,DataRTCDate);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+
+			   posicionMenu = CAMBIAR_FECHA;
+			   estadoPantalla = MENUS;
+			   visualPantalla = CONFIGURACION;
+
+			   stateKeypad = NOTHING;
+
+
+			}
+
+			// Aqui impresión de la actual hora
+
+			if(stateKeypad == TECLA_B){
+
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"Configuracion hora");
+				sprintf(DataRTC, "hora= %u:%u:%u seg  ", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,DataRTC);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+
+			   posicionMenu = CAMBIAR_HORA;
+			   estadoPantalla = MENUS;
+			   visualPantalla = CONFIGURACION;
+
+			   stateKeypad = NOTHING;
+
+
+			}
+
+			if(stateKeypad == TECLA_C){
+
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"Los eventos fueron =");
+				sprintf(DataRTC, "fecha = %u:%u:%u seg  ", (unsigned int) Hor, (unsigned int) Min, (unsigned int) Seg );
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,DataRTC);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+
+			   posicionMenu = EVENTOS;
+			   estadoPantalla = MENUS;
+			   visualPantalla = CONFIGURACION;
+
+			   stateKeypad = NOTHING;
+
+
+			}
 
 			if((stateKeypad == TECLA_D)){
 
@@ -675,9 +765,6 @@ while (1){
 
 			}
 		}
-
-
-
 			/***************************************************************/
 
 			/* Se encarga de leer letras ya en el menu DESPUES DE INICIO */
@@ -776,11 +863,7 @@ while (1){
 
        			           } // FIN DE OPCIÓN MENU CONFIGURACIÓN
 
-
-
-
        			/*****************************************************************/
-
 
        			/* Se encarga de la opción B despues del inicio, osea de parametros */
 
@@ -874,8 +957,6 @@ while (1){
 										   }
 
 								   } // FIN DE OPCIÓN MENU FECHA Y HORA
-
-
 
 
            /****************************************************************/
@@ -1037,29 +1118,1173 @@ while (1){
 
               /* Configuraciones particulares */
 
+
+
               if(posicionMenu == ACTIVAR_A){
 
-            	  if(stateKeypad == TECLA_ESTRELLA){
+
+            	  if(stateKeypad == TECLA_UNO){
+
+            		  Confi1 ++;
+
+            		  if(Confi1 == 1){
+
+            		        valorNumerosArreglo[0] = 1;
 
 
-					    LCD_ClearScreen(&handlerLCD);
-						LCD_setCursor(&handlerLCD,0,2);
-						LCD_sendSTR(&handlerLCD,"La alarma activa");
-						LCD_setCursor(&handlerLCD,1,0);
-						LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
-						LCD_setCursor(&handlerLCD,2,2);
-						LCD_sendSTR(&handlerLCD,"Felices fiestas");
-						LCD_setCursor(&handlerLCD,3,0);
-						LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
 
-            		  movimiento_puerta = 1;
+            		        Actualizar[0] =valorNumerosArreglo[0] ;
 
-            		  seleccionConfiguracion = NOTHING;
-					  estadoPantalla = CONFIGURACION;
-					  stateKeypad = NOTHING;
+            		        LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
 
-					  posicionMenu = SALIO;
-            	  }
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+            		  } if(Confi1 == 2){
+
+            			  valorNumerosArreglo[1] = 1;
+
+            			  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+            			  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+            		  }
+
+            		  if(Confi1 == 3){
+
+
+            			  valorNumerosArreglo[2] = 1;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+            			  Confi1 = 0;
+
+            		  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"La alarma activa");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Felices fiestas");
+								LCD_setCursor(&handlerLCD,3,0);
+								LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+							    movimiento_puerta = 1;
+
+							    seleccionConfiguracion = NOTHING;
+							    estadoPantalla = CONFIGURACION;
+							    stateKeypad = NOTHING;
+
+							  posicionMenu = SALIO;
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+							}
+
+
+            	         } // FIN TECLA_UNO
+
+            	  if(stateKeypad == TECLA_DOS){
+
+				  Confi1 ++;
+
+				  if(Confi1 == 1){
+
+						valorNumerosArreglo[0] = 2;
+
+
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,0);
+						LCD_sendSTR(&handlerLCD,"A| Into to password");
+						LCD_setCursor(&handlerLCD,1,3);
+						LCD_sendSTR(&handlerLCD,"The password.");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,0);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = NOTHING;
+						estadoPantalla = MENUS;
+						stateKeypad = NOTHING;
+
+						posicionMenu = ACTIVAR_A;
+
+
+				  } if(Confi1 == 2){
+
+					  valorNumerosArreglo[1] = 2;
+
+					  Actualizar[1] =valorNumerosArreglo[1]
+														 ;
+					  LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,0);
+						LCD_sendSTR(&handlerLCD,"A| Into to password");
+						LCD_setCursor(&handlerLCD,1,3);
+						LCD_sendSTR(&handlerLCD,"The password.");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,0);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = NOTHING;
+						estadoPantalla = MENUS;
+						stateKeypad = NOTHING;
+
+						posicionMenu = ACTIVAR_A;
+
+
+				  }
+
+				  if(Confi1 == 3){
+
+
+					  valorNumerosArreglo[2] = 2;
+
+					  Actualizar[2] =valorNumerosArreglo[2]
+														 ;
+					  LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,0);
+						LCD_sendSTR(&handlerLCD,"A| Into to password");
+						LCD_setCursor(&handlerLCD,1,3);
+						LCD_sendSTR(&handlerLCD,"The password.");
+						sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+						LCD_setCursor(&handlerLCD,2,0);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = NOTHING;
+						estadoPantalla = MENUS;
+						stateKeypad = NOTHING;
+
+						posicionMenu = ACTIVAR_A;
+
+					  Confi1 = 0;
+
+				  }
+
+						if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,2);
+							LCD_sendSTR(&handlerLCD,"La alarma activa");
+							LCD_setCursor(&handlerLCD,1,0);
+							LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+							LCD_setCursor(&handlerLCD,2,2);
+							LCD_sendSTR(&handlerLCD,"Felices fiestas");
+							LCD_setCursor(&handlerLCD,3,0);
+							LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+							movimiento_puerta = 1;
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = CONFIGURACION;
+							stateKeypad = NOTHING;
+
+						  posicionMenu = SALIO;
+
+						  Actualizar[0] = 0;
+						 Actualizar[1] = 0;
+						 Actualizar[2] = 0;
+						}
+
+
+
+					 }// Posición 2
+
+
+            	  if(stateKeypad == TECLA_TRES){
+
+					  Confi1 ++;
+
+					  if(Confi1 == 1){
+
+							valorNumerosArreglo[0] = 3;
+
+
+
+							Actualizar[0] =valorNumerosArreglo[0] ;
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  } if(Confi1 == 2){
+
+						  valorNumerosArreglo[1] = 3;
+
+						  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  }
+
+					  if(Confi1 == 3){
+
+
+						  valorNumerosArreglo[2] = 3;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+						  Confi1 = 0;
+
+					  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"La alarma activa");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Felices fiestas");
+								LCD_setCursor(&handlerLCD,3,0);
+								LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+								movimiento_puerta = 1;
+
+								seleccionConfiguracion = NOTHING;
+								estadoPantalla = CONFIGURACION;
+								stateKeypad = NOTHING;
+
+							  posicionMenu = SALIO;
+
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+							}
+
+
+
+						 }// Posición 3
+
+
+
+
+            	  if(stateKeypad == TECLA_CUARTRO){
+
+					  Confi1 ++;
+
+					  if(Confi1 == 1){
+
+							valorNumerosArreglo[0] = 4;
+
+
+
+							Actualizar[0] =valorNumerosArreglo[0] ;
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  } if(Confi1 == 2){
+
+						  valorNumerosArreglo[1] = 4;
+
+						  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  }
+
+					  if(Confi1 == 3){
+
+
+						  valorNumerosArreglo[2] = 4;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+						  Confi1 = 0;
+
+					  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"La alarma activa");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Felices fiestas");
+								LCD_setCursor(&handlerLCD,3,0);
+								LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+								movimiento_puerta = 1;
+
+								seleccionConfiguracion = NOTHING;
+								estadoPantalla = CONFIGURACION;
+								stateKeypad = NOTHING;
+
+							  posicionMenu = SALIO;
+
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+							}
+
+
+						 }// Posición 4
+
+
+
+            	  if(stateKeypad == TECLA_CINCO){
+
+					  Confi1 ++;
+
+					  if(Confi1 == 1){
+
+							valorNumerosArreglo[0] = 5;
+
+
+
+							Actualizar[0] =valorNumerosArreglo[0] ;
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  } if(Confi1 == 2){
+
+						  valorNumerosArreglo[1] = 5;
+
+						  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  }
+
+					  if(Confi1 == 3){
+
+
+						  valorNumerosArreglo[2] = 5;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+						  Confi1 = 0;
+
+					  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"La alarma activa");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Felices fiestas");
+								LCD_setCursor(&handlerLCD,3,0);
+								LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+								movimiento_puerta = 1;
+
+								seleccionConfiguracion = NOTHING;
+								estadoPantalla = CONFIGURACION;
+								stateKeypad = NOTHING;
+
+							  posicionMenu = SALIO;
+
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+							}
+
+
+						 }// Posición 5
+
+
+            	  if(stateKeypad == TECLA_SEIS){
+
+					  Confi1 ++;
+
+					  if(Confi1 == 1){
+
+							valorNumerosArreglo[0] = 6;
+
+
+
+							Actualizar[0] =valorNumerosArreglo[0] ;
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  } if(Confi1 == 2){
+
+						  valorNumerosArreglo[1] = 6;
+
+						  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  }
+
+					  if(Confi1 == 3){
+
+
+						  valorNumerosArreglo[2] = 6;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+						  Confi1 = 0;
+
+					  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"La alarma activa");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Felices fiestas");
+								LCD_setCursor(&handlerLCD,3,0);
+								LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+								movimiento_puerta = 1;
+
+								seleccionConfiguracion = NOTHING;
+								estadoPantalla = CONFIGURACION;
+								stateKeypad = NOTHING;
+
+							  posicionMenu = SALIO;
+
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+							}
+
+						 }// Posición 6
+
+
+
+
+            	  if(stateKeypad == TECLA_SIETE){
+
+					  Confi1 ++;
+
+					  if(Confi1 == 1){
+
+							valorNumerosArreglo[0] = 7;
+
+
+
+							Actualizar[0] =valorNumerosArreglo[0] ;
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  } if(Confi1 == 2){
+
+						  valorNumerosArreglo[1] = 7;
+
+						  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  }
+
+					  if(Confi1 == 3){
+
+
+						  valorNumerosArreglo[2] = 7;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+						  Confi1 = 0;
+
+					  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"La alarma activa");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Felices fiestas");
+								LCD_setCursor(&handlerLCD,3,0);
+								LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+								movimiento_puerta = 1;
+
+								seleccionConfiguracion = NOTHING;
+								estadoPantalla = CONFIGURACION;
+								stateKeypad = NOTHING;
+
+							  posicionMenu = SALIO;
+
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+							}
+
+
+
+						 }// Posición 7
+
+
+            	  if(stateKeypad == TECLA_OCHO){
+
+					  Confi1 ++;
+
+					  if(Confi1 == 1){
+
+							valorNumerosArreglo[0] = 8;
+
+
+
+							Actualizar[0] =valorNumerosArreglo[0] ;
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  } if(Confi1 == 2){
+
+						  valorNumerosArreglo[1] = 8;
+
+						  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  }
+
+					  if(Confi1 == 3){
+
+
+						  valorNumerosArreglo[2] = 8;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+						  Confi1 = 0;
+
+					  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"La alarma activa");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Felices fiestas");
+								LCD_setCursor(&handlerLCD,3,0);
+								LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+								movimiento_puerta = 1;
+
+								seleccionConfiguracion = NOTHING;
+								estadoPantalla = CONFIGURACION;
+								stateKeypad = NOTHING;
+
+							  posicionMenu = SALIO;
+
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+							}
+
+							  // Va guardar un (111)
+
+						 }// Posición 8
+
+
+            	  if(stateKeypad == TECLA_NUEVE){
+
+					  Confi1 ++;
+
+					  if(Confi1 == 1){
+
+							valorNumerosArreglo[0] = 9;
+
+							Actualizar[0] =valorNumerosArreglo[0] ;
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  } if(Confi1 == 2){
+
+						  valorNumerosArreglo[1] = 9;
+
+						  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  }
+
+					  if(Confi1 == 3){
+
+
+						  valorNumerosArreglo[2] = 9;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+						  Confi1 = 0;
+
+					  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"La alarma activa");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Felices fiestas");
+								LCD_setCursor(&handlerLCD,3,0);
+								LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+								movimiento_puerta = 1;
+
+								seleccionConfiguracion = NOTHING;
+								estadoPantalla = CONFIGURACION;
+								stateKeypad = NOTHING;
+
+							  posicionMenu = SALIO;
+
+
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+							}
+
+							  // Va guardar un (111)
+
+						 }// Posición 9
+
+
+
+            	  if(stateKeypad == TECLA_CERO){
+
+					  Confi1 ++;
+
+					  if(Confi1 == 1){
+
+							valorNumerosArreglo[0] = 0;
+
+
+
+							Actualizar[0] =valorNumerosArreglo[0] ;
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  } if(Confi1 == 2){
+
+						  valorNumerosArreglo[1] = 0;
+
+						  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+
+					  }
+
+					  if(Confi1 == 3){
+
+
+						  valorNumerosArreglo[2] = 0;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Into to password");
+							LCD_setCursor(&handlerLCD,1,3);
+							LCD_sendSTR(&handlerLCD,"The password.");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = ACTIVAR_A;
+
+						  Confi1 = 0;
+
+					  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"La alarma activa");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Felices fiestas");
+								LCD_setCursor(&handlerLCD,3,0);
+								LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+								movimiento_puerta = 1;
+
+								seleccionConfiguracion = NOTHING;
+								estadoPantalla = CONFIGURACION;
+								stateKeypad = NOTHING;
+
+							  posicionMenu = SALIO;
+
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+							}
+
+							  // Va guardar un (111)
+
+						 }// Posición 0
+
+
+
+
+
+//            	  if(stateKeypad == TECLA_ESTRELLA){
+//
+//
+//					    LCD_ClearScreen(&handlerLCD);
+//						LCD_setCursor(&handlerLCD,0,2);
+//						LCD_sendSTR(&handlerLCD,"La alarma activa");
+//						LCD_setCursor(&handlerLCD,1,0);
+//						LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+//						LCD_setCursor(&handlerLCD,2,2);
+//						LCD_sendSTR(&handlerLCD,"Felices fiestas");
+//						LCD_setCursor(&handlerLCD,3,0);
+//						LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+//
+//            		  movimiento_puerta = 1;
+//
+//            		  seleccionConfiguracion = NOTHING;
+//					  estadoPantalla = CONFIGURACION;
+//					  stateKeypad = NOTHING;
+//
+//					  posicionMenu = SALIO;
+//            	  }
 
 
             	  if(stateKeypad == TECLA_D){
@@ -1080,6 +2305,10 @@ while (1){
 
 					posicionMenu = SALIO;
 
+					 Actualizar[0] = 0;
+					 Actualizar[1] = 0;
+					 Actualizar[2] = 0;
+
 
             	  }
               }
@@ -1089,7 +2318,226 @@ while (1){
               if(posicionMenu == ACTIVAR_S){
 
 
-            	if(stateKeypad == TECLA_CERO){
+//            	if(stateKeypad == TECLA_CERO){
+//
+//				LCD_ClearScreen(&handlerLCD);
+//				LCD_setCursor(&handlerLCD,0,2);
+//				LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+//				LCD_setCursor(&handlerLCD,1,0);
+//				LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+//				LCD_setCursor(&handlerLCD,2,2);
+//				LCD_sendSTR(&handlerLCD,"Felices fiestas");
+//				LCD_setCursor(&handlerLCD,3,0);
+//				LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+//
+//			   movimiento_puerta = 1;
+//
+//			  seleccionConfiguracion = NOTHING;
+//			  estadoPantalla = CONFIGURACION;
+//
+//			  stateKeypad = NOTHING;
+//
+//			  posicionMenu = SALIO;
+//		  }
+
+
+            	 if(stateKeypad == TECLA_UNO){
+
+		  Confi1 ++;
+
+		  if(Confi1 == 1){
+
+				valorNumerosArreglo[0] = 1;
+
+
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  } if(Confi1 == 2){
+
+			  valorNumerosArreglo[1] = 1;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  }
+
+		  if(Confi1 == 3){
+
+
+			  valorNumerosArreglo[2] = 1;
+
+			  Actualizar[2] =valorNumerosArreglo[2] ;
+
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+			  Confi1 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+					movimiento_puerta = 2;
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+	        }
+
+			 } // FIN TECLA_UNO
+
+	  if(stateKeypad == TECLA_DOS){
+
+	  Confi1 ++;
+
+	  if(Confi1 == 1){
+
+			valorNumerosArreglo[0] = 2;
+
+
+
+			Actualizar[0] =valorNumerosArreglo[0] ;
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"A| Into to password");
+			LCD_setCursor(&handlerLCD,1,3);
+			LCD_sendSTR(&handlerLCD,"The password.");
+			sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,dataLCD);
+			LCD_setCursor(&handlerLCD,3,1);
+			LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+			seleccionConfiguracion = NOTHING;
+			estadoPantalla = MENUS;
+			stateKeypad = NOTHING;
+
+			posicionMenu = ACTIVAR_S;
+
+
+
+	  } if(Confi1 == 2){
+
+		  valorNumerosArreglo[1] = 2;
+
+		  Actualizar[1] =valorNumerosArreglo[1]
+											 ;
+		  LCD_Clear(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"A| Into to password");
+			LCD_setCursor(&handlerLCD,1,3);
+			LCD_sendSTR(&handlerLCD,"The password.");
+			sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,dataLCD);
+			LCD_setCursor(&handlerLCD,3,1);
+			LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+			seleccionConfiguracion = NOTHING;
+			estadoPantalla = MENUS;
+			stateKeypad = NOTHING;
+
+			posicionMenu = ACTIVAR_S;
+
+
+	  }
+
+	  if(Confi1 == 3){
+
+
+		  valorNumerosArreglo[2] = 2;
+
+		  Actualizar[2] =valorNumerosArreglo[2]
+											 ;
+		  LCD_Clear(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"A| Into to password");
+			LCD_setCursor(&handlerLCD,1,3);
+			LCD_sendSTR(&handlerLCD,"The password.");
+			sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,dataLCD);
+			LCD_setCursor(&handlerLCD,3,1);
+			LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+			seleccionConfiguracion = NOTHING;
+			estadoPantalla = MENUS;
+			stateKeypad = NOTHING;
+
+			posicionMenu = ACTIVAR_S;
+
+		  Confi1 = 0;
+
+	  }
+
+			if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
 
 				LCD_ClearScreen(&handlerLCD);
 				LCD_setCursor(&handlerLCD,0,2);
@@ -1101,15 +2549,939 @@ while (1){
 				LCD_setCursor(&handlerLCD,3,0);
 				LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
 
-			   movimiento_puerta = 1;
+				movimiento_puerta = 2;
 
-			  seleccionConfiguracion = NOTHING;
-			  estadoPantalla = CONFIGURACION;
-			  desactivar_puerta = MOVIMIENTO; // Sensor puerta
-			  stateKeypad = NOTHING;
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = CONFIGURACION;
+				stateKeypad = NOTHING;
 
 			  posicionMenu = SALIO;
+
+			  Actualizar[0] = 0;
+			  Actualizar[1] = 0;
+			  Actualizar[2] = 0;
+			}
+
+
+
+		 }// Posición 2
+
+
+	  if(stateKeypad == TECLA_TRES){
+
+		  Confi1 ++;
+
+		  if(Confi1 == 1){
+
+				valorNumerosArreglo[0] = 3;
+
+
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  } if(Confi1 == 2){
+
+			  valorNumerosArreglo[1] = 3;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
 		  }
+
+		  if(Confi1 == 3){
+
+
+			  valorNumerosArreglo[2] = 3;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+			  Confi1 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+					movimiento_puerta = 2;
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  Actualizar[0] = 0;
+				  Actualizar[1] = 0;
+				  Actualizar[2] = 0;
+				}
+
+
+
+			 }// Posición 3
+
+
+
+
+	  if(stateKeypad == TECLA_CUARTRO){
+
+		  Confi1 ++;
+
+		  if(Confi1 == 1){
+
+				valorNumerosArreglo[0] = 4;
+
+
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  } if(Confi1 == 2){
+
+			  valorNumerosArreglo[1] = 4;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  }
+
+		  if(Confi1 == 3){
+
+
+			  valorNumerosArreglo[2] = 4;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+			  Confi1 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+					movimiento_puerta = 2;
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  Actualizar[0] = 0;
+				  Actualizar[1] = 0;
+				  Actualizar[2] = 0;
+				}
+
+
+
+			 }// Posición 4
+
+
+
+	  if(stateKeypad == TECLA_CINCO){
+
+		  Confi1 ++;
+
+		  if(Confi1 == 1){
+
+				valorNumerosArreglo[0] = 5;
+
+
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  } if(Confi1 == 2){
+
+			  valorNumerosArreglo[1] = 5;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  }
+
+		  if(Confi1 == 3){
+
+
+			  valorNumerosArreglo[2] = 5;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+			  Confi1 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+					movimiento_puerta = 2;
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  Actualizar[0] = 0;
+				  Actualizar[1] = 0;
+				  Actualizar[2] = 0;
+				}
+
+
+
+			 }// Posición 5
+
+
+	  if(stateKeypad == TECLA_SEIS){
+
+		  Confi1 ++;
+
+		  if(Confi1 == 1){
+
+				valorNumerosArreglo[0] = 6;
+
+
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  } if(Confi1 == 2){
+
+			  valorNumerosArreglo[1] = 6;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  }
+
+		  if(Confi1 == 3){
+
+
+			  valorNumerosArreglo[2] = 6;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+			  Confi1 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+					movimiento_puerta = 2;
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  Actualizar[0] = 0;
+				  Actualizar[1] = 0;
+				  Actualizar[2] = 0;
+				}
+
+				  // Va guardar un (111)
+
+			 }// Posición 6
+
+
+
+
+	  if(stateKeypad == TECLA_SIETE){
+
+		  Confi1 ++;
+
+		  if(Confi1 == 1){
+
+				valorNumerosArreglo[0] = 7;
+
+
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  } if(Confi1 == 2){
+
+			  valorNumerosArreglo[1] = 7;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  }
+
+		  if(Confi1 == 3){
+
+
+			  valorNumerosArreglo[2] = 7;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+			  Confi1 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+					movimiento_puerta = 2;
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  Actualizar[0] = 0;
+				  Actualizar[1] = 0;
+				  Actualizar[2] = 0;
+				}
+
+				  // Va guardar un (111)
+
+			 }// Posición 7
+
+
+	  if(stateKeypad == TECLA_OCHO){
+
+		  Confi1 ++;
+
+		  if(Confi1 == 1){
+
+				valorNumerosArreglo[0] = 8;
+
+
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  } if(Confi1 == 2){
+
+			  valorNumerosArreglo[1] = 8;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  }
+
+		  if(Confi1 == 3){
+
+
+			  valorNumerosArreglo[2] = 8;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+			  Confi1 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+					movimiento_puerta = 2;
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  Actualizar[0] = 0;
+				  Actualizar[1] = 0;
+				  Actualizar[2] = 0;
+				}
+
+			 }// Posición 8
+
+
+	  if(stateKeypad == TECLA_NUEVE){
+
+		  Confi1 ++;
+
+		  if(Confi1 == 1){
+
+				valorNumerosArreglo[0] = 9;
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  } if(Confi1 == 2){
+
+			  valorNumerosArreglo[1] = 9;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  }
+
+		  if(Confi1 == 3){
+
+
+			  valorNumerosArreglo[2] = 9;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+			  Confi1 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+					movimiento_puerta = 2;
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  Actualizar[0] = 0;
+				  Actualizar[1] = 0;
+				  Actualizar[2] = 0;
+				}
+
+				  // Va guardar un (111)
+
+			 }// Posición 9
+
+
+
+	  if(stateKeypad == TECLA_CERO){
+
+		  Confi1 ++;
+
+		  if(Confi1 == 1){
+
+				valorNumerosArreglo[0] = 0;
+
+
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  } if(Confi1 == 2){
+
+			  valorNumerosArreglo[1] = 0;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+
+		  }
+
+		  if(Confi1 == 3){
+
+
+			  valorNumerosArreglo[2] = 0;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = ACTIVAR_S;
+
+			  Confi1 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"La alarma Puerta");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa 'D' para atras");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+					movimiento_puerta = 2;
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = CONFIGURACION;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+
+				  Actualizar[0] = 0;
+				  Actualizar[1] = 0;
+				  Actualizar[2] = 0;
+				}
+
+
+
+			 }// Posición 0
+
+
 
 
 		  if(stateKeypad == TECLA_D){
@@ -1130,22 +3502,1042 @@ while (1){
 
 			posicionMenu = SALIO;
 
+			 Actualizar[0] = 0;
+			 Actualizar[1] = 0;
+			 Actualizar[2] = 0;
+
 
 		  }
-              }
+              } // Acaba sensor S
 
+/***********************************************************************************************************/
              /* Opción para desactivar */
 
               if(posicionMenu == DESACTIVAR){
 
-            	  if(stateKeypad == TECLA_NUMERAL){
+            	  if(stateKeypad == TECLA_UNO){
 
-            		  seleccionConfiguracion = NOTHING;
-            		  estadoPantalla = CONFIGURACION;
-            		  desactivar_puerta = 1;
-            		  posicionMenu = SALIO;
-            		  stateKeypad = NOTHING;
-            	  }
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 1;
+
+
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 1;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 1;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+	            		  seleccionConfiguracion = NOTHING;
+	            		  estadoPantalla = CONFIGURACION;
+	            		  desactivar_puerta = 1;
+	            		  posicionMenu = SALIO;
+	            		  stateKeypad = NOTHING;
+
+	            		  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+					}
+
+
+				 } // FIN TECLA_UNO
+
+		  if(stateKeypad == TECLA_DOS){
+
+		  Confi2 ++;
+
+		  if(Confi2 == 1){
+
+				valorNumerosArreglo[0] = 2;
+
+
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = DESACTIVAR;
+
+
+		  } if(Confi2 == 2){
+
+			  valorNumerosArreglo[1] = 2;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = DESACTIVAR;
+
+
+		  }
+
+		  if(Confi2 == 3){
+
+
+			  valorNumerosArreglo[2] = 2;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Into to password");
+				LCD_setCursor(&handlerLCD,1,3);
+				LCD_sendSTR(&handlerLCD,"The password.");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = DESACTIVAR;
+
+			  Confi2 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+          		  seleccionConfiguracion = NOTHING;
+          		  estadoPantalla = CONFIGURACION;
+          		  desactivar_puerta = 1;
+          		  posicionMenu = SALIO;
+          		  stateKeypad = NOTHING;
+
+          		 Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+				}
+
+
+
+			 }// Posición 2
+
+
+		  if(stateKeypad == TECLA_TRES){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 3;
+
+
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 3;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 3;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+	            		  seleccionConfiguracion = NOTHING;
+	            		  estadoPantalla = CONFIGURACION;
+	            		  desactivar_puerta = 1;
+	            		  posicionMenu = SALIO;
+	            		  stateKeypad = NOTHING;
+
+	            		  Actualizar[0] = 0;
+						 Actualizar[1] = 0;
+						 Actualizar[2] = 0;
+					}
+
+
+				 }// Posición 3
+
+
+
+
+		  if(stateKeypad == TECLA_CUARTRO){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 4;
+
+
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 4;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 4;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+	            		  seleccionConfiguracion = NOTHING;
+	            		  estadoPantalla = CONFIGURACION;
+	            		  desactivar_puerta = 1;
+	            		  posicionMenu = SALIO;
+	            		  stateKeypad = NOTHING;
+
+	            		  Actualizar[0] = 0;
+						 Actualizar[1] = 0;
+						 Actualizar[2] = 0;
+					}
+
+				 }// Posición 4
+
+
+
+		  if(stateKeypad == TECLA_CINCO){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 5;
+
+
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 5;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 5;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+	            		  seleccionConfiguracion = NOTHING;
+	            		  estadoPantalla = CONFIGURACION;
+	            		  desactivar_puerta = 1;
+	            		  posicionMenu = SALIO;
+	            		  stateKeypad = NOTHING;
+
+	            		 Actualizar[0] = 0;
+						 Actualizar[1] = 0;
+						 Actualizar[2] = 0;
+
+
+					}
+
+
+
+				 }// Posición 5
+
+
+		  if(stateKeypad == TECLA_SEIS){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 6;
+
+
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 6;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 6;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+
+	            		  seleccionConfiguracion = NOTHING;
+	            		  estadoPantalla = CONFIGURACION;
+	            		  desactivar_puerta = 1;
+	            		  posicionMenu = SALIO;
+	            		  stateKeypad = NOTHING;
+
+	            		  Actualizar[0] = 0;
+	            		 		     Actualizar[1] = 0;
+	            		 		     Actualizar[2] = 0;
+					}
+
+
+				 }// Posición 6
+
+
+
+
+		  if(stateKeypad == TECLA_SIETE){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 7;
+
+
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 7;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 7;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+	            		  seleccionConfiguracion = NOTHING;
+	            		  estadoPantalla = CONFIGURACION;
+	            		  desactivar_puerta = 1;
+	            		  posicionMenu = SALIO;
+	            		  stateKeypad = NOTHING;
+
+	            		  Actualizar[0] = 0;
+	            		 		     Actualizar[1] = 0;
+	            		 		     Actualizar[2] = 0;
+					}
+
+
+				 }// Posición 7
+
+
+		  if(stateKeypad == TECLA_OCHO){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 8;
+
+
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 8;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 8;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+	            		  seleccionConfiguracion = NOTHING;
+	            		  estadoPantalla = CONFIGURACION;
+	            		  desactivar_puerta = 1;
+	            		  posicionMenu = SALIO;
+	            		  stateKeypad = NOTHING;
+
+	            		  Actualizar[0] = 0;
+	            		 		     Actualizar[1] = 0;
+	            		 		     Actualizar[2] = 0;
+					}
+
+
+				 }// Posición 8
+
+
+		  if(stateKeypad == TECLA_NUEVE){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 9;
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 9;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 9;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+	            		  seleccionConfiguracion = NOTHING;
+	            		  estadoPantalla = CONFIGURACION;
+	            		  desactivar_puerta = 1;
+	            		  posicionMenu = SALIO;
+	            		  stateKeypad = NOTHING;
+
+	            		  Actualizar[0] = 0;
+	            		 		     Actualizar[1] = 0;
+	            		 		     Actualizar[2] = 0;
+					}
+
+				 }// Posición 9
+
+
+
+		  if(stateKeypad == TECLA_CERO){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 0;
+
+
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 0;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 0;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Into to password");
+					LCD_setCursor(&handlerLCD,1,3);
+					LCD_sendSTR(&handlerLCD,"The password.");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = DESACTIVAR;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+	            		  seleccionConfiguracion = NOTHING;
+	            		  estadoPantalla = CONFIGURACION;
+	            		  desactivar_puerta = 1;
+	            		  posicionMenu = SALIO;
+	            		  stateKeypad = NOTHING;
+
+	            		  Actualizar[0] = 0;
+	            		  Actualizar[1] = 0;
+	            		 Actualizar[2] = 0;
+					}
+
+				 }
+
+
+//            	  if(stateKeypad == TECLA_NUMERAL){
+//
+//            		  seleccionConfiguracion = NOTHING;
+//            		  estadoPantalla = CONFIGURACION;
+//            		  desactivar_puerta = 1;
+//            		  posicionMenu = SALIO;
+//            		  stateKeypad = NOTHING;
+//            	  }
 
 
             	  if(stateKeypad == TECLA_D){
@@ -1165,23 +4557,2264 @@ while (1){
 				stateKeypad = NOTHING;
 
 				posicionMenu = SALIO;
+				 Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
               }
 
-              }
+              } // Fin de desactivo
+
 
               /************************************************************/
 
+              // Comienza cambio de contraseña
               /* Otras confis --> Parametros */
 
               if(posicionMenu == CONTRASE){
 
-            	  if(stateKeypad == TECLA_A){
+            	  // Vamos a cambiar contraseña, pedira la actual, si es valida dejar cambiar
 
-            		  seleccionConfiguracion = NOTHING;
-					  estadoPantalla = PARAMETROS;
+	  if(stateKeypad == TECLA_UNO){
+
+					  Confi2 ++;
+
+					  if(Confi2 == 1){
+
+							valorNumerosArreglo[0] = 1;
+
+							Actualizar[0] =valorNumerosArreglo[0] ;
+
+							LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+							LCD_setCursor(&handlerLCD,1,1);
+							LCD_sendSTR(&handlerLCD,"Los valores son =");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = CONTRASE;
+
+
+					  } if(Confi2 == 2){
+
+						  valorNumerosArreglo[1] = 1;
+
+						  Actualizar[1] =valorNumerosArreglo[1]
+															 ;
+						  LCD_Clear(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+							LCD_setCursor(&handlerLCD,1,1);
+							LCD_sendSTR(&handlerLCD,"Los valores son =");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = CONTRASE;
+
+					  }
+
+					  if(Confi2 == 3){
+
+
+						  valorNumerosArreglo[2] = 1;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						  LCD_Clear(&handlerLCD);
+						  LCD_setCursor(&handlerLCD,0,0);
+							LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+							LCD_setCursor(&handlerLCD,1,1);
+							LCD_sendSTR(&handlerLCD,"Los valores son =");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,0);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = NOTHING;
+							estadoPantalla = MENUS;
+							stateKeypad = NOTHING;
+
+							posicionMenu = CONTRASE;
+
+						  Confi2 = 0;
+
+					  }
+
+							if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+								 LCD_ClearScreen(&handlerLCD);
+								LCD_setCursor(&handlerLCD,0,2);
+								LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+								LCD_setCursor(&handlerLCD,1,0);
+								LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+								LCD_setCursor(&handlerLCD,2,2);
+								LCD_sendSTR(&handlerLCD,"Valor = ");
+								LCD_setCursor(&handlerLCD,3,1);
+								LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+								seleccionConfiguracion = CONTRASE;
+								  posicionMenu = SALIO;
+								  stateKeypad = NOTHING;
+
+								  Actualizar[0] = 0;
+								 Actualizar[1] = 0;
+								 Actualizar[2] = 0;
+
+								 Confi1 = 0;
+
+							}
+
+						 } // FIN TECLA 1
+
+
+			  if(stateKeypad == TECLA_DOS){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 2;
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 2;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 2;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+				  LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+						 LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,"Valor = ");
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+						seleccionConfiguracion = CONTRASE;
+						  posicionMenu = SALIO;
+						  stateKeypad = NOTHING;
+
+						  Actualizar[0] = 0;
+						 Actualizar[1] = 0;
+						 Actualizar[2] = 0;
+
+						 Confi1 = 0;
+
+					}
+
+				 } // FIN TECLA 2
+
+
+  if(stateKeypad == TECLA_TRES){
+
+				  Confi2 ++;
+
+				  if(Confi2 == 1){
+
+						valorNumerosArreglo[0] = 3;
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,0);
+						LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+						LCD_setCursor(&handlerLCD,1,1);
+						LCD_sendSTR(&handlerLCD,"Los valores son =");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,0);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = NOTHING;
+						estadoPantalla = MENUS;
+						stateKeypad = NOTHING;
+
+						posicionMenu = CONTRASE;
+
+
+				  } if(Confi2 == 2){
+
+					  valorNumerosArreglo[1] =3;
+
+					  Actualizar[1] =valorNumerosArreglo[1]
+														 ;
+					  LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,0);
+						LCD_setCursor(&handlerLCD,0,0);
+						LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+						LCD_setCursor(&handlerLCD,1,1);
+						LCD_sendSTR(&handlerLCD,"Los valores son =");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,0);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = NOTHING;
+						estadoPantalla = MENUS;
+						stateKeypad = NOTHING;
+
+						posicionMenu = CONTRASE;
+
+				  }
+
+            	  				  if(Confi2 == 3){
+
+
+		  valorNumerosArreglo[2] = 3;
+
+		  Actualizar[2] =valorNumerosArreglo[2]
+											 ;
+		  LCD_Clear(&handlerLCD);
+		  LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+			LCD_setCursor(&handlerLCD,1,1);
+			LCD_sendSTR(&handlerLCD,"Los valores son =");
+			sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,dataLCD);
+			LCD_setCursor(&handlerLCD,3,1);
+			LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+			seleccionConfiguracion = NOTHING;
+			estadoPantalla = MENUS;
+			stateKeypad = NOTHING;
+
+			posicionMenu = CONTRASE;
+
+		  Confi2 = 0;
+
+	  }
+
+			if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+				 LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,2);
+				LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+				LCD_setCursor(&handlerLCD,2,2);
+				LCD_sendSTR(&handlerLCD,"Valor = ");
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+				seleccionConfiguracion = CONTRASE;
+				  posicionMenu = SALIO;
+				  stateKeypad = NOTHING;
+
+				  Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+
+				 Confi1 = 0;
+
+			}
+
+		 } // FIN TECLA 3
+
+            	  if(stateKeypad == TECLA_CUARTRO){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 4;
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+
+            	  				  } if(Confi2 == 2){
+
+			  valorNumerosArreglo[1] = 4;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+		  }
+
+		  if(Confi2 == 3){
+
+
+			  valorNumerosArreglo[2] = 4;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+			  LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+			  Confi2 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					 LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Valor = ");
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+					seleccionConfiguracion = CONTRASE;
 					  posicionMenu = SALIO;
 					  stateKeypad = NOTHING;
+
+					  Actualizar[0] = 0;
+					 Actualizar[1] = 0;
+					 Actualizar[2] = 0;
+
+					 Confi1 = 0;
+
+				}
+
+			 } // FIN TECLA 4
+
+
+
+            	  if(stateKeypad == TECLA_CINCO){
+
+		  Confi2 ++;
+
+		  if(Confi2 == 1){
+
+				valorNumerosArreglo[0] = 5;
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+
+		  } if(Confi2 == 2){
+
+			  valorNumerosArreglo[1] = 5;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+		  }
+
+		  if(Confi2 == 3){
+
+
+			  valorNumerosArreglo[2] = 5;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+			  LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+			  Confi2 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					 LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Valor = ");
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+					seleccionConfiguracion = CONTRASE;
+					  posicionMenu = SALIO;
+					  stateKeypad = NOTHING;
+
+					  Actualizar[0] = 0;
+					 Actualizar[1] = 0;
+					 Actualizar[2] = 0;
+
+					 Confi1 = 0;
+
+				}
+
+			 } // FIN TECLA 5
+
+            	  if(stateKeypad == TECLA_SEIS){
+
+		  Confi2 ++;
+
+		  if(Confi2 == 1){
+
+				valorNumerosArreglo[0] = 6;
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+
+		  } if(Confi2 == 2){
+
+			  valorNumerosArreglo[1] = 6;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+		  }
+
+		  if(Confi2 == 3){
+
+
+			  valorNumerosArreglo[2] = 6;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+			  LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+			  Confi2 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					 LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Valor = ");
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+					seleccionConfiguracion = CONTRASE;
+					  posicionMenu = SALIO;
+					  stateKeypad = NOTHING;
+
+					  Actualizar[0] = 0;
+					 Actualizar[1] = 0;
+					 Actualizar[2] = 0;
+
+					 Confi1 = 0;
+
+				}
+
+			 } // FIN TECLA 6
+
+            	  if(stateKeypad == TECLA_SIETE){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 7;
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 7;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 7;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+				  LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+						 LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,"Valor = ");
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+						seleccionConfiguracion = CONTRASE;
+						  posicionMenu = SALIO;
+						  stateKeypad = NOTHING;
+
+						  Actualizar[0] = 0;
+						 Actualizar[1] = 0;
+						 Actualizar[2] = 0;
+
+						 Confi1 = 0;
+
+					}
+
+				 } // FIN TECLA 7
+
+            	  if(stateKeypad == TECLA_OCHO){
+
+				  Confi2 ++;
+
+				  if(Confi2 == 1){
+
+						valorNumerosArreglo[0] = 8;
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,0);
+						LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+						LCD_setCursor(&handlerLCD,1,1);
+						LCD_sendSTR(&handlerLCD,"Los valores son =");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,0);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = NOTHING;
+						estadoPantalla = MENUS;
+						stateKeypad = NOTHING;
+
+						posicionMenu = CONTRASE;
+
+
+				  } if(Confi2 == 2){
+
+					  valorNumerosArreglo[1] = 8;
+
+					  Actualizar[1] =valorNumerosArreglo[1]
+														 ;
+					  LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,0);
+						LCD_setCursor(&handlerLCD,0,0);
+						LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+						LCD_setCursor(&handlerLCD,1,1);
+						LCD_sendSTR(&handlerLCD,"Los valores son =");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,0);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = NOTHING;
+						estadoPantalla = MENUS;
+						stateKeypad = NOTHING;
+
+						posicionMenu = CONTRASE;
+
+				  }
+
+				  if(Confi2 == 3){
+
+
+					  valorNumerosArreglo[2] = 8;
+
+					  Actualizar[2] =valorNumerosArreglo[2]
+														 ;
+					  LCD_Clear(&handlerLCD);
+					  LCD_setCursor(&handlerLCD,0,0);
+						LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+						LCD_setCursor(&handlerLCD,1,1);
+						LCD_sendSTR(&handlerLCD,"Los valores son =");
+						sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+						LCD_setCursor(&handlerLCD,2,0);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = NOTHING;
+						estadoPantalla = MENUS;
+						stateKeypad = NOTHING;
+
+						posicionMenu = CONTRASE;
+
+					  Confi2 = 0;
+
+				  }
+
+						if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+							 LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,2);
+							LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+							LCD_setCursor(&handlerLCD,1,0);
+							LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+							LCD_setCursor(&handlerLCD,2,2);
+							LCD_sendSTR(&handlerLCD,"Valor = ");
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+							seleccionConfiguracion = CONTRASE;
+							  posicionMenu = SALIO;
+							  stateKeypad = NOTHING;
+
+							  Actualizar[0] = 0;
+							 Actualizar[1] = 0;
+							 Actualizar[2] = 0;
+
+							 Confi1 = 0;
+
+						}
+
+					 } // FIN TECLA 8
+
+
+            	  if(stateKeypad == TECLA_NUEVE){
+
+		  Confi2 ++;
+
+		  if(Confi2 == 1){
+
+				valorNumerosArreglo[0] = 9;
+
+				Actualizar[0] =valorNumerosArreglo[0] ;
+
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+
+		  } if(Confi2 == 2){
+
+			  valorNumerosArreglo[1] = 9;
+
+			  Actualizar[1] =valorNumerosArreglo[1]
+												 ;
+			  LCD_Clear(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+		  }
+
+		  if(Confi2 == 3){
+
+
+			  valorNumerosArreglo[2] = 9;
+
+			  Actualizar[2] =valorNumerosArreglo[2]
+												 ;
+			  LCD_Clear(&handlerLCD);
+			  LCD_setCursor(&handlerLCD,0,0);
+				LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+				LCD_setCursor(&handlerLCD,1,1);
+				LCD_sendSTR(&handlerLCD,"Los valores son =");
+				sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+				LCD_setCursor(&handlerLCD,2,0);
+				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,3,1);
+				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = MENUS;
+				stateKeypad = NOTHING;
+
+				posicionMenu = CONTRASE;
+
+			  Confi2 = 0;
+
+		  }
+
+				if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+					 LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Valor = ");
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+					seleccionConfiguracion = CONTRASE;
+					  posicionMenu = SALIO;
+					  stateKeypad = NOTHING;
+
+					  Actualizar[0] = 0;
+					 Actualizar[1] = 0;
+					 Actualizar[2] = 0;
+
+					 Confi1 = 0;
+
+				}
+
+			 } // FIN TECLA 9
+
+
+
+            	  if(stateKeypad == TECLA_CERO){
+
+			  Confi2 ++;
+
+			  if(Confi2 == 1){
+
+					valorNumerosArreglo[0] = 0;
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+
+			  } if(Confi2 == 2){
+
+				  valorNumerosArreglo[1] = 0;
+
+				  Actualizar[1] =valorNumerosArreglo[1]
+													 ;
+				  LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+			  }
+
+			  if(Confi2 == 3){
+
+
+				  valorNumerosArreglo[2] = 0;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+				  LCD_Clear(&handlerLCD);
+				  LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A| Ingrese la actual");
+					LCD_setCursor(&handlerLCD,1,1);
+					LCD_sendSTR(&handlerLCD,"Los valores son =");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = MENUS;
+					stateKeypad = NOTHING;
+
+					posicionMenu = CONTRASE;
+
+				  Confi2 = 0;
+
+			  }
+
+					if((Actualizar[0] == ContrasenaInicial[0]) && (Actualizar[1]== ContrasenaInicial[1]) && (Actualizar[2] == ContrasenaInicial[2])){
+
+						 LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,"Valor = ");
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D ");
+
+						seleccionConfiguracion = CONTRASE;
+						  posicionMenu = SALIO;
+						  stateKeypad = NOTHING;
+
+						  Actualizar[0] = 0;
+						 Actualizar[1] = 0;
+						 Actualizar[2] = 0;
+
+						 Confi1 = 0;
+
+					}
+
+				 } // FIN TECLA 0
+
+            	  if(stateKeypad == TECLA_D){
+
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,0);
+					LCD_sendSTR(&handlerLCD,"A|Cambiar contrasena");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"B|Cambiar sonido");
+					LCD_setCursor(&handlerLCD,2,0);
+					LCD_sendSTR(&handlerLCD,"C|Panico");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"D| Atras");
+
+					 seleccionConfiguracion = NOTHING;
+					 estadoPantalla = PARAMETROS;
+					 stateKeypad = NOTHING;
+
+					  posicionMenu = SALIO;
+
+            	             	               }
+
+            	  // Configuración panico
+
+            	  if(stateKeypad ==  TECLA_ESTRELLA){
+            		  estadoPantalla = PANICO;
+            		  seleccionConfiguracion = NOTHING;
+
+
             	  }
+
+            	  if(stateKeypad == TECLA_ESTRELLA){
+
+            		  estadoPantalla = PARAMETROS;
+            		  seleccionConfiguracion = NOTHING;
+            	  }
+
+
+            	  }
+
+              // FIN DE LECTURA
+
+
+  /****************************************************************************************************************************/
+
+              /* Cambio de contraseña */
+
+        	  if(seleccionConfiguracion == CONTRASE){
+
+            	  if(stateKeypad == TECLA_UNO){
+
+            		  Confi1 ++;
+
+            		  if(Confi1 == 1){
+
+            		        valorNumerosArreglo[0] = 1;
+
+            		        Actualizar[0] =valorNumerosArreglo[0] ;
+
+            		        LCD_ClearScreen(&handlerLCD);
+							LCD_setCursor(&handlerLCD,0,2);
+							LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+							LCD_setCursor(&handlerLCD,1,0);
+							LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+							sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+							LCD_setCursor(&handlerLCD,2,2);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = CONTRASE;
+							estadoPantalla = PARAMETROS;
+							stateKeypad = NOTHING;
+
+
+
+
+            		  } if(Confi1 == 2){
+
+            			  valorNumerosArreglo[1] = 1;
+
+            			  Actualizar[1] =valorNumerosArreglo[1];
+
+            			   LCD_Clear(&handlerLCD);
+            			   LCD_setCursor(&handlerLCD,0,2);
+            			   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+							LCD_setCursor(&handlerLCD,1,0);
+							LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+							sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+							LCD_setCursor(&handlerLCD,2,2);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = CONTRASE;
+							estadoPantalla = PARAMETROS;
+							stateKeypad = NOTHING;
+
+
+
+
+            		  }
+
+            		  if(Confi1 == 3){
+
+
+            			  valorNumerosArreglo[2] = 1;
+
+						  Actualizar[2] =valorNumerosArreglo[2]
+															 ;
+						    LCD_Clear(&handlerLCD);
+						    LCD_setCursor(&handlerLCD,0,2);
+							LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+							LCD_setCursor(&handlerLCD,1,0);
+							LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+							sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+							LCD_setCursor(&handlerLCD,2,2);
+							LCD_sendSTR(&handlerLCD,dataLCD);
+							LCD_setCursor(&handlerLCD,3,1);
+							LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+							seleccionConfiguracion = CONTRASE;
+							estadoPantalla = CAMBIO;
+							stateKeypad = NOTHING;
+
+
+            			  Confi1 = 0;
+
+            		  }
+
+					if(estadoPantalla == CAMBIO){
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Cambio correcto");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,"Felices fiestas");
+						LCD_setCursor(&handlerLCD,3,0);
+						LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+						seleccionConfiguracion = NOTHING;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+					  posicionMenu = SALIO;
+
+					  ContrasenaInicial[0] = Actualizar[0];
+					  ContrasenaInicial[1] = Actualizar[1];
+					  ContrasenaInicial[2] = Actualizar[2];
+
+					  Actualizar[0] = 0;
+					 Actualizar[1] = 0;
+					 Actualizar[2] = 0;
+					}
+
+
+            	         } // Uno P1
+
+
+
+            	  if(stateKeypad == TECLA_DOS){
+
+				  Confi1 ++;
+
+				  if(Confi1 == 1){
+
+						valorNumerosArreglo[0] = 2;
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+
+				  } if(Confi1 == 2){
+
+					  valorNumerosArreglo[1] = 2;
+
+					  Actualizar[1] =valorNumerosArreglo[1];
+
+					   LCD_Clear(&handlerLCD);
+					   LCD_setCursor(&handlerLCD,0,2);
+					   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+				  }
+
+				  if(Confi1 == 3){
+
+
+					  valorNumerosArreglo[2] = 2;
+
+					  Actualizar[2] =valorNumerosArreglo[2]
+														 ;
+						LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = CAMBIO;
+						stateKeypad = NOTHING;
+
+
+					  Confi1 = 0;
+
+				  }
+
+				if(estadoPantalla == CAMBIO){
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Cambio correcto");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  ContrasenaInicial[0] = Actualizar[0];
+				  ContrasenaInicial[1] = Actualizar[1];
+				  ContrasenaInicial[2] = Actualizar[2];
+
+				  Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+				}
+
+
+					 } // Tecla 2
+
+            	  if(stateKeypad == TECLA_TRES){
+
+				  Confi1 ++;
+
+				  if(Confi1 == 1){
+
+						valorNumerosArreglo[0] = 3;
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+
+				  } if(Confi1 == 2){
+
+					  valorNumerosArreglo[1] = 3;
+
+					  Actualizar[1] =valorNumerosArreglo[1];
+
+					   LCD_Clear(&handlerLCD);
+					   LCD_setCursor(&handlerLCD,0,2);
+					   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+
+				  }
+
+				  if(Confi1 == 3){
+
+
+					  valorNumerosArreglo[2] = 3;
+
+					  Actualizar[2] =valorNumerosArreglo[2]
+														 ;
+						LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+
+						estadoPantalla = CAMBIO;
+
+
+						seleccionConfiguracion = CONTRASE;
+
+						stateKeypad = NOTHING;
+
+
+					  Confi1 = 0;
+
+				  }
+
+				if(estadoPantalla == CAMBIO){
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Cambio correcto");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  ContrasenaInicial[0] = Actualizar[0];
+				  ContrasenaInicial[1] = Actualizar[1];
+				  ContrasenaInicial[2] = Actualizar[2];
+
+				  Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+				}
+
+
+					 } // TECLA 3
+
+
+
+
+            	  if(stateKeypad == TECLA_CUARTRO){
+
+				  Confi1 ++;
+
+				  if(Confi1 == 1){
+
+						valorNumerosArreglo[0] = 4;
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+
+
+				  } if(Confi1 == 2){
+
+					  valorNumerosArreglo[1] = 4;
+
+					  Actualizar[1] =valorNumerosArreglo[1];
+
+					   LCD_Clear(&handlerLCD);
+					   LCD_setCursor(&handlerLCD,0,2);
+					   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+				  }
+
+				  if(Confi1 == 3){
+
+
+					  valorNumerosArreglo[2] = 4;
+
+					  Actualizar[2] =valorNumerosArreglo[2]
+														 ;
+						LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+					  Confi1 = 0;
+
+				  }
+
+				if(estadoPantalla == CAMBIO){
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Cambio correcto");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  ContrasenaInicial[0] = Actualizar[0];
+				  ContrasenaInicial[1] = Actualizar[1];
+				  ContrasenaInicial[2] = Actualizar[2];
+
+				  Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+				}
+
+
+                 } // TECLA CUATRO
+
+
+            	  if(stateKeypad == TECLA_CINCO){
+
+				  Confi1 ++;
+
+				  if(Confi1 == 1){
+
+						valorNumerosArreglo[0] = 5;
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+				  } if(Confi1 == 2){
+
+					  valorNumerosArreglo[1] = 5;
+
+					  Actualizar[1] =valorNumerosArreglo[1];
+
+					   LCD_Clear(&handlerLCD);
+					   LCD_setCursor(&handlerLCD,0,2);
+					   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+				  }
+
+				  if(Confi1 == 3){
+
+
+					  valorNumerosArreglo[2] = 5;
+
+					  Actualizar[2] =valorNumerosArreglo[2]
+														 ;
+						LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = CAMBIO;
+						stateKeypad = NOTHING;
+
+					  Confi1 = 0;
+
+				  }
+
+				if(estadoPantalla == CAMBIO){
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Cambio correcto");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  ContrasenaInicial[0] = Actualizar[0];
+				  ContrasenaInicial[1] = Actualizar[1];
+				  ContrasenaInicial[2] = Actualizar[2];
+
+				  Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+				}
+
+
+					 } // TECLA CINCO
+
+
+
+
+            	  if(stateKeypad == TECLA_SEIS){
+
+				  Confi1 ++;
+
+				  if(Confi1 == 1){
+
+						valorNumerosArreglo[0] = 6;
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+				  } if(Confi1 == 2){
+
+					  valorNumerosArreglo[1] = 6;
+
+					  Actualizar[1] =valorNumerosArreglo[1];
+
+					   LCD_Clear(&handlerLCD);
+					   LCD_setCursor(&handlerLCD,0,2);
+					   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+				  }
+
+				  if(Confi1 == 3){
+
+
+					  valorNumerosArreglo[2] = 6;
+
+					  Actualizar[2] =valorNumerosArreglo[2]
+														 ;
+						LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = CAMBIO;
+						stateKeypad = NOTHING;
+
+						posicionMenu = SALIO;
+
+					  Confi1 = 0;
+
+				  }
+
+				if(estadoPantalla == CAMBIO){
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Cambio correcto");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  ContrasenaInicial[0] = Actualizar[0];
+				  ContrasenaInicial[1] = Actualizar[1];
+				  ContrasenaInicial[2] = Actualizar[2];
+
+				  Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+				}
+
+
+					 } // TECLA SEIS
+
+
+            	  if(stateKeypad == TECLA_SIETE){
+
+				  Confi1 ++;
+
+				  if(Confi1 == 1){
+
+						valorNumerosArreglo[0] = 7;
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+				  } if(Confi1 == 2){
+
+					  valorNumerosArreglo[1] = 7;
+
+					  Actualizar[1] =valorNumerosArreglo[1];
+
+					   LCD_Clear(&handlerLCD);
+					   LCD_setCursor(&handlerLCD,0,2);
+					   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+				  }
+
+				  if(Confi1 == 3){
+
+
+					  valorNumerosArreglo[2] = 7;
+
+					  Actualizar[2] =valorNumerosArreglo[2]
+														 ;
+						LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = CAMBIO;
+						stateKeypad = NOTHING;
+
+
+					  Confi1 = 0;
+
+				  }
+
+				if(estadoPantalla == CAMBIO){
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Cambio correcto");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  ContrasenaInicial[0] = Actualizar[0];
+				  ContrasenaInicial[1] = Actualizar[1];
+				  ContrasenaInicial[2] = Actualizar[2];
+
+				  Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+				}
+
+
+					 } // TECLA SIETE
+
+
+            	  if(stateKeypad == TECLA_OCHO){
+
+			  Confi1 ++;
+
+			  if(Confi1 == 1){
+
+			valorNumerosArreglo[0] = 8;
+
+			Actualizar[0] =valorNumerosArreglo[0] ;
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,2);
+			LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+			LCD_setCursor(&handlerLCD,1,0);
+			LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+			sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+			LCD_setCursor(&handlerLCD,2,2);
+			LCD_sendSTR(&handlerLCD,dataLCD);
+			LCD_setCursor(&handlerLCD,3,1);
+			LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+			seleccionConfiguracion = CONTRASE;
+			estadoPantalla = PARAMETROS;
+			stateKeypad = NOTHING;
+
+	  } if(Confi1 == 2){
+
+		  valorNumerosArreglo[1] = 8;
+
+		  Actualizar[1] =valorNumerosArreglo[1];
+
+		   LCD_Clear(&handlerLCD);
+		   LCD_setCursor(&handlerLCD,0,2);
+		   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+			LCD_setCursor(&handlerLCD,1,0);
+			LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+			sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+			LCD_setCursor(&handlerLCD,2,2);
+			LCD_sendSTR(&handlerLCD,dataLCD);
+			LCD_setCursor(&handlerLCD,3,1);
+			LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+			seleccionConfiguracion = CONTRASE;
+			estadoPantalla = PARAMETROS;
+			stateKeypad = NOTHING;
+
+
+        }
+
+			  if(Confi1 == 3){
+
+
+				  valorNumerosArreglo[2] = 8;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+					LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = CONTRASE;
+					estadoPantalla = CAMBIO;
+					stateKeypad = NOTHING;
+
+				  Confi1 = 0;
+
+			  }
+
+			if(estadoPantalla == CAMBIO){
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,2);
+				LCD_sendSTR(&handlerLCD,"Cambio correcto");
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+				LCD_setCursor(&handlerLCD,2,2);
+				LCD_sendSTR(&handlerLCD,"Felices fiestas");
+				LCD_setCursor(&handlerLCD,3,0);
+				LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = PARAMETROS;
+				stateKeypad = NOTHING;
+
+			     posicionMenu = SALIO;
+
+			  ContrasenaInicial[0] = Actualizar[0];
+			  ContrasenaInicial[1] = Actualizar[1];
+			  ContrasenaInicial[2] = Actualizar[2];
+
+			  Actualizar[0] = 0;
+			 Actualizar[1] = 0;
+			 Actualizar[2] = 0;
+			}
+
+
+				 }// TECLA OCHO
+
+            	  if(stateKeypad == TECLA_NUEVE){
+
+				  Confi1 ++;
+
+				  if(Confi1 == 1){
+
+						valorNumerosArreglo[0] = 9;
+
+						Actualizar[0] =valorNumerosArreglo[0] ;
+
+						LCD_ClearScreen(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+						stateKeypad = NOTHING;
+
+
+				  } if(Confi1 == 2){
+
+					  valorNumerosArreglo[1] = 9;
+
+					  Actualizar[1] =valorNumerosArreglo[1];
+
+					   LCD_Clear(&handlerLCD);
+					   LCD_setCursor(&handlerLCD,0,2);
+					   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = PARAMETROS;
+
+				  }
+
+				  if(Confi1 == 3){
+
+
+					  valorNumerosArreglo[2] = 9;
+
+					  Actualizar[2] =valorNumerosArreglo[2]
+														 ;
+						LCD_Clear(&handlerLCD);
+						LCD_setCursor(&handlerLCD,0,2);
+						LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+						LCD_setCursor(&handlerLCD,1,0);
+						LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+						sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+						LCD_setCursor(&handlerLCD,2,2);
+						LCD_sendSTR(&handlerLCD,dataLCD);
+						LCD_setCursor(&handlerLCD,3,1);
+						LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+						seleccionConfiguracion = CONTRASE;
+						estadoPantalla = CAMBIO;
+						stateKeypad = NOTHING;
+
+
+					  Confi1 = 0;
+
+				  }
+
+				if(estadoPantalla == CAMBIO){
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Cambio correcto");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,"Felices fiestas");
+					LCD_setCursor(&handlerLCD,3,0);
+					LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+					seleccionConfiguracion = NOTHING;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+				  posicionMenu = SALIO;
+
+				  ContrasenaInicial[0] = Actualizar[0];
+				  ContrasenaInicial[1] = Actualizar[1];
+				  ContrasenaInicial[2] = Actualizar[2];
+
+				  Actualizar[0] = 0;
+				 Actualizar[1] = 0;
+				 Actualizar[2] = 0;
+				}
+
+
+					 } // TECLA NUEVE
+
+           if(stateKeypad == TECLA_CERO){
+
+			  Confi1 ++;
+
+			  if(Confi1 == 1){
+
+					valorNumerosArreglo[0] = 0;
+
+					Actualizar[0] =valorNumerosArreglo[0] ;
+
+					LCD_ClearScreen(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+					sprintf(dataLCD, "Valor = %u",  Actualizar[0]);
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = CONTRASE;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+			  } if(Confi1 == 2){
+
+				  valorNumerosArreglo[1] = 0;
+
+				  Actualizar[1] =valorNumerosArreglo[1];
+
+				   LCD_Clear(&handlerLCD);
+				   LCD_setCursor(&handlerLCD,0,2);
+				   LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+					sprintf(dataLCD, "Valor = %u%u",  Actualizar[0],Actualizar[1]);
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = CONTRASE;
+					estadoPantalla = PARAMETROS;
+					stateKeypad = NOTHING;
+
+			  }
+
+			  if(Confi1 == 3){
+
+
+				  valorNumerosArreglo[2] = 0;
+
+				  Actualizar[2] =valorNumerosArreglo[2]
+													 ;
+					LCD_Clear(&handlerLCD);
+					LCD_setCursor(&handlerLCD,0,2);
+					LCD_sendSTR(&handlerLCD,"Ingrese nueva");
+					LCD_setCursor(&handlerLCD,1,0);
+					LCD_sendSTR(&handlerLCD,"Contrasena Por favor");
+					sprintf(dataLCD, "Valor = %u%u%u",  Actualizar[0],Actualizar[1],Actualizar[2]);
+					LCD_setCursor(&handlerLCD,2,2);
+					LCD_sendSTR(&handlerLCD,dataLCD);
+					LCD_setCursor(&handlerLCD,3,1);
+					LCD_sendSTR(&handlerLCD,"Atras con tecla D");
+
+					seleccionConfiguracion = CONTRASE;
+					estadoPantalla = CAMBIO;
+					stateKeypad = NOTHING;
+
+				  Confi1 = 0;
+
+			  }
+
+			if(estadoPantalla == CAMBIO){
+				LCD_ClearScreen(&handlerLCD);
+				LCD_setCursor(&handlerLCD,0,2);
+				LCD_sendSTR(&handlerLCD,"Cambio correcto");
+				LCD_setCursor(&handlerLCD,1,0);
+				LCD_sendSTR(&handlerLCD,"pulsa D para retonar");
+				LCD_setCursor(&handlerLCD,2,2);
+				LCD_sendSTR(&handlerLCD,"Felices fiestas");
+				LCD_setCursor(&handlerLCD,3,0);
+				LCD_sendSTR(&handlerLCD,"Alarmas German S.A.S");
+
+
+
+				seleccionConfiguracion = NOTHING;
+				estadoPantalla = PARAMETROS;
+				stateKeypad = NOTHING;
+
+			  posicionMenu = SALIO;
+
+			  ContrasenaInicial[0] = Actualizar[0];
+			  ContrasenaInicial[1] = Actualizar[1];
+			  ContrasenaInicial[2] = Actualizar[2];
+
+			  Actualizar[0] = 0;
+			 Actualizar[1] = 0;
+			 Actualizar[2] = 0;
+			}
+
+
+				 } // TECLA CERO
+
+
+ /*****************************************************************************************/
+
+
+//            	  if(stateKeypad == TECLA_A){
+//
+//            		  seleccionConfiguracion = NOTHING;
+//					  estadoPantalla = PARAMETROS;
+//					  posicionMenu = SALIO;
+//					  stateKeypad = NOTHING;
+//            	  }
 
             	  if(stateKeypad == TECLA_D){
 
@@ -1211,13 +6844,10 @@ while (1){
 
           if(posicionMenu == SONIDO){
 
-
-
-
         	if(stateKeypad == TECLA_ESTRELLA){
 
-
-			duttyValue += 100;
+            if(duttyValue < 18000){
+			duttyValue += 1000;
 
 
 			updateDuttyCycle(&handlerPWM, duttyValue);
@@ -1227,6 +6857,8 @@ while (1){
 			sprintf(dataLCD, "Nuevo valor = %u ", (unsigned int) duttyValue );
 			LCD_setCursor(&handlerLCD,1,0);
 			LCD_sendSTR(&handlerLCD,dataLCD);
+			LCD_setCursor(&handlerLCD,2,2);
+			LCD_sendSTR(&handlerLCD," + = * Y  - = # ");
 			LCD_setCursor(&handlerLCD,3,1);
 			LCD_sendSTR(&handlerLCD,"Atras con tecla D");
 
@@ -1237,11 +6869,14 @@ while (1){
 
         	  }
 
+        	}
+
         	  // Bajar
 
 			if(stateKeypad == TECLA_NUMERAL){
 
-				duttyValue -= 100;
+				if(duttyValue >= 1000){
+				duttyValue -= 1000;
 
 
 				updateDuttyCycle(&handlerPWM, duttyValue);
@@ -1251,6 +6886,8 @@ while (1){
 				sprintf(dataLCD, "Nuevo valor = %u ", (unsigned int) duttyValue );
 				LCD_setCursor(&handlerLCD,1,0);
 				LCD_sendSTR(&handlerLCD,dataLCD);
+				LCD_setCursor(&handlerLCD,2,2);
+				LCD_sendSTR(&handlerLCD," + = * Y  - = # ");
 				LCD_setCursor(&handlerLCD,3,1);
 				LCD_sendSTR(&handlerLCD,"Atras con tecla D");
 
@@ -1260,17 +6897,7 @@ while (1){
 				seleccionConfiguracion = NOTHING;
 			}
 
-			   /* Devolverse o retorna */
-
-//        	  if(stateKeypad == TECLA_B){
-//
-//		  seleccionConfiguracion = NOTHING;
-//		  estadoPantalla = SONIDO; //  NUEVO SONIDO, OJO VOLVER A PARAMETROS
-//		  posicionMenu = SALIO;
-//		  stateKeypad = NOTHING;
-//
-//
-//        	            	}
+			}
 
         	  if(stateKeypad == TECLA_D){
 
@@ -1293,17 +6920,122 @@ while (1){
 
         	             	               }
 
-
-
-
-
-
           } // Fin de sonido
+
+          /* Panico */
 
           if(posicionMenu == PANICO){
 
+        	  if(stateKeypad == TECLA_D){
+
+
+			LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,2);
+			LCD_sendSTR(&handlerLCD,"Recuerda que las");
+			LCD_setCursor(&handlerLCD,1,2);
+			LCD_sendSTR(&handlerLCD,"Estrellas gritan");
+			LCD_setCursor(&handlerLCD,2,3);
+			LCD_sendSTR(&handlerLCD,"y los # callan");
+			LCD_setCursor(&handlerLCD,3,0);
+			LCD_sendSTR(&handlerLCD,"D| Atras");
+
+			 estadoPantalla = PARAMETROS;
+			 stateKeypad = NOTHING;
+
+			  posicionMenu = SALIO;
+
+										   }
+          }
+
+
+
+          /* De fecha y hora */
+
+
+
+          if(posicionMenu == CAMBIAR_FECHA){
+
+        	  if(stateKeypad == TECLA_D){
+
+
+        	 LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"A|Cambiar Fecha");
+			LCD_setCursor(&handlerLCD,1,0);
+			LCD_sendSTR(&handlerLCD,"B|Cambiar Hora");
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,"C|Eventos");
+			LCD_setCursor(&handlerLCD,3,0);
+			LCD_sendSTR(&handlerLCD,"D| Atras");
+
+
+		 seleccionConfiguracion = NOTHING;
+		 estadoPantalla = FECHAYHORA;
+		 stateKeypad = NOTHING;
+
+		  posicionMenu = SALIO;
+
+        	  }
 
           }
+
+
+          if(posicionMenu == CAMBIAR_HORA){
+
+
+        	  if(stateKeypad == TECLA_D){
+
+
+			 LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"A|Cambiar Fecha");
+			LCD_setCursor(&handlerLCD,1,0);
+			LCD_sendSTR(&handlerLCD,"B|Cambiar Hora");
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,"C|Eventos");
+			LCD_setCursor(&handlerLCD,3,0);
+			LCD_sendSTR(&handlerLCD,"D| Atras");
+
+
+			 seleccionConfiguracion = NOTHING;
+			 estadoPantalla = FECHAYHORA;
+			 stateKeypad = NOTHING;
+
+			  posicionMenu = SALIO;
+
+        	         	  }
+
+
+
+          }
+
+          if(posicionMenu == EVENTOS){
+
+        	  if(stateKeypad == TECLA_D){
+
+
+			 LCD_ClearScreen(&handlerLCD);
+			LCD_setCursor(&handlerLCD,0,0);
+			LCD_sendSTR(&handlerLCD,"A|Cambiar Fecha");
+			LCD_setCursor(&handlerLCD,1,0);
+			LCD_sendSTR(&handlerLCD,"B|Cambiar Hora");
+			LCD_setCursor(&handlerLCD,2,0);
+			LCD_sendSTR(&handlerLCD,"C|Eventos");
+			LCD_setCursor(&handlerLCD,3,0);
+			LCD_sendSTR(&handlerLCD,"D| Atras");
+
+
+			 seleccionConfiguracion = NOTHING;
+			 estadoPantalla = FECHAYHORA;
+			 stateKeypad = NOTHING;
+
+			  posicionMenu = SALIO;
+
+        	         	  }
+
+
+          }
+
 
 
 		} // While
@@ -1484,6 +7216,23 @@ void initSystem(void){
 
 		/*Cargando la configuración del Usart para la comunicación serial */
 		USART_Config(&handlerUsart);
+
+
+		 /* Configuración RTC inicial que se actualizara si el sistema no se apaga o reinicia*/
+
+		 handlerRTC.DateTypeDef.RTC_Fecha     = 31;
+		 handlerRTC.DateTypeDef.RTC_Mes       = 12;
+		 handlerRTC.DateTypeDef.RTC_Semana    = Thus;
+		 handlerRTC.DateTypeDef.RTC_Ano       = 22;
+		 handlerRTC.TimeTypeDef.RTC_H12       = 12;
+		 handlerRTC.TimeTypeDef.RTC_Hora      = 23;
+		 handlerRTC.TimeTypeDef.RTC_Minutos   = 59;
+		 handlerRTC.TimeTypeDef.RTC_Segundos  = 01;
+
+
+		  /*Se carga la configuración */
+
+		  RTC_Config(&handlerRTC);
 
 }
 

@@ -5,18 +5,21 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../Src/PruebaTecla.c \
 ../Src/main.c \
 ../Src/mainCase.c \
 ../Src/syscalls.c \
 ../Src/sysmem.c 
 
 OBJS += \
+./Src/PruebaTecla.o \
 ./Src/main.o \
 ./Src/mainCase.o \
 ./Src/syscalls.o \
 ./Src/sysmem.o 
 
 C_DEPS += \
+./Src/PruebaTecla.d \
 ./Src/main.d \
 ./Src/mainCase.d \
 ./Src/syscalls.d \
