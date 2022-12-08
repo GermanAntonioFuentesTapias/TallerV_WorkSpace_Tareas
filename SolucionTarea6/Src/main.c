@@ -315,3 +315,10 @@ void capturefrecuencia3(void){
 
 }
 
+/*
+ * Hola Germán, tu solución es identica (en su escencia) a la de muchos de tus compañeros, donde básicamente tienen
+ * siempre encendido el modulo de captura y no lo pueden apagar y eso no es ideal. Tu solución funciona, pero la idea
+ * debe ser poder encender y apagar cosas cuando sea necesario.
+ *
+ * Calificación = 4.5
+ * */
